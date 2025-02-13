@@ -1,0 +1,6 @@
+run_tests = ['nmap']
+saved_directory = "/home/april_zhao/backup/test"
+saved_method = "excel"
+compiler = "clang"
+netperf_server_ip = "10.10.10.10"
+Thread = 1

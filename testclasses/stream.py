@@ -1,0 +1,5 @@
+
+
+
+class Stream:
+    pass

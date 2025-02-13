@@ -20,11 +20,13 @@ class Nmap:
         install_rpm = subprocess.run("dnf install nmap",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if install_rpm.returncode != 0:
             print(f"nmap测试出错:rpm包安装失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
+            sys.exit(1)
 
     def run_test(self):
         nmap = subprocess.run("nmap -sS -sU 127.0.0.1",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if nmap.returncode != 0:
             print(f"nmap测试出错:nmap进程运行出错.报错信息:{nmap.stderr.decode('utf-8')}")
+            sys.exit(1)
         self.test_result = nmap.stdout.decode('utf-8')
 
 

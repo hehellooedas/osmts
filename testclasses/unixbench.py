@@ -1,4 +1,5 @@
 import subprocess,fileinput,shutil,re
+import sys
 from pathlib import Path
 from openpyxl import Workbook
 from testclasses.excel2csv import excel2csv
@@ -20,9 +21,11 @@ class Unixbench:
         install_rpm = subprocess.run(f"dnf install make {self.compiler} perl perl-CPAN",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if install_rpm.returncode != 0:
             print(f"unixbench测试出错:rpm包安装失败.报错信息:{install_rpm.stderr.decode()}")
+            sys.exit(1)
         clone = subprocess.run("cd /root/unixbench && git clone https://gitcode.com/gh_mirrors/by/byte-unixbench.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if clone.returncode != 0:
             print(f"unixbench测试出错:git clone执行失败.报错信息:{clone.stderr.decode('utf-8')}")
+            sys.exit(1)
         if self.compiler == 'clang':
             for line in fileinput.input('/root/unixbench/byte-unixbench/UnixBench/Makefile', inplace=True):
                 if 'CC=gcc' in line:  # 仅在包含'CC=gcc'的行进行替换
@@ -31,12 +34,14 @@ class Unixbench:
         make = subprocess.run("cd /root/unixbench/byte-unixbench/UnixBench && make",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if make.returncode != 0:
             print(f"unixbench测试出错:make执行失败.报错信息:{make.stderr.decode('utf-8')}")
+            sys.exit(1)
 
 
     def run_test(self):
         run = subprocess.run("cd /root/unixbench/byte-unixbench/UnixBench/ && ./Run -c 1 -c $(nproc)",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if run.returncode != 0:
             print(f"unixbench测试出错:Run程序运行失败.报错信息:{run.stderr.decode('utf-8')}")
+            sys.exit(1)
         print(run.stdout.decode('utf-8'))
         print(run.stderr.decode('utf-8'))
         self.test_result = run.stdout.decode('utf-8')

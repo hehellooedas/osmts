@@ -124,7 +124,7 @@ class Netperf(object):
         # UDP REQUEST/RESPONSE测试
         UDP_RR = subprocess.run(f"netperf -t UDP_RR -H ${self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if UDP_RR.returncode != 0:
-            print(f"netperf测试出错:TCP_CRR测试运行失败.报错信息:{TCP_CRR.stderr.decode('utf-8')}")
+            print(f"netperf测试出错:UDP_RR测试运行失败.报错信息:{UDP_RR.stderr.decode('utf-8')}")
             sys.exit(1)
         result1 = re.findall(r'\d+\.\d+|\d+', UDP_RR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', UDP_RR.stdout.decode('utf-8').split('\n')[7])

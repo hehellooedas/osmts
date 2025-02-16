@@ -11,13 +11,12 @@ nmap测试:具体请查看文档https://gitee.com/jean9823/openEuler_riscv_test/
 
 class Nmap:
     def __init__(self, **kwargs):
-        super().__init__()
         self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.test_result = ''
 
     def pre_test(self):
-        install_rpm = subprocess.run("dnf install nmap",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+        install_rpm = subprocess.run("dnf install nmap -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if install_rpm.returncode != 0:
             print(f"nmap测试出错:rpm包安装失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
             sys.exit(1)

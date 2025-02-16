@@ -1,6 +1,5 @@
-run_tests = ['nmap']
+run_tests = ['netperf']
 saved_directory = "/home/april_zhao/backup/test"
 saved_method = "excel"
-compiler = "clang"
-netperf_server_ip = "10.10.10.10"
-Thread = 1
+compiler = "gcc"
+netperf_server_ip = "127.0.0.1"

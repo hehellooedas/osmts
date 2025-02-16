@@ -27,16 +27,16 @@ class Netperf(object):
         ws.merge_cells("a1:a5")
 
         ws.cell(6,1,"UDP STREAM TEST")
-        ws.merge_cells("a6:a20")
+        ws.merge_cells("a6:a18")
 
-        ws.cell(21,1,"TCP REQUEST/RESPONSE TEST")
-        ws.merge_cells("a21:a23")
+        ws.cell(20,1,"TCP REQUEST/RESPONSE TEST")
+        ws.merge_cells("a20:a21")
 
-        ws.cell(24,1,"TCP Connect/Request/Response TEST")
-        ws.merge_cells("a24:a26")
+        ws.cell(22,1,"TCP Connect/Request/Response TEST")
+        ws.merge_cells("a22:a23")
 
-        ws.cell(27,1,"UDP REQUEST/RESPONSE TEST")
-        ws.merge_cells("a27:a29")
+        ws.cell(24,1,"UDP REQUEST/RESPONSE TEST")
+        ws.merge_cells("a24:a25")
 
         # TCP_STREAM表头
         ws.cell(1,2,"Recv Socket Size bytes")
@@ -46,20 +46,20 @@ class Netperf(object):
         ws.cell(1,6,"Throughput(10^6bits/sec)")
 
         # UDP_STREAM表头
-        ws.cell(7,2,"Socket Size bytes")
-        ws.cell(7,3,"Message Size bytes")
-        ws.cell(7,4,"Elapsed Time secs")
-        ws.cell(7,5,"Messages Okay")
-        ws.cell(7, 6, "Messages Errors")
-        ws.cell(7,7,"Throughput(10^6bits/sec)")
+        ws.cell(6,2,"Socket Size bytes")
+        ws.cell(6,3,"Message Size bytes")
+        ws.cell(6,4,"Elapsed Time secs")
+        ws.cell(6,5,"Messages Okay")
+        ws.cell(6, 6, "Messages Errors")
+        ws.cell(6,7,"Throughput(10^6bits/sec)")
 
         # 剩余三个测试的表头
-        ws.cell(21,2,"Local Socket Send bytes")
-        ws.cell(21, 3, "Remote Size Recv Bytes")
-        ws.cell(21, 4, "Request Size bytes")
-        ws.cell(21, 5, "Resp. Size bytes")
-        ws.cell(21, 6, "Elapsed Time secs.")
-        ws.cell(21,7,"Trans. Rate per sec")
+        ws.cell(19,2,"Local Socket Send bytes")
+        ws.cell(19, 3, "Remote Size Recv Bytes")
+        ws.cell(19, 4, "Request Size bytes")
+        ws.cell(19, 5, "Resp. Size bytes")
+        ws.cell(19, 6, "Elapsed Time secs.")
+        ws.cell(19,7,"Trans. Rate per sec")
 
 
 
@@ -96,42 +96,42 @@ class Netperf(object):
 
 
         # TCP REQUEST/RESPONSE测试
-        TCP_RR = subprocess.run(f"netperf -t TCP_RR -H ${self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        TCP_RR = subprocess.run(f"netperf -t TCP_RR -H {self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if TCP_RR.returncode != 0:
             print(f"netperf测试出错:TCP_RR测试运行失败.报错信息:{TCP_RR.stderr.decode('utf-8')}")
             sys.exit(1)
         result1 = re.findall(r'\d+\.\d+|\d+', TCP_RR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', TCP_RR.stdout.decode('utf-8').split('\n')[7])
         for col, value in enumerate(result1):
-            ws.cell(22, col + 2, value)
-        ws.cell(23, 2, result2[0])
-        ws.cell(23, 3, result2[1])
+            ws.cell(20, col + 2, value)
+        ws.cell(21, 2, result2[0])
+        ws.cell(21, 3, result2[1])
 
 
         # TCP Connect/Request/Response测试
-        TCP_CRR = subprocess.run(f"netperf -t TCP_CRR -H ${self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        TCP_CRR = subprocess.run(f"netperf -t TCP_CRR -H {self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if TCP_CRR.returncode != 0:
             print(f"netperf测试出错:TCP_CRR测试运行失败.报错信息:{TCP_CRR.stderr.decode('utf-8')}")
             sys.exit(1)
         result1 = re.findall(r'\d+\.\d+|\d+', TCP_CRR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', TCP_CRR.stdout.decode('utf-8').split('\n')[7])
         for col, value in enumerate(result1):
-            ws.cell(25, col + 2, value)
-        ws.cell(26, 2, result2[0])
-        ws.cell(26, 3, result2[1])
+            ws.cell(22, col + 2, value)
+        ws.cell(23, 2, result2[0])
+        ws.cell(23, 3, result2[1])
 
 
         # UDP REQUEST/RESPONSE测试
-        UDP_RR = subprocess.run(f"netperf -t UDP_RR -H ${self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        UDP_RR = subprocess.run(f"netperf -t UDP_RR -H {self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if UDP_RR.returncode != 0:
             print(f"netperf测试出错:UDP_RR测试运行失败.报错信息:{UDP_RR.stderr.decode('utf-8')}")
             sys.exit(1)
         result1 = re.findall(r'\d+\.\d+|\d+', UDP_RR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', UDP_RR.stdout.decode('utf-8').split('\n')[7])
         for col, value in enumerate(result1):
-            ws.cell(28, col + 2, value)
-        ws.cell(29, 2, result2[0])
-        ws.cell(29, 3, result2[1])
+            ws.cell(24, col + 2, value)
+        ws.cell(25, 2, result2[0])
+        ws.cell(25, 3, result2[1])
 
         if self.saved_method == "excel":
             wb.save(self.directory / 'netperf.xlsx')

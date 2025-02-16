@@ -1,4 +1,4 @@
-run_tests = ['netperf']
+run_tests = ['stream']
 saved_directory = "/home/april_zhao/backup/test"
 saved_method = "excel"
 compiler = "gcc"

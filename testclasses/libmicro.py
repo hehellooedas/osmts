@@ -47,9 +47,14 @@ class Libmicro:
             shutil.rmtree(self.path)
 
 
+    def result2summary(self):
+        pass
+
+
     def run(self):
         print("开始进行libmicro测试")
         self.pre_test()
         self.run_test()
+        self.result2summary()
         self.post_test()
         print("libmicro测试结束")

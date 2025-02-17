@@ -1,5 +1,5 @@
+from multiprocessing import Process
 
 
-
-class Ltp_stress(object):
+class Ltp_stress(Process):
     pass

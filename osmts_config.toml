@@ -1,5 +1,5 @@
-run_tests = ['stream']
-saved_directory = "/home/april_zhao/backup/test"
+run_tests = ['stream','fio']
+saved_directory = "/root/result"
 saved_method = "excel"
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"

@@ -22,6 +22,9 @@ cd osmts
 ```
 pip install --upgrade pip
 pip install -r requirements.txt
+
+# 如果遇到SSL问题
+pip install --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host=files.pythonhosted.org -r requirements.txt
 ```
 
 

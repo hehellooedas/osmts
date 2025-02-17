@@ -79,7 +79,6 @@ class Stream:
         print("开始进行stream测试")
         self.pre_test()
         self.run_test()
-        #self.post_test()
-        print(self.test_result)
         self.result2summary()
+        self.post_test()
         print("stream测试结束")

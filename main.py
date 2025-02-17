@@ -77,7 +77,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     #安装必备的rpm包
-    install_git = subprocess.run("dnf install git -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+    install_git = subprocess.run("dnf install git make -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
     if install_git.returncode != 0:
         print(f"安装git失败,请检查.报错信息:{install_git.stderr.decode('utf-8')}")
         sys.exit(1)

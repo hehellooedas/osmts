@@ -21,6 +21,7 @@ class Nmap:
             print(f"nmap测试出错:rpm包安装失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
             sys.exit(1)
 
+
     def run_test(self):
         nmap = subprocess.run("nmap -sS -sU 127.0.0.1",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         if nmap.returncode != 0:

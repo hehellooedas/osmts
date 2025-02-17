@@ -28,7 +28,7 @@ class Iozone:
 
 
     def run_test(self):
-        iozone = subprocess.run(f"cd /root/osmts_tmp/iozone/iozone3_506/src/current && ./iozone -Rab {self.directory}/iozone-output.xls",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+        iozone = subprocess.run(f"cd /root/osmts_tmp/iozone/iozone3_506/src/current && ./iozone -Rab {self.directory}/iozone.xls",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if iozone.returncode != 0:
             print(f"iozone测试出错:iozone运行报错.报错信息:{iozone.stderr.decode('utf-8')}")
             sys.exit(1)

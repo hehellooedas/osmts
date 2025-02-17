@@ -1,6 +1,6 @@
 # osmts means "One-stop management of test scripts".
 
-osmts是一个一站式管理和运行测试脚本并完成总结数据的工具。
+osmts是一个一站式管理和运行测试脚本并完成总结数据的工具。为基于rpm包管理器的linux发行版设计，一般用于openEuler新镜像的测试。
 
 testclasses目录用于存放测试类,用于描述测试脚本执行过程以及数据分析与总结。
 
@@ -81,7 +81,7 @@ netperf_server_ip = "127.0.0.1"
 | lmbench    | 待移植   |
 | stream     | 完成     |
 | ltp stress | 未完成   |
-| iozone     | 待移植   |
+| iozone     | 完成   |
 | libmicro   | 未完成   |
 | fio        | 待移植   |
 | netperf    | 完成     |

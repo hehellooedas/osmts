@@ -78,20 +78,20 @@ netperf_server_ip = "127.0.0.1"
 目前支持的测试项目：
 
 | 项目       | 支持程度 |
-| ---------- | -------- |
-| unixbench  | 完成     |
-| nmap       | 完成     |
-| lmbench    | 待移植   |
-| stream     | 完成     |
-| ltp stress | 未完成   |
-| iozone     | 完成   |
-| libmicro   | 未完成   |
-| fio        | 待移植   |
-| netperf    | 完成     |
-| trinity    | 未完成   |
-| ltp cve    | 未完成   |
-| ltp posix  | 未完成   |
-| ltp        | 未完成   |
+| ---------- |---|
+| unixbench  | 完成 |
+| nmap       | 完成 |
+| lmbench    | 待移植 |
+| stream     | 完成 |
+| ltp stress | 待总结  |
+| iozone     | 完成 |
+| libmicro   | 未完成 |
+| fio        | 待总结 |
+| netperf    | 完成 |
+| trinity    | 未完成 |
+| ltp cve    | 未完成 |
+| ltp posix  | 未完成 |
+| ltp        | 未完成 |
 
 
 

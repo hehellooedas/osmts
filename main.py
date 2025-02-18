@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 # encoding: utf-8
-
+import multiprocessing
 import sys,psutil,shutil
 import tomllib,ipaddress
 import subprocess,argparse
@@ -9,7 +9,8 @@ from testclasses import osmts_tests
 
 
 osmts_path = Path('/root/osmts_tmp/')
-fio_status = False
+fio_flag = False
+ltp_stress_flag = False
 
 
 def fio_judge():
@@ -17,8 +18,8 @@ def fio_judge():
     if psutil.disk_usage('/').free < 20 * 1024 * 1024 * 1024:
         print("当前机器的/分区剩余容量过低,无法进行fio测试,请参考 https://github.com/openeuler-riscv/oerv-team/blob/main/cases/2024.10.19-OERV-UEFI%E5%90%AF%E5%8A%A8%E7%A3%81%E7%9B%98%E5%88%B6%E4%BD%9C-%E8%B5%B5%E9%A3%9E%E6%89%AC.md#%E9%99%84%E5%BD%95%E4%BA%8C 扩展/分区容量.")
         sys.exit(1)
-    nonlocal fio_status
-    fio_status = True
+    nonlocal fio_flag
+    fio_flag = True
 
 
 
@@ -108,10 +109,22 @@ if __name__ == '__main__':
     if not osmts_path.exists():
         osmts_path.mkdir()
 
-    if fio_status:
+    if fio_flag:
         # 提前下载iso文件
         fio = osmts_tests['fio'](saved_directory=saved_directory, saved_method=saved_method)
         tasks.remove('fio')
+
+    # ltp stress独立测试
+    if 'ltp_stress' in tasks:
+        tasks.remove('ltp_stress')
+        ltp_stress:multiprocessing.Process = osmts_tests['ltp_stress'](
+            saved_directory=saved_directory,
+            saved_method=saved_method,
+            compiler=compiler,
+            netperf_server_ip=netperf_server_ip
+        )
+        ltp_stress.daemon = True
+        ltp_stress.start()
 
 
     # 所有检查都通过,则正式开始测试
@@ -119,9 +132,14 @@ if __name__ == '__main__':
         # 构造测试类
         osmts_tests[task](saved_directory=saved_directory,saved_method=saved_method,compiler=compiler,netperf_server_ip=netperf_server_ip).run()
 
-    if fio_status:
+    if fio_flag:
         fio.run()
 
+    if ltp_stress_flag:
+        print("osmts等待ltp_stress测试的7x24小时压力测试的结束...|如果osmts被信号强制退出,则ltp_stress测试也会停止.")
+        ltp_stress.join()
     # if osmts_path.exists():
     #     shutil.rmtree(osmts_path)
-    print("osmts运行结束")
+    delete_osmts_tmp = input("osmts运行结束.是否删除osmts_tmp临时目录?(y/N)")
+    if delete_osmts_tmp == "Y" and delete_osmts_tmp == "y":
+        shutil.rmtree(osmts_path)

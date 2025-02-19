@@ -1,9 +1,10 @@
 #! /usr/bin/env python3
 # encoding: utf-8
+
 import multiprocessing
 import sys,psutil,shutil
 import tomllib,ipaddress
-import subprocess,argparse
+import subprocess,argparse,random
 from pathlib import Path
 from testclasses import osmts_tests
 
@@ -18,7 +19,7 @@ def fio_judge():
     if psutil.disk_usage('/').free < 20 * 1024 * 1024 * 1024:
         print("当前机器的/分区剩余容量过低,无法进行fio测试,请参考 https://github.com/openeuler-riscv/oerv-team/blob/main/cases/2024.10.19-OERV-UEFI%E5%90%AF%E5%8A%A8%E7%A3%81%E7%9B%98%E5%88%B6%E4%BD%9C-%E8%B5%B5%E9%A3%9E%E6%89%AC.md#%E9%99%84%E5%BD%95%E4%BA%8C 扩展/分区容量.")
         sys.exit(1)
-    nonlocal fio_flag
+    global fio_flag
     fio_flag = True
 
 
@@ -54,7 +55,9 @@ def from_tests_to_tasks(run_tests:list) -> list:
         netperf_judge()
     if 'fio' in tasks:
         fio_judge()
-    return list(tasks)
+    tasks = list(tasks)
+    random.shuffle(tasks)
+    return tasks
 
 
 
@@ -117,6 +120,7 @@ if __name__ == '__main__':
     # ltp stress独立测试
     if 'ltp_stress' in tasks:
         tasks.remove('ltp_stress')
+        ltp_stress_flag = True
         ltp_stress:multiprocessing.Process = osmts_tests['ltp_stress'](
             saved_directory=saved_directory,
             saved_method=saved_method,

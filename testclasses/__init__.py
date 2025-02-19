@@ -10,6 +10,7 @@ from testclasses.ltp_cve import Ltp_cve
 from testclasses.netperf import Netperf
 from testclasses.lmbench import Lmbench
 
+
 osmts_tests = {
     "iozone":(
         Iozone

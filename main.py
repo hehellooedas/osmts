@@ -12,6 +12,7 @@ from testclasses import osmts_tests
 osmts_path = Path('/root/osmts_tmp/')
 fio_flag = False
 ltp_stress_flag = False
+netserver_created_by_osmts = False
 
 
 def fio_judge():
@@ -34,7 +35,30 @@ def netperf_judge():
     except ipaddress.AddressValueError:
         print(f"输入的netperf服务端ip不符合ipv4规范,请检查netperf_server_ip字段.")
         sys.exit(1)
-    print("友情提示:请确保指定ip机器上已经执行了netserver -p 10000命令,否则osmts会报错.")
+    if netperf_server_ip in ('127.0.0.1', 'localhost'):
+        if 'netserver' not in [process.name() for process in tuple(psutil.process_iter())]:
+            turn_on_netserver = input("未检测到netserver,是否在本机启动netserver?(Y/n) [netperf测试结束后会自动关闭netserver] ")
+            if turn_on_netserver == 'Y' or turn_on_netserver == 'y':
+                install_netperf = subprocess.run(
+                    "dnf install netperf -y",
+                    shell=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE
+                )
+                if install_netperf.returncode != 0:
+                    print(f"netperf测试出错:rpm包安装失败.报错信息:{install_netperf.stderr.decode('utf-8')}")
+                    sys.exit(1)
+                subprocess.run(
+                    "netserver -p 10000",
+                    shell=True,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                global netserver_created_by_osmts
+                netserver_created_by_osmts = True
+
+
 
 
 
@@ -81,8 +105,7 @@ if __name__ == '__main__':
     netperf_server_ip = config.get("netperf_server_ip", None)
 
     if saved_directory is None:
-        print("请输入本次测试结果保存的目录,检查saved_directory字段")
-        sys.exit(1)
+        saved_directory = '/root/osmts_result/'
     saved_directory = Path(saved_directory)
     saved_directory.mkdir(parents=True,exist_ok=True)
 
@@ -134,7 +157,8 @@ if __name__ == '__main__':
     # 所有检查都通过,则正式开始测试
     for task in tasks:
         # 构造测试类
-        osmts_tests[task](saved_directory=saved_directory,saved_method=saved_method,compiler=compiler,netperf_server_ip=netperf_server_ip).run()
+        osmts_tests[task](saved_directory=saved_directory,saved_method=saved_method,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts).run()
+
 
     if fio_flag:
         fio.run()
@@ -142,8 +166,9 @@ if __name__ == '__main__':
     if ltp_stress_flag:
         print("osmts等待ltp_stress测试的7x24小时压力测试的结束...|如果osmts被信号强制退出,则ltp_stress测试也会停止.")
         ltp_stress.join()
+
     # if osmts_path.exists():
     #     shutil.rmtree(osmts_path)
-    delete_osmts_tmp = input("osmts运行结束.是否删除osmts_tmp临时目录?(y/N)")
-    if delete_osmts_tmp == "Y" and delete_osmts_tmp == "y":
-        shutil.rmtree(osmts_path)
+
+
+    shutil.rmtree(osmts_path)

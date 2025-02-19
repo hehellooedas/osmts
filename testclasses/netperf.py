@@ -1,5 +1,5 @@
 from pathlib import Path
-import re,sys,subprocess
+import re,sys,subprocess,psutil
 from openpyxl import Workbook
 from testclasses.excel2csv import excel2csv
 
@@ -9,6 +9,7 @@ class Netperf(object):
         self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.server_ip:str = kwargs.get('netperf_server_ip')
+        self.netserver_created_by_osmts = kwargs.get('netserver_created_by_osmts')
 
 
     def pre_test(self):
@@ -139,8 +140,16 @@ class Netperf(object):
             excel2csv(ws, self.directory)
 
 
+    def post_test(self):
+        if self.netserver_created_by_osmts:
+            for process in psutil.process_iter():
+                if process.name() == 'netserver':
+                    process.terminate()
+
+
     def run(self):
         print("开始进行netperf测试")
         self.pre_test()
         self.run_test()
+        self.post_test()
         print("netperf测试结束")

@@ -1,4 +1,3 @@
-import time
 from pathlib import Path
 import re,sys,subprocess,shutil,pexpect
 from openpyxl import Workbook

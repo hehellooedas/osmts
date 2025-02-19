@@ -1,5 +1,5 @@
-run_tests = ['stream','fio']
-saved_directory = "/root/result"
+run_tests = ['netperf','unixbench','nmap','stream']
+saved_directory = "/root/osmts_result"
 saved_method = "excel"
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"

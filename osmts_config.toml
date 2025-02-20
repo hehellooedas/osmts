@@ -1,4 +1,4 @@
-run_tests = ['netperf','unixbench','nmap','stream']
+run_tests = ['fio','unixbench']
 saved_directory = "/root/osmts_result"
 saved_method = "excel"
 compiler = "gcc"

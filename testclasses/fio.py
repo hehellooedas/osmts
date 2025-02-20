@@ -23,12 +23,10 @@ class Fio:
         with requests.get(
                 'https://repo.openeuler.org/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso',
                 stream=True
-        ) as response:
+        ) as response,open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
             response.raise_for_status()
-            with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
-                for chunk in response.iter_content(chunk_size=64 * 1024):
-                    if chunk:
-                        file.write(chunk)
+            for chunk in response.iter_content(64 * 1024):
+                file.write(chunk)
 
 
 
@@ -59,10 +57,8 @@ class Fio:
                 if fio.returncode != 0:
                     print(f"fio测试出错:fio进程运行报错,此时rw为{rw}.报错信息:{fio.stderr.decode('utf-8')}")
                     sys.exit(1)
-                print('此时fio开始输出')
-                print(fio.stdout.decode('utf-8'))
-                print('---------------------------------------------------------------')
-                time.sleep(3)
+                result = fio.stdout.decode('utf-8')
+
 
 
 

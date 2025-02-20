@@ -2,9 +2,9 @@
 # encoding: utf-8
 
 import multiprocessing
-import sys,psutil,shutil
+import sys,psutil,shutil,time
 import tomllib,ipaddress
-import subprocess,argparse,random
+import subprocess,argparse,random,humanfriendly
 from pathlib import Path
 from testclasses import osmts_tests
 
@@ -87,6 +87,7 @@ def from_tests_to_tasks(run_tests:list) -> list:
 
 
 if __name__ == '__main__':
+    start_time = time.time()
     parser = argparse.ArgumentParser(description="get the config file name for osmts.")
     parser.add_argument("--config","-c",type=str,default="osmts_config.toml")
     osmts_config_file = parser.parse_args().config
@@ -133,7 +134,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     tasks = from_tests_to_tasks(run_tests)
-    print(f"本次osmts脚本执行将进行的测试:{tasks}")
+    print(f"本次osmts脚本执行将进行的测试:{tasks},运行时请勿删除{osmts_tmp_dir}和{saved_directory}")
     if not osmts_tmp_dir.exists():
         osmts_tmp_dir.mkdir()
 
@@ -172,4 +173,4 @@ if __name__ == '__main__':
     if remove_osmts_tmp_dir and osmts_tmp_dir.exists():
         shutil.rmtree(osmts_tmp_dir)
 
-    shutil.rmtree(osmts_tmp_dir)
+    print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")

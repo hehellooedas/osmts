@@ -16,8 +16,6 @@ class Lmbench:
     def pre_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
-        if not Path('/root/osmts_tmp/').exists():
-            Path('/root/osmts_tmp/').mkdir()
         # 获取lmbench源码
         git_clone = subprocess.run(
             "cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/lmbench.git",

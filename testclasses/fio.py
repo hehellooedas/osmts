@@ -1,7 +1,8 @@
 from pathlib import Path
 import sys,subprocess,shutil,time,requests
 from multiprocessing import Process
-from testclasses.excel2csv import excel2csv
+from openpyxl.workbook import Workbook
+
 
 
 
@@ -25,7 +26,7 @@ class Fio:
         ) as response:
             response.raise_for_status()
             with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
-                for chunk in response.iter_content(chunk_size=8192):
+                for chunk in response.iter_content(chunk_size=64 * 1024):
                     if chunk:
                         file.write(chunk)
 
@@ -40,8 +41,11 @@ class Fio:
 
 
 
-
     def run_test(self):
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "fio"
+
         self.download_iso_process.join()
         filename = "/root/osmts_tmp/fio/openEuler-24.03-LLVM-riscv64-dvd.iso"
         numjobs = 10

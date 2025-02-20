@@ -2,4 +2,7 @@
 
 
 class Ltp:
-    pass
+
+
+    def run(self):
+        pass

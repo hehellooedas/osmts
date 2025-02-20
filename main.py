@@ -9,7 +9,7 @@ from pathlib import Path
 from testclasses import osmts_tests
 
 
-osmts_path = Path('/root/osmts_tmp/')
+osmts_tmp_dir = Path('/root/osmts_tmp/')
 fio_flag = False
 ltp_stress_flag = False
 netserver_created_by_osmts = False
@@ -57,8 +57,9 @@ def netperf_judge():
                 )
                 global netserver_created_by_osmts
                 netserver_created_by_osmts = True
-
-
+        else:
+            print("请手动执行netserver -p 10000以进行netperf的测试")
+            sys.exit(1)
 
 
 
@@ -103,6 +104,7 @@ if __name__ == '__main__':
     saved_method = config.get("saved_method",None)
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
+    remove_osmts_tmp_dir = config.get("remove_osmts_tmp_dir", None)
 
     if saved_directory is None:
         saved_directory = '/root/osmts_result/'
@@ -132,8 +134,8 @@ if __name__ == '__main__':
 
     tasks = from_tests_to_tasks(run_tests)
     print(f"本次osmts脚本执行将进行的测试:{tasks}")
-    if not osmts_path.exists():
-        osmts_path.mkdir()
+    if not osmts_tmp_dir.exists():
+        osmts_tmp_dir.mkdir()
 
     if fio_flag:
         # 提前下载iso文件
@@ -167,8 +169,7 @@ if __name__ == '__main__':
         print("osmts等待ltp_stress测试的7x24小时压力测试的结束...|如果osmts被信号强制退出,则ltp_stress测试也会停止.")
         ltp_stress.join()
 
-    # if osmts_path.exists():
-    #     shutil.rmtree(osmts_path)
+    if remove_osmts_tmp_dir and osmts_tmp_dir.exists():
+        shutil.rmtree(osmts_tmp_dir)
 
-
-    shutil.rmtree(osmts_path)
+    shutil.rmtree(osmts_tmp_dir)

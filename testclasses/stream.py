@@ -16,8 +16,6 @@ class Stream:
     def pre_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
-        if not Path('/root/osmts_tmp/').exists():
-            Path('/root/osmts_tmp/').mkdir()
         git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/stream.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if git_clone.returncode != 0:
             print(f"stream测试出错:git拉取stream失败.报错信息:{git_clone.stderr.decode('utf-8')}")

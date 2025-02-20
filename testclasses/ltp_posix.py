@@ -2,4 +2,5 @@
 
 
 class Ltp_posix(object):
-    pass
+    def run(self):
+        pass

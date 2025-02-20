@@ -2,4 +2,5 @@
 
 
 class Ltp_cve:
-    pass
+    def run(self):
+        pass

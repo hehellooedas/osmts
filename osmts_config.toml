@@ -3,3 +3,4 @@ saved_directory = "/root/osmts_result"
 saved_method = "excel"
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
+remove_osmts_tmp_dir = 0

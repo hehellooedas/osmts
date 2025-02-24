@@ -9,7 +9,8 @@ class Netperf(object):
         self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.server_ip:str = kwargs.get('netperf_server_ip')
-        self.netserver_created_by_osmts = kwargs.get('netserver_created_by_osmts')
+        self.netserver_created_by_osmts:bool = kwargs.get('netserver_created_by_osmts')
+        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
 
 
     def pre_test(self):
@@ -151,5 +152,6 @@ class Netperf(object):
         print("开始进行netperf测试")
         self.pre_test()
         self.run_test()
-        self.post_test()
+        if self.remove_osmts_tmp_dir:
+            self.post_test()
         print("netperf测试结束")

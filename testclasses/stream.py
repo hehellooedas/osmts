@@ -11,6 +11,7 @@ class Stream:
         self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
+        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result = ''
 
 
@@ -80,5 +81,6 @@ class Stream:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        self.post_test()
+        if self.remove_osmts_tmp_dir:
+            self.post_test()
         print("stream测试结束")

@@ -6,10 +6,11 @@ from testclasses.excel2csv import excel2csv
 
 class Lmbench:
     def __init__(self, **kwargs):
-        self.path = Path('/root/osmts_tmp/stream')
+        self.path = Path('/root/osmts_tmp/lmbench')
         self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
+        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result = ''
 
 
@@ -36,7 +37,6 @@ class Lmbench:
         if install_rpm.returncode != 0:
             print(f"lmbench测试出错:安装rpm包失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
             sys.exit(1)
-
 
 
 
@@ -96,12 +96,19 @@ class Lmbench:
 
         # 等待lmbench测试运行结束
         make.expect(pexpect.EOF)
+        print(make.before)
 
 
         # 获取运行结果
-        subprocess.run(
-            "cd /root/osmts_tmp/lmbench && make see"
+        make_see = subprocess.run(
+            "cd /root/osmts_tmp/lmbench && make see",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stdin=subprocess.PIPE,
         )
+        if make_see.returncode != 0:
+            print(f"lmbench测试:make see执行出错.报错信息:{make_see.stderr.decode('utf-8')}")
+            sys.exit(1)
 
 
 
@@ -110,10 +117,8 @@ class Lmbench:
             shutil.rmtree(self.path)
 
 
-
     def result2summary(self):
         pass
-
 
 
     def run(self):
@@ -121,5 +126,6 @@ class Lmbench:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        #self.post_test()
+        if self.remove_osmts_tmp_dir:
+            self.post_test()
         print("lmbench测试结束")

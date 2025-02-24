@@ -86,20 +86,20 @@ remove_osmts_tmp_dir = 1
 ## 开发进度
 
 | 项目       | 支持程度 |
-| ---------- |---|
-| unixbench  | 完成 |
-| nmap       | 完成 |
-| lmbench    | 待总结 |
-| stream     | 完成 |
+| ---------- |------|
+| unixbench  | 完成   |
+| nmap       | 完成   |
+| lmbench    | 待总结  |
+| stream     | 完成   |
 | ltp stress | 待总结  |
-| iozone     | 完成 |
-| libmicro   | 待总结 |
-| fio        | 待总结 |
-| netperf    | 完成 |
-| trinity    | 未完成 |
-| ltp cve    | 未完成 |
-| ltp posix  | 未完成 |
-| ltp        | 未完成 |
+| iozone     | 完成   |
+| libmicro   | 待总结  |
+| fio        | 完成   |
+| netperf    | 完成   |
+| trinity    | 未完成  |
+| ltp cve    | 未完成  |
+| ltp posix  | 未完成  |
+| ltp        | 未完成  |
 
 
 ## 注意事项

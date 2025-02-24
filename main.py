@@ -106,6 +106,7 @@ if __name__ == '__main__':
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
     remove_osmts_tmp_dir = config.get("remove_osmts_tmp_dir", None)
+    remove_osmts_tmp_dir = bool(remove_osmts_tmp_dir)
 
     if saved_directory is None:
         saved_directory = '/root/osmts_result/'
@@ -160,7 +161,7 @@ if __name__ == '__main__':
     # 所有检查都通过,则正式开始测试
     for task in tasks:
         # 构造测试类
-        osmts_tests[task](saved_directory=saved_directory,saved_method=saved_method,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts).run()
+        osmts_tests[task](saved_directory=saved_directory,saved_method=saved_method,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir).run()
 
 
     if fio_flag:

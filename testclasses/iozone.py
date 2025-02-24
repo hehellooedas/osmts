@@ -9,6 +9,8 @@ class Iozone:
         self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
+        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
+
 
     def pre_test(self):
         if self.path.exists():
@@ -33,6 +35,7 @@ class Iozone:
             print(f"iozone测试出错:iozone运行报错.报错信息:{iozone.stderr.decode('utf-8')}")
             sys.exit(1)
 
+
     def post_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
@@ -42,5 +45,6 @@ class Iozone:
         print("开始进行iozone测试")
         self.pre_test()
         self.run_test()
-        self.post_test()
+        if self.remove_osmts_tmp_dir:
+            self.post_test()
         print("iozone测试结束")

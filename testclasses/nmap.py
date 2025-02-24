@@ -15,6 +15,7 @@ class Nmap:
         self.directory:Path = kwargs.get('saved_directory')
         self.test_result = ''
 
+
     def pre_test(self):
         install_rpm = subprocess.run("dnf install nmap -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if install_rpm.returncode != 0:
@@ -28,7 +29,6 @@ class Nmap:
             print(f"nmap测试出错:nmap进程运行出错.报错信息:{nmap.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = nmap.stdout.decode('utf-8')
-
 
 
     def result2summary(self):

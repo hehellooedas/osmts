@@ -10,6 +10,7 @@ class Fio:
         self.path = Path('/root/osmts_tmp/fio')
         self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
+        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         # 如果iso文件已经存在则不重复下载(用哈希值校验文件)
         if Path.exists(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso'):
             iso_hash = hashlib.sha256()
@@ -355,17 +356,15 @@ class Fio:
             wb.save(self.directory / 'fio.xlsx')
 
 
-
-
     def post_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
-
 
 
     def run(self):
         print("开始进行fio测试")
         self.pre_test()
         self.run_test()
-        #self.post_test()
+        if self.remove_osmts_tmp_dir:
+            self.post_test()
         print("fio测试结束")

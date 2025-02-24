@@ -5,13 +5,12 @@ from openpyxl.workbook import Workbook
 
 
 
-
 class Fio:
     def __init__(self, **kwargs):
         self.path = Path('/root/osmts_tmp/fio')
         self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
-        # 如果iso文件已经存在则不重复下载
+        # 如果iso文件已经存在则不重复下载(用哈希值校验文件)
         if Path.exists(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso'):
             iso_hash = hashlib.sha256()
             with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso','rb') as file:
@@ -131,6 +130,22 @@ class Fio:
                 ws.merge_cells(f"a{baseline+15}:a{baseline+31}")
                 # |  1.00th=[ 1205],  5.00th=[ 1696], 10.00th=[ 1811], 20.00th=[ 1909],
                 ws.cell(baseline + 15, 2, '1.00th')
+                ws.cell(baseline + 16, 2, '5.00th')
+                ws.cell(baseline + 17, 2, '10.00th')
+                ws.cell(baseline + 18, 2, '20.00th')
+                ws.cell(baseline + 19, 2, '30.00th')
+                ws.cell(baseline + 20, 2, '40.00th')
+                ws.cell(baseline + 21, 2, '50.00th')
+                ws.cell(baseline + 22, 2, '60.00th')
+                ws.cell(baseline + 23, 2, '70.00th')
+                ws.cell(baseline + 24, 2, '80.00th')
+                ws.cell(baseline + 25, 2, '90.00th')
+                ws.cell(baseline + 26, 2, '95.00th')
+                ws.cell(baseline + 27, 2, '99.00th')
+                ws.cell(baseline + 28, 2, '99.50th')
+                ws.cell(baseline + 29, 2, '99.90th')
+                ws.cell(baseline + 30, 2, '99.95th')
+                ws.cell(baseline + 31, 2, '99.99th')
                 match = re.search(r'\|  1\.00th=\[ (\d+)\],  5\.00th=\[ (\d+)\], 10\.00th=\[ (\d+)\], 20\.00th=\[ (\d+)\],',result)
                 if match:
                     ws.cell(baseline + 15, 3, match.group(1))

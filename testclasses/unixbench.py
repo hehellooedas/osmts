@@ -50,6 +50,7 @@ class Unixbench:
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True, exist_ok=True)
 
+
     def result2summary(self):
         wb = Workbook()
         ws = wb.active

@@ -13,6 +13,7 @@ class Stream:
         self.compiler:str = kwargs.get('compiler')
         self.test_result = ''
 
+
     def pre_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
@@ -43,6 +44,7 @@ class Stream:
     def post_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
+
 
     def result2summary(self):
         wb = Workbook()

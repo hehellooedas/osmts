@@ -50,6 +50,7 @@ class Nmap:
         elif self.saved_method == "csv":
             excel2csv(ws,self.directory)
 
+
     def run(self):
         print("开始进行nmap测试")
         self.pre_test()

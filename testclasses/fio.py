@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys,subprocess,shutil,time,requests,re
+import sys,subprocess,shutil,hashlib,requests,re
 from multiprocessing import Process
 from openpyxl.workbook import Workbook
 
@@ -11,6 +11,14 @@ class Fio:
         self.path = Path('/root/osmts_tmp/fio')
         self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
+        # 如果iso文件已经存在则不重复下载
+        if Path.exists(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso'):
+            iso_hash = hashlib.sha256()
+            with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso','rb') as file:
+                while chunk := file.read(8192):
+                    iso_hash.update(chunk)
+            if iso_hash.hexdigest() == '74e9ac072b6b72744f21fec030fbe67ea331047ae44b26277f9d5ef41ab6776d':
+                return
         self.download_iso_process:Process = Process(target=self.download_iso_file,daemon=True)
         self.download_iso_process.start()
 
@@ -69,7 +77,7 @@ class Fio:
                 # read: IOPS=47.1k, BW=184MiB/s (193MB/s)(5524MiB/30002msec)
                 match = re.search(r'read: IOPS=([\d\.]+)k, BW=(\d+)MiB/s.',result)
                 ws.cell(baseline + 1, 3, match.group(1)) # 47.1
-                ws.cell(baseline + 2, 2, match.group(2)) # 184
+                ws.cell(baseline + 2, 3, match.group(2)) # 184
 
 
                 # slat (usec): min=24, max=4289, avg=44.17, stdev=11.76
@@ -124,19 +132,19 @@ class Fio:
                 ws.cell(baseline + 17, 3, match.group(3))
                 ws.cell(baseline + 18, 3, match.group(4))
                 # | 30.00th=[ 1958], 40.00th=[ 2008], 50.00th=[ 2057], 60.00th=[ 2114],
-                match = re.search(r'\|  30\.00th=\[ (\d+)\],  40\.00th=\[ (\d+)\], 50\.00th=\[ (\d+)\], 60\.00th=\[ (\d+)\],',result)
+                match = re.search(r'\| 30\.00th=\[ (\d+)\], 40\.00th=\[ (\d+)\], 50\.00th=\[ (\d+)\], 60\.00th=\[ (\d+)\],',result)
                 ws.cell(baseline + 19, 3, match.group(1))
                 ws.cell(baseline + 20, 3, match.group(2))
                 ws.cell(baseline + 21, 3, match.group(3))
                 ws.cell(baseline + 22, 3, match.group(4))
                 # | 70.00th=[ 2180], 80.00th=[ 2245], 90.00th=[ 2409], 95.00th=[ 2507],
-                match = re.search(r'\|  70\.00th=\[ (\d+)\],  80\.00th=\[ (\d+)\], 90\.00th=\[ (\d+)\], 95\.00th=\[ (\d+)\],',result)
+                match = re.search(r'\| 70\.00th=\[ (\d+)\], 80\.00th=\[ (\d+)\], 90\.00th=\[ (\d+)\], 95\.00th=\[ (\d+)\],',result)
                 ws.cell(baseline + 23, 3, match.group(1))
                 ws.cell(baseline + 24, 3, match.group(2))
                 ws.cell(baseline + 25, 3, match.group(3))
                 ws.cell(baseline + 26, 3, match.group(4))
                 # | 99.00th=[ 2737], 99.50th=[ 2835], 99.90th=[ 2999], 99.95th=[ 3064],
-                match = re.search(r'\|  99\.00th=\[ (\d+)\],  99\.50th=\[ (\d+)\], 99\.90th=\[ (\d+)\], 99\.95th=\[ (\d+)\],',result)
+                match = re.search(r'\| 99\.00th=\[ (\d+)\], 99\.50th=\[ (\d+)\], 99\.90th=\[ (\d+)\], 99\.95th=\[ (\d+)\],',result)
                 ws.cell(baseline + 27, 3, match.group(1))
                 ws.cell(baseline + 28, 3, match.group(2))
                 ws.cell(baseline + 29, 3, match.group(3))
@@ -204,7 +212,7 @@ class Fio:
                 ws.cell(baseline + 52, 2, '16')
                 ws.cell(baseline + 53, 2, '32')
                 ws.cell(baseline + 54, 2, '>=64')
-                match = re.search(r'IO depths    : 1=([\d\.]+), 2=([\d\.]+)%, 4=([\d\.]+)%, 8=([\d\.]+)%, 16=([\d\.]+)%, 32=([\d\.]+)%, >=64=([\d\.]+)%',result)
+                match = re.search(r'IO depths    : 1=([\d\.]+)%, 2=([\d\.]+)%, 4=([\d\.]+)%, 8=([\d\.]+)%, 16=([\d\.]+)%, 32=([\d\.]+)%, >=64=([\d\.]+)%',result)
                 ws.cell(baseline + 48, 3, match.group(1) + '%')
                 ws.cell(baseline + 49, 3, match.group(2) + '%')
                 ws.cell(baseline + 50, 3, match.group(3) + '%')
@@ -308,7 +316,7 @@ class Fio:
 
 
         if self.saved_method == "excel":
-            wb.save(self.directory / 'nmap.xlsx')
+            wb.save(self.directory / 'fio.xlsx')
 
 
 

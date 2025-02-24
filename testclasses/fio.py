@@ -18,6 +18,7 @@ class Fio:
                 while chunk := file.read(8192):
                     iso_hash.update(chunk)
             if iso_hash.hexdigest() == '74e9ac072b6b72744f21fec030fbe67ea331047ae44b26277f9d5ef41ab6776d':
+                self.download_iso_process = None
                 return
         self.download_iso_process:Process = Process(target=self.download_iso_file,daemon=True)
         self.download_iso_process.start()
@@ -52,8 +53,8 @@ class Fio:
         ws = wb.active
         ws.title = "fio"
         baseline = 1
-
-        self.download_iso_process.join()
+        if self.download_iso_process is not None:
+            self.download_iso_process.join()
         filename = "/root/osmts_tmp/fio/openEuler-24.03-LLVM-riscv64-dvd.iso"
         numjobs = 10
         iodepth = 10

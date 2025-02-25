@@ -47,55 +47,55 @@ class Lmbench:
         )
 
         # 同时运行lmbench的份数
-        make.expect("MULTIPLE COPIES [default 1]:",timeout=1800)
+        make.expect_exact("MULTIPLE COPIES [default 1]:",timeout=180)
         make.sendline("1")
 
         # 允许作业调度
-        make.expect("Job placement selection [default 1]:",timeout=1800)
+        make.expect_exact("Job placement selection [default 1]:",timeout=180)
         make.sendline("1")
 
         # 设置测试内存大小
-        make.expect("MB [default",timeout=1800)
+        make.expect_exact("MB [default",timeout=180)
         make.sendline("4096")
 
         # 选择要运行的测试集
-        make.expect("SUBSET (ALL|HARWARE|OS|DEVELOPMENT) [default all]:",timeout=1800)
+        make.expect_exact("SUBSET (ALL|HARWARE|OS|DEVELOPMENT) [default all]:",timeout=1800)
         make.sendline("ALL")
 
         # 不跳过内存latency测试
-        make.expect('FASTMEM [default no]:',timeout=1800)
+        make.expect_exact('FASTMEM [default no]:',timeout=1800)
         make.sendline("no")
 
         # 不跳过文件系统latency测试
-        make.expect('SLOWFS [default no]:',timeout=1800)
+        make.expect_exact('SLOWFS [default no]:',timeout=1800)
         make.sendline("no")
 
         # 不测试硬盘
-        make.expect('DISKS [default none]:',timeout=1800)
+        make.expect_exact('DISKS [default none]:',timeout=1800)
         make.sendline()
 
         # 不测试网络
-        make.expect("REMOTE [default none]:",timeout=1800)
+        make.expect_exact("REMOTE [default none]:",timeout=1800)
         make.sendline("")
 
         # 测试CPU与设定频率
-        make.expect('Processor mhz',timeout=1800)
+        make.expect_exact('Processor mhz',timeout=1800)
         make.sendline()
 
         # 设定临时目录存放测试文件
-        make.expect('FSDIR [default /usr/tmp]:',timeout=1800)
+        make.expect_exact('FSDIR [default /usr/tmp]:',timeout=1800)
         make.sendline('/usr/tmp')
 
         # 设置测试输出信息文件存放目录
-        make.expect('Status output file [default /dev/tty]:',timeout=1800)
+        make.expect_exact('Status output file [default /dev/tty]:',timeout=1800)
         make.sendline('/dev/tty')
 
         # 设置不发邮件
-        make.expect('Mail results [default yes]:',timeout=1800)
+        make.expect_exact('Mail results [default yes]:',timeout=1800)
         make.sendline('no')
 
         # 等待lmbench测试运行结束
-        make.expect(pexpect.EOF)
+        make.expect_exact(pexpect.EOF,timeout=18000)
         print(make.before)
 
 

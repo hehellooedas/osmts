@@ -37,8 +37,8 @@ def netperf_judge():
         sys.exit(1)
     if netperf_server_ip in ('127.0.0.1', 'localhost'):
         if 'netserver' not in [process.name() for process in tuple(psutil.process_iter())]:
-            turn_on_netserver = input("未检测到netserver,是否在本机启动netserver?(Y/n) [netperf测试结束后会自动关闭netserver] ")
-            if turn_on_netserver == 'Y' or turn_on_netserver == 'y':
+            choice = input("未检测到netserver,是否在本机启动netserver?(Y/n) [netperf测试结束后会自动关闭netserver] ")
+            if choice == 'Y' or choice == 'y':
                 install_netperf = subprocess.run(
                     "dnf install netperf -y",
                     shell=True,
@@ -104,10 +104,18 @@ if __name__ == '__main__':
     saved_directory = config.get("saved_directory",None)
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
-    remove_osmts_tmp_dir = config.get("remove_osmts_tmp_dir", None)
-    remove_osmts_tmp_dir = bool(remove_osmts_tmp_dir)
+    remove_osmts_tmp_dir = bool(config.get("remove_osmts_tmp_dir", None))
+    merge = bool(config.get("merge", None))
+
 
     if saved_directory is None:
+        saved_directory = '/root/osmts_result/'
+    elif saved_directory in ('/','/etc','/dev','proc','/boot'):
+        print(f"{saved_directory}为系统关键目录,不建议把结果存放在该路径")
+        choice = input("是否使用osmts推荐的路径?(Y/n)")
+        if choice == 'N' or choice == 'n':
+            print('本次测试退出.')
+            sys.exit(1)
         saved_directory = '/root/osmts_result/'
     saved_directory = Path(saved_directory)
     saved_directory.mkdir(parents=True,exist_ok=True)
@@ -156,7 +164,7 @@ if __name__ == '__main__':
     # 所有检查都通过,则正式开始测试
     for task in tasks:
         # 构造测试类
-        osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir).run()
+        osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir,merge=merge).run()
 
 
     if fio_flag:

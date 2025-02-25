@@ -1,5 +1,5 @@
 from pathlib import Path
-import re,sys,subprocess,shutil,pexpect
+import sys,subprocess,shutil,pexpect
 from openpyxl import Workbook
 
 
@@ -44,7 +44,7 @@ class Lmbench:
             command = '/bin/bash',
             args = ['-c',f"cd /root/osmts_tmp/lmbench && make CC={self.compiler} results"],
             encoding = 'utf-8',
-            logfile = open(self.directory / 'osmts_lmbench.log', 'wb')
+            logfile = open(self.directory / 'osmts_lmbench.log', 'w')
         )
 
         # 同时运行lmbench的份数
@@ -141,7 +141,7 @@ class Lmbench:
         ws.cell(4,3,content[4])
         ws.cell(6,3,content[5])
         ws.cell(7,3,content[6])
-        ws.cell(8,3,content[7])
+        ws.cell(8,3,content[7].rstrip('\n'))
 
         ws.cell(9,1,'Processor, Processes - times in microseconds - smaller is better')
         ws.merge_cells('A9:A21')
@@ -159,21 +159,19 @@ class Lmbench:
         ws.cell(20, 2, 'exec proc')
         ws.cell(21, 2, 'sh proc')
         content = [line for line in lines[19].split(' ') if line != '']
-        ws.cell(9,2,content[0])
-        ws.cell(10, 2, content[1] + content[2])
-        ws.cell(11,2,content[3])
-        ws.cell(11, 2, content[4])
-        ws.cell(12, 2, content[5])
-        ws.cell(13, 2, content[6])
-        ws.cell(14, 2, content[7])
-        ws.cell(15, 2, content[8])
-        ws.cell(15, 2, content[9])
-        ws.cell(16, 2, content[10])
-        ws.cell(17, 2, content[11])
-        ws.cell(18, 2, content[12])
-        ws.cell(19, 2, content[13])
-        ws.cell(20, 2, content[14])
-        ws.cell(21, 2, content[15])
+        ws.cell(9,3,content[0])
+        ws.cell(10, 3, content[1] + content[2])
+        ws.cell(11,3,content[3])
+        ws.cell(12, 3, content[4])
+        ws.cell(13, 3, content[5])
+        ws.cell(14, 3, content[6])
+        ws.cell(15, 3, content[7])
+        ws.cell(16, 3, content[8])
+        ws.cell(17, 3, content[9])
+        ws.cell(18, 3, content[10])
+        ws.cell(19, 3, content[11])
+        ws.cell(20, 3, content[12])
+        ws.cell(21, 3, content[13].rstrip('\n'))
 
         ws.cell(22,1,'Basic integer operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A22:A28")
@@ -191,7 +189,7 @@ class Lmbench:
         ws.cell(25, 3, content[4])
         ws.cell(26, 3, content[5])
         ws.cell(27, 3, content[6])
-        ws.cell(28, 3, content[7])
+        ws.cell(28, 3, content[7].rstrip('\n'))
 
         ws.cell(29,1,'Basic uint64 operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A29:A35")
@@ -209,7 +207,7 @@ class Lmbench:
         ws.cell(32, 3, '')
         ws.cell(33, 3, content[4])
         ws.cell(34, 3, content[5])
-        ws.cell(35, 3, content[6])
+        ws.cell(35, 3, content[6].rstrip('\n'))
 
         ws.cell(36,1,'Basic float operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A36:A41")
@@ -225,7 +223,7 @@ class Lmbench:
         ws.cell(38, 3, content[3])
         ws.cell(39, 3, content[4])
         ws.cell(40, 3, content[5])
-        ws.cell(41, 3, content[6])
+        ws.cell(41, 3, content[6].rstrip('\n'))
 
         ws.cell(42, 1, 'Basic double operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A42:A45")
@@ -241,7 +239,7 @@ class Lmbench:
         ws.cell(44, 3, content[3])
         ws.cell(45, 3, content[4])
         ws.cell(46, 3, content[5])
-        ws.cell(47, 3, content[6])
+        ws.cell(47, 3, content[6].rstrip('\n'))
 
         ws.cell(48, 1,'Context switching - times in microseconds - smaller is better')
         ws.merge_cells("A48:A56")
@@ -263,7 +261,7 @@ class Lmbench:
         ws.cell(53,3,content[6])
         ws.cell(54,3,content[7])
         ws.cell(55,3,content[8])
-        ws.cell(56,3,content[9])
+        ws.cell(56,3,content[9].rstrip('\n'))
 
         ws.cell(57,1,'*Local* Communication latencies in microseconds - smaller is better')
         ws.merge_cells("A57:A66")
@@ -287,7 +285,7 @@ class Lmbench:
         ws.cell(63,3,content[7])
         ws.cell(64,3,content[8])
         ws.cell(65,3,content[9])
-        ws.cell(66,3,content[10])
+        ws.cell(66,3,content[10].rstrip('\n'))
 
         # 网络测试前面选择不测,故此少了一组
 
@@ -313,7 +311,7 @@ class Lmbench:
         ws.cell(73, 3, '')
         ws.cell(74, 3, content[7])
         ws.cell(75, 3, '')
-        ws.cell(76, 3, content[8])
+        ws.cell(76, 3, content[8].rstrip('\n'))
 
         ws.cell(77, 1, '*Local* Communication bandwidths in MB/s - bigger is better')
         ws.merge_cells("A77:A87")
@@ -332,15 +330,14 @@ class Lmbench:
         ws.cell(77,3,content[0])
         ws.cell(78,3,content[1] + content[2])
         ws.cell(79,3,content[3])
-        ws.cell(79,3,content[4])
-        ws.cell(80,3,content[5])
-        ws.cell(81,3,content[6])
-        ws.cell(82,3,content[7])
-        ws.cell(83,3,content[8])
-        ws.cell(84,3,content[9])
-        ws.cell(85,3,content[10])
-        ws.cell(86,3,content[11])
-        ws.cell(87,3,content[12])
+        ws.cell(80,3,content[4])
+        ws.cell(81,3,content[5])
+        ws.cell(82,3,content[6])
+        ws.cell(83,3,content[7])
+        ws.cell(84,3,content[8])
+        ws.cell(85,3,content[9])
+        ws.cell(86,3,content[10])
+        ws.cell(87,3,content[11].rstrip('\n'))
 
         ws.cell(88,1,'Memory latencies in nanoseconds - smaller is better\n(WARNING - may not be correct, check graphs)')
         ws.merge_cells("A88:A95")
@@ -359,7 +356,7 @@ class Lmbench:
         ws.cell(91,3,content[4])
         ws.cell(92,3,content[5])
         ws.cell(93,3,content[6])
-        ws.cell(94,3,content[7])
+        ws.cell(94,3,content[7].rstrip('\n'))
         ws.cell(95,3,'')
 
 

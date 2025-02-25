@@ -7,7 +7,6 @@ class Ltp_stress(Process):
     def __init__(self, **kwargs):
         super().__init__()
         self.path = Path('/root/osmts_tmp/ltp_stress')
-        self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
 

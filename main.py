@@ -102,7 +102,6 @@ if __name__ == '__main__':
         sys.exit(1)
     run_tests = config.get("run_tests",None)
     saved_directory = config.get("saved_directory",None)
-    saved_method = config.get("saved_method",None)
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
     remove_osmts_tmp_dir = config.get("remove_osmts_tmp_dir", None)
@@ -113,9 +112,6 @@ if __name__ == '__main__':
     saved_directory = Path(saved_directory)
     saved_directory.mkdir(parents=True,exist_ok=True)
 
-    if saved_method not in ("excel","csv"):
-        print("保存方式只能为excel或csv,请检查saved_method字段")
-        sys.exit(1)
     if compiler not in ("gcc","clang"):
         print("编译器必为gcc或者clang之一,否则默认为gcc,请检查compiler字段")
         continue_test = input("是否继续测试?(y/N)")
@@ -141,7 +137,7 @@ if __name__ == '__main__':
 
     if fio_flag:
         # 提前下载iso文件
-        fio = osmts_tests['fio'](saved_directory=saved_directory, saved_method=saved_method)
+        fio = osmts_tests['fio'](saved_directory=saved_directory)
         tasks.remove('fio')
 
     # ltp stress独立测试
@@ -150,7 +146,6 @@ if __name__ == '__main__':
         ltp_stress_flag = True
         ltp_stress:multiprocessing.Process = osmts_tests['ltp_stress'](
             saved_directory=saved_directory,
-            saved_method=saved_method,
             compiler=compiler,
             netperf_server_ip=netperf_server_ip
         )
@@ -161,7 +156,7 @@ if __name__ == '__main__':
     # 所有检查都通过,则正式开始测试
     for task in tasks:
         # 构造测试类
-        osmts_tests[task](saved_directory=saved_directory,saved_method=saved_method,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir).run()
+        osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir).run()
 
 
     if fio_flag:

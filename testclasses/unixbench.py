@@ -8,7 +8,6 @@ from testclasses.excel2csv import excel2csv
 class Unixbench:
     def __init__(self,**kwargs ):
         self.path = Path('/root/osmts_tmp/unixbench')
-        self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
@@ -98,10 +97,7 @@ class Unixbench:
             ws[f'c{line + 13}'] = match_result[1]
             line += 1
 
-        if self.saved_method == "excel":
-            wb.save(self.directory / 'unixbench.xlsx')
-        elif self.saved_method == "csv":
-            excel2csv(ws, self.directory)
+        wb.save(self.directory / 'unixbench.xlsx')
 
 
     def run(self):

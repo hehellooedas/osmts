@@ -1,13 +1,12 @@
 from pathlib import Path
 import re,sys,subprocess,shutil,pexpect
 from openpyxl import Workbook
-from testclasses.excel2csv import excel2csv
+
 
 
 class Lmbench:
     def __init__(self, **kwargs):
         self.path = Path('/root/osmts_tmp/lmbench')
-        self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
@@ -43,7 +42,10 @@ class Lmbench:
     def run_test(self):
         # make后直接就运行了
         make = pexpect.spawn(
-            '/bin/bash',['-c',f"cd /root/osmts_tmp/lmbench && make CC={self.compiler} results"]
+            command = '/bin/bash',
+            args = ['-c',f"cd /root/osmts_tmp/lmbench && make CC={self.compiler} results"],
+            encoding = 'utf-8',
+            logfile = open(self.directory / 'osmts_lmbench.log', 'wb')
         )
 
         # 同时运行lmbench的份数

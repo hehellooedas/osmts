@@ -8,7 +8,6 @@ from openpyxl.workbook import Workbook
 class Fio:
     def __init__(self, **kwargs):
         self.path = Path('/root/osmts_tmp/fio')
-        self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         # 如果iso文件已经存在则不重复下载(用哈希值校验文件)
@@ -352,8 +351,7 @@ class Fio:
                 baseline += 85
 
 
-        if self.saved_method == "excel":
-            wb.save(self.directory / 'fio.xlsx')
+        wb.save(self.directory / 'fio.xlsx')
 
 
     def post_test(self):

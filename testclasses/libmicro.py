@@ -7,7 +7,6 @@ from testclasses.excel2csv import excel2csv
 class Libmicro:
     def __init__(self, **kwargs):
         self.path = Path('/root/osmts_tmp/libmicro')
-        self.saved_method: str = kwargs.get('saved_method')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
         self.test_result = ''

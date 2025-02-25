@@ -6,7 +6,6 @@ from testclasses.excel2csv import excel2csv
 class Iozone:
     def __init__(self,**kwargs ):
         self.path = Path('/root/osmts_tmp/iozone')
-        self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')

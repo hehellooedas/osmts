@@ -1,14 +1,12 @@
 from pathlib import Path
 import re,sys,subprocess,shutil
 from openpyxl import Workbook
-from testclasses.excel2csv import excel2csv
 
 
 
 class Stream:
     def __init__(self,**kwargs ):
         self.path = Path('/root/osmts_tmp/stream')
-        self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
@@ -70,10 +68,8 @@ class Stream:
             for j in range(2, 6):
                 ws.cell(i, j, Function.group(j - 1))
         # 保存
-        if self.saved_method == "excel":
-            wb.save(self.directory / 'stream.xlsx')
-        elif self.saved_method == "csv":
-            excel2csv(ws, self.directory)
+        wb.save(self.directory / 'stream.xlsx')
+
 
 
     def run(self):

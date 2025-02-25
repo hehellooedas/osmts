@@ -2,7 +2,6 @@ import subprocess,re
 import sys
 from pathlib import Path
 from openpyxl import Workbook
-from testclasses.excel2csv import excel2csv
 
 
 """
@@ -11,7 +10,6 @@ nmap测试:具体请查看文档https://gitee.com/jean9823/openEuler_riscv_test/
 
 class Nmap:
     def __init__(self, **kwargs):
-        self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.test_result = ''
 
@@ -45,10 +43,9 @@ class Nmap:
             ws.cell(index,3,service)
             index += 1
 
-        if self.saved_method == "excel":
-            wb.save(self.directory / 'nmap.xlsx')
-        elif self.saved_method == "csv":
-            excel2csv(ws,self.directory)
+
+        wb.save(self.directory / 'nmap.xlsx')
+
 
 
     def run(self):

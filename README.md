@@ -63,7 +63,7 @@ chmod +x main.py
 ```
 run_tests = ['netperf','unixbench','nmap','stream']
 saved_directory = "/root/osmts_result"
-saved_method = "excel"
+merge = 0
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
 remove_osmts_tmp_dir = 1
@@ -71,7 +71,7 @@ remove_osmts_tmp_dir = 1
 
 1. run_tests是一个列表，里面是需要测试的项目;
 2. saved_directory填写测试结果存放的目录，main.py运行结束后会在这个目录产生excel文件，默认为'/root/osmts_result';
-3. saved_method是保存方式，应当填写excel或者csv，默认是excel;
+3. merge是最终生成的excel是否要合并，如果为1则产物只有一个，如果为0则每个测试各生成一个;
 4. compiler是待测试的编译环境，应当填写gcc或者clang ,默认是gcc;
 5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000。
 6. 如果run_tests里存在“performance-test”，则osmts会自动把[性能测试文档](https://gitee.com/jean9823/openEuler_riscv_test/blob/master/%E5%9C%A8openEuler%20RISC-V%2024.03%20LTS%20%E4%B8%8A%E6%89%8B%E5%8A%A8%E6%89%A7%E8%A1%8C%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95.md)这里面的项目添加进去;
@@ -109,9 +109,14 @@ remove_osmts_tmp_dir = 1
 
 ---
 ## 未来计划
-1. 开发更多测试脚本进行汇总
+1. 开发更多测试脚本进行汇总;
+2. 对已有的测试结果进行审查看是否有数据遗漏.
 
 
 ---
 ## 展示图片
+netperf测试类的输出结果如图所示:
 ![netperf总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/netperf_excel.png?raw=true)
+
+fio测试类的输出结果如图所示:
+![fio总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/fio_excel.png?raw=true)

@@ -1,12 +1,11 @@
 from pathlib import Path
 import re,sys,subprocess,psutil
 from openpyxl import Workbook
-from testclasses.excel2csv import excel2csv
+
 
 
 class Netperf(object):
     def __init__(self,**kwargs):
-        self.saved_method:str = kwargs.get('saved_method')
         self.directory:Path = kwargs.get('saved_directory')
         self.server_ip:str = kwargs.get('netperf_server_ip')
         self.netserver_created_by_osmts:bool = kwargs.get('netserver_created_by_osmts')
@@ -135,10 +134,8 @@ class Netperf(object):
         ws.cell(25, 2, result2[0])
         ws.cell(25, 3, result2[1])
 
-        if self.saved_method == "excel":
-            wb.save(self.directory / 'netperf.xlsx')
-        elif self.saved_method == "csv":
-            excel2csv(ws, self.directory)
+
+        wb.save(self.directory / 'netperf.xlsx')
 
 
     def post_test(self):

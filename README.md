@@ -91,12 +91,12 @@ remove_osmts_tmp_dir = 1
 | nmap       | 完成   |
 | lmbench    | 完成   |
 | stream     | 完成   |
-| ltp stress | 待总结  |
+| ltp stress | 完成  |
 | iozone     | 完成   |
-| libmicro   | 待总结  |
+| libmicro   | 完成  |
 | fio        | 完成   |
 | netperf    | 完成   |
-| trinity    | 未完成  |
+| trinity    | 完成  |
 | ltp cve    | 未完成  |
 | ltp posix  | 未完成  |
 | ltp        | 未完成  |

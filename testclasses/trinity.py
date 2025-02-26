@@ -7,9 +7,7 @@ class Trinity:
     def __init__(self,**kwargs ):
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
-        self.path = Path(f'/home/test/trinity_{self.compiler}')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
-        self.test_user_created_by_osmts:bool = False
         self.test_result:str = ''
 
 
@@ -25,25 +23,36 @@ class Trinity:
             sys.exit(1)
 
         user_exist = subprocess.run(
-            "id test",
+            "id trinity_test",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL
         )
+        # trinity_test用户若不存在则创建一个
         if user_exist.returncode != 0:
-            trinity = subprocess.run(
-                f"useradd test",
+            useradd = subprocess.run(
+                f"useradd trinity_test",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE
             )
-            if trinity.returncode != 0:
-                print(f"trinity测试出错:无法创建临时测试用户test.报错信息:{trinity.stderr.decode('utf-8')}")
+            if useradd.returncode != 0:
+                print(f"trinity测试出错:无法创建临时测试用户trinity_test.报错信息:{useradd.stderr.decode('utf-8')}")
                 sys.exit(1)
-            self.test_user_created_by_osmts = True
+        else:
+            del_add = subprocess.run(
+                f"userdel trinity_test -r && useradd trinity_test",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+            if del_add.returncode != 0:
+                print(f"trinity测试出错:无法创建临时测试用户trinity_test.报错信息:{del_add.stderr.decode('utf-8')}")
+                sys.exit(1)
+
 
         git_clone = subprocess.run(
-            f"cd /home/test/ && git clone https://gitee.com/April_Zhao/trinity_{self.compiler}.git",
+            f"cd /home/trinity_test/ && git clone https://gitee.com/April_Zhao/trinity_{self.compiler}.git",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE
@@ -53,7 +62,7 @@ class Trinity:
             sys.exit(1)
 
         config_make = subprocess.run(
-            f"cd /home/test/trinity_{self.compiler} && ./configure && make && make install",
+            f"cd /home/trinity_test/trinity_{self.compiler} && ./configure && make && make install",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE
@@ -63,7 +72,7 @@ class Trinity:
             sys.exit(1)
 
         set_permit = subprocess.run(
-            f"chmod -R 777 /home/test/trinity_{self.compiler}",
+            f"chmod -R 777 /home/trinity_test/trinity_{self.compiler}",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE
@@ -75,7 +84,7 @@ class Trinity:
 
     def run_test(self):
         trinity = subprocess.run(
-            f"""su test -c 'cd /home/test/trinity_{self.compiler} && ./trinity -N 10000'""",
+            f"""su trinity_test -c 'cd /home/trinity_test/trinity_{self.compiler} && ./trinity -N 10000'""",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -89,25 +98,19 @@ class Trinity:
 
 
     def post_test(self):
-        if self.test_user_created_by_osmts:
-            userdel = subprocess.run(
-                "userdel test -r", # -r选项会删除用户的家目录
-                    shell=True,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE
-            )
-            if userdel.returncode != 0:
-                print(f"删除trinity的测试用户test失败,请手动删除该用户[userdel test -r].报错信息:{userdel.stderr.decode('utf-8')}")
-
-
-    def result2summary(self):
-        pass
+        userdel = subprocess.run(
+            "userdel trinity_test -r", # -r选项会删除用户的家目录
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+        )
+        if userdel.returncode != 0:
+            print(f"删除trinity的测试用户test失败,请手动删除该用户[userdel test -r].报错信息:{userdel.stderr.decode('utf-8')}")
 
 
     def run(self):
         print("开始进行trinity测试")
         self.pre_test()
         self.run_test()
-        self.result2summary()
         self.post_test()
         print("trinity测试结束")

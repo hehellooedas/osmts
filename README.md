@@ -89,7 +89,7 @@ remove_osmts_tmp_dir = 1
 | ---------- |------|
 | unixbench  | 完成   |
 | nmap       | 完成   |
-| lmbench    | 待总结  |
+| lmbench    | 完成   |
 | stream     | 完成   |
 | ltp stress | 待总结  |
 | iozone     | 完成   |
@@ -120,3 +120,6 @@ netperf测试类的输出结果如图所示:
 
 fio测试类的输出结果如图所示:
 ![fio总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/fio_excel.png?raw=true)
+
+lmbench测试类的输出结果如图所示:
+![netperf总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/lmbench_excel.png?raw=true)

@@ -15,8 +15,6 @@ class Libmicro:
     def pre_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
-        if not Path('/root/osmts_tmp/').exists():
-            Path('/root/osmts_tmp/').mkdir()
         # 获取源码
         git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/libmicro.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if git_clone.returncode != 0:
@@ -34,12 +32,17 @@ class Libmicro:
 
 
     def run_test(self):
-        bench = subprocess.run("cd /root/osmts_tmp/libmicro && ./bench",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        bench = subprocess.run(
+            "cd /root/osmts_tmp/libmicro && ./bench",
+                   shell=True,
+                   stdout=subprocess.PIPE,
+                   stderr=subprocess.PIPE
+        )
         if bench.returncode != 0:
             print(f"libmicro测试出错:bench运行失败.报错信息:{bench.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = bench.stdout.decode('utf-8')
-        with open(self.path / 'libmicro.log','w') as file:
+        with open(self.directory / 'libmicro.log','w') as file:
             file.write(self.test_result)
 
 
@@ -57,5 +60,6 @@ class Libmicro:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        self.post_test()
+        if self.remove_osmts_tmp_dir:
+            self.post_test()
         print("libmicro测试结束")

@@ -5,9 +5,9 @@ from openpyxl.workbook import Workbook
 
 class Trinity:
     def __init__(self,**kwargs ):
-        self.path = Path('/root/osmts_tmp/trinity')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
+        self.path = Path(f'/root/osmts_tmp/trinity_{self.compiler}')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result:str = ''
 
@@ -59,7 +59,7 @@ class Trinity:
 
     def run_test(self):
         trinity = subprocess.run(
-            """useradd test && su test -c 'cd /root/osmts_tmp/trinity_{self.compiler} && ./trinity -N 10000'""",
+            f"""useradd test && su test -c 'cd /root/osmts_tmp/trinity_{self.compiler} && ./trinity -N 10000'""",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -68,7 +68,7 @@ class Trinity:
             print(f"trinity测试出错:configure和make失败.报错信息:{trinity.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = trinity.stdout.decode('utf-8')
-        with open(self.path / 'trinity.log','w') as file:
+        with open(self.directory / 'trinity.log','w') as file:
             file.write(self.test_result)
 
 
@@ -90,9 +90,9 @@ class Trinity:
 
 
     def run(self):
-        print("开始进行libmicro测试")
+        print("开始进行trinity测试")
         self.pre_test()
         self.run_test()
         self.result2summary()
         self.post_test()
-        print("libmicro测试结束")
+        print("trinity测试结束")

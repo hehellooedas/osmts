@@ -7,15 +7,13 @@ class Trinity:
     def __init__(self,**kwargs ):
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
-        self.path = Path(f'/root/osmts_tmp/trinity_{self.compiler}')
+        self.path = Path(f'/home/test/trinity_{self.compiler}')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
+        self.test_user_created_by_osmts:bool = False
         self.test_result:str = ''
 
 
     def pre_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
-        self.path.mkdir()
         install_rpm = subprocess.run(
             f"dnf install {self.compiler} make -y",
             shell=True,
@@ -26,8 +24,26 @@ class Trinity:
             print(f"trinity测试出错:编译器安装失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
             sys.exit(1)
 
+        user_exist = subprocess.run(
+            "id test",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        if user_exist.returncode != 0:
+            trinity = subprocess.run(
+                f"useradd test",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+            if trinity.returncode != 0:
+                print(f"trinity测试出错:无法创建临时测试用户test.报错信息:{trinity.stderr.decode('utf-8')}")
+                sys.exit(1)
+            self.test_user_created_by_osmts = True
+
         git_clone = subprocess.run(
-            f"cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/trinity_{self.compiler}.git",
+            f"cd /home/test/ && git clone https://gitee.com/April_Zhao/trinity_{self.compiler}.git",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE
@@ -37,7 +53,7 @@ class Trinity:
             sys.exit(1)
 
         config_make = subprocess.run(
-            f"cd /root/osmts_tmp/trinity_{self.compiler} && ./configure && make && make install",
+            f"cd /home/test/trinity_{self.compiler} && ./configure && make && make install",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE
@@ -47,7 +63,7 @@ class Trinity:
             sys.exit(1)
 
         set_permit = subprocess.run(
-            f"chmod -R 777 /root/osmts_tmp/trinity_{self.compiler}",
+            f"chmod -R 777 /home/test/trinity_{self.compiler}",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE
@@ -59,7 +75,7 @@ class Trinity:
 
     def run_test(self):
         trinity = subprocess.run(
-            f"""useradd test && su test -c 'cd /root/osmts_tmp/trinity_{self.compiler} && ./trinity -N 10000'""",
+            f"""su test -c 'cd /home/test/trinity_{self.compiler} && ./trinity -N 10000'""",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -73,16 +89,15 @@ class Trinity:
 
 
     def post_test(self):
-        userdel = subprocess.run(
-            "userdel test",
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-        )
-        if userdel.returncode != 0:
-            print(f"删除trinity的测试用户test失败,请手动删除该用户[userdel test].报错信息:{userdel.stderr.decode('utf-8')}")
-        if self.remove_osmts_tmp_dir and self.path.exists():
-            shutil.rmtree(self.path)
+        if self.test_user_created_by_osmts:
+            userdel = subprocess.run(
+                "userdel test -r", # -r选项会删除用户的家目录
+                    shell=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+            )
+            if userdel.returncode != 0:
+                print(f"删除trinity的测试用户test失败,请手动删除该用户[userdel test -r].报错信息:{userdel.stderr.decode('utf-8')}")
 
 
     def result2summary(self):

@@ -1,6 +1,5 @@
 from pathlib import Path
 import sys,subprocess,shutil
-from testclasses.excel2csv import excel2csv
 
 
 class Iozone:

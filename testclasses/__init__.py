@@ -9,6 +9,7 @@ from testclasses.ltp import Ltp
 from testclasses.ltp_cve import Ltp_cve
 from testclasses.netperf import Netperf
 from testclasses.lmbench import Lmbench
+from testclasses.trinity import Trinity
 
 
 osmts_tests = {
@@ -41,5 +42,8 @@ osmts_tests = {
     ),
     "lmbench":(
         Lmbench
+    ),
+    "trinity":(
+        Trinity
     )
 }

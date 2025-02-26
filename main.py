@@ -116,6 +116,7 @@ if __name__ == '__main__':
         if choice == 'N' or choice == 'n':
             print('本次测试退出.')
             sys.exit(1)
+        print("已设定存放结果的目录为/root/osmts_result")
         saved_directory = '/root/osmts_result/'
     saved_directory = Path(saved_directory)
     saved_directory.mkdir(parents=True,exist_ok=True)

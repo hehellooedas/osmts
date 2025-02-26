@@ -1,6 +1,5 @@
 from pathlib import Path
 import sys,subprocess,shutil
-from testclasses.excel2csv import excel2csv
 
 
 
@@ -9,7 +8,9 @@ class Libmicro:
         self.path = Path('/root/osmts_tmp/libmicro')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
+        self.remove_osmts_tmp_dir: bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result = ''
+
 
     def pre_test(self):
         if self.path.exists():
@@ -38,7 +39,8 @@ class Libmicro:
             print(f"libmicro测试出错:bench运行失败.报错信息:{bench.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = bench.stdout.decode('utf-8')
-        print(self.test_result)
+        with open(self.path / 'libmicro.log','w') as file:
+            file.write(self.test_result)
 
 
     def post_test(self):

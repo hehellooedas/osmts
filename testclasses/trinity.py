@@ -1,6 +1,5 @@
 from pathlib import Path
-import sys,subprocess,shutil,hashlib,requests,re
-from multiprocessing import Process
+import sys,subprocess,shutil,re
 from openpyxl.workbook import Workbook
 
 
@@ -47,10 +46,20 @@ class Trinity:
             print(f"trinity测试出错:configure和make失败.报错信息:{config_make.stderr.decode('utf-8')}")
             sys.exit(1)
 
+        set_permit = subprocess.run(
+            "chmod -R 777 /root/osmts_tmp/trinity_{self.compiler}",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE
+        )
+        if set_permit.returncode != 0:
+            print(f"trinity测试出错:trinity_{self.compiler}目录的权限设置失败.报错信息:{set_permit.stderr.decode('utf-8')}")
+            sys.exit(1)
+
 
     def run_test(self):
         trinity = subprocess.run(
-            "cd /root/osmts_tmp/trinity_{self.compiler} && ./trinity -N 10000 | tee output.log",
+            """useradd test && su test -c 'cd /root/osmts_tmp/trinity_{self.compiler} && ./trinity -N 10000'""",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
@@ -64,7 +73,15 @@ class Trinity:
 
 
     def post_test(self):
-        if self.path.exists():
+        userdel = subprocess.run(
+            "userdel test",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+        )
+        if userdel.returncode != 0:
+            print(f"删除trinity的测试用户test失败,请手动删除该用户[userdel test].报错信息:{userdel.stderr.decode('utf-8')}")
+        if self.remove_osmts_tmp_dir and self.path.exists():
             shutil.rmtree(self.path)
 
 
@@ -77,6 +94,5 @@ class Trinity:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
+        self.post_test()
         print("libmicro测试结束")

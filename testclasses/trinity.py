@@ -47,7 +47,7 @@ class Trinity:
             sys.exit(1)
 
         set_permit = subprocess.run(
-            "chmod -R 777 /root/osmts_tmp/trinity_{self.compiler}",
+            f"chmod -R 777 /root/osmts_tmp/trinity_{self.compiler}",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE

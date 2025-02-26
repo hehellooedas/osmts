@@ -10,6 +10,7 @@ from testclasses.ltp_cve import Ltp_cve
 from testclasses.netperf import Netperf
 from testclasses.lmbench import Lmbench
 from testclasses.trinity import Trinity
+from testclasses.ltp_stress import Ltp_stress
 
 
 osmts_tests = {
@@ -45,5 +46,8 @@ osmts_tests = {
     ),
     "trinity":(
         Trinity
+    ),
+    "ltp_stress":(
+        Ltp_stress
     )
 }

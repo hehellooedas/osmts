@@ -18,7 +18,7 @@ class Ltp_stress(Process):
             shutil.rmtree(self.path)
         # 安装rpm包
         install_rpm = subprocess.run(
-            "yum install -y git make automake gcc clang pkgconf autoconf bison flex m4 kernel-headers glibc-headers clang findutils libtirpc libtirpc-devel pkg-config sysstat",
+            "yum install -y --skip-broken --nobest git make automake gcc clang pkgconf autoconf bison flex m4 kernel-headers glibc-headers clang findutils libtirpc libtirpc-devel pkg-config sysstat",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,

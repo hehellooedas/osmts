@@ -1,4 +1,4 @@
-run_tests = ['fio','unixbench']
+run_tests = ['performance-test']
 saved_directory = "/root/osmts_result"
 merge = 0
 compiler = "gcc"

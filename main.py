@@ -17,7 +17,7 @@ netserver_created_by_osmts = False
 
 def fio_judge():
     # 避免下载大文件导致系统崩溃
-    if psutil.disk_usage('/').free < 20 * 1024 * 1024 * 1024:
+    if psutil.disk_usage('/').free < 10 * 1024 * 1024 * 1024:
         print("当前机器的/分区剩余容量过低,无法进行fio测试,请参考 https://github.com/openeuler-riscv/oerv-team/blob/main/cases/2024.10.19-OERV-UEFI%E5%90%AF%E5%8A%A8%E7%A3%81%E7%9B%98%E5%88%B6%E4%BD%9C-%E8%B5%B5%E9%A3%9E%E6%89%AC.md#%E9%99%84%E5%BD%95%E4%BA%8C 扩展/分区容量.")
         sys.exit(1)
     global fio_flag

@@ -29,7 +29,7 @@ class Fio:
             shutil.rmtree(self.path)
         self.path.mkdir()
         with requests.get(
-                'https://mirrors.ustc.edu.cn/openeuler/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso',
+                'https://fast-mirror.isrc.ac.cn/openeuler/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso',
                 stream=True
         ) as response,open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
             response.raise_for_status()

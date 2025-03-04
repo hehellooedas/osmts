@@ -1,4 +1,3 @@
-from testclasses.excel2csv import excel2csv
 from testclasses.libmicro import Libmicro
 from testclasses.unixbench import Unixbench
 from testclasses.stream import Stream

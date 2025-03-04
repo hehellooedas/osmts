@@ -111,7 +111,6 @@ class Lmbench:
             sys.exit(1)
 
 
-
     def post_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
@@ -141,7 +140,10 @@ class Lmbench:
         ws.cell(4,3,content[4])
         ws.cell(6,3,content[5])
         ws.cell(7,3,content[6])
-        ws.cell(8,3,content[7].rstrip('\n'))
+        try:
+            ws.cell(8,3,content[7].rstrip('\n'))
+        except IndexError:
+            ws.cell(8,3,'Empty')
 
         ws.cell(9,1,'Processor, Processes - times in microseconds - smaller is better')
         ws.merge_cells('A9:A21')
@@ -171,7 +173,10 @@ class Lmbench:
         ws.cell(18, 3, content[10])
         ws.cell(19, 3, content[11])
         ws.cell(20, 3, content[12])
-        ws.cell(21, 3, content[13].rstrip('\n'))
+        try:
+            ws.cell(21, 3, content[13].rstrip('\n'))
+        except IndexError:
+            ws.cell(21,3,'Empty')
 
         ws.cell(22,1,'Basic integer operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A22:A28")
@@ -189,7 +194,10 @@ class Lmbench:
         ws.cell(25, 3, content[4])
         ws.cell(26, 3, content[5])
         ws.cell(27, 3, content[6])
-        ws.cell(28, 3, content[7].rstrip('\n'))
+        try:
+            ws.cell(28, 3, content[7].rstrip('\n'))
+        except IndexError:
+            ws.cell(28,3,'Empty')
 
         ws.cell(29,1,'Basic uint64 operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A29:A35")
@@ -207,7 +215,10 @@ class Lmbench:
         ws.cell(32, 3, '')
         ws.cell(33, 3, content[4])
         ws.cell(34, 3, content[5])
-        ws.cell(35, 3, content[6].rstrip('\n'))
+        try:
+            ws.cell(35, 3, content[6].rstrip('\n'))
+        except IndexError:
+            ws.cell(35,3,'Empty')
 
         ws.cell(36,1,'Basic float operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A36:A41")
@@ -223,7 +234,10 @@ class Lmbench:
         ws.cell(38, 3, content[3])
         ws.cell(39, 3, content[4])
         ws.cell(40, 3, content[5])
-        ws.cell(41, 3, content[6].rstrip('\n'))
+        try:
+            ws.cell(41, 3, content[6].rstrip('\n'))
+        except IndexError:
+            ws.cell(41,3,'Empty')
 
         ws.cell(42, 1, 'Basic double operations - times in nanoseconds - smaller is better')
         ws.merge_cells("A42:A45")
@@ -239,7 +253,10 @@ class Lmbench:
         ws.cell(44, 3, content[3])
         ws.cell(45, 3, content[4])
         ws.cell(46, 3, content[5])
-        ws.cell(47, 3, content[6].rstrip('\n'))
+        try:
+            ws.cell(47, 3, content[6].rstrip('\n'))
+        except IndexError:
+            ws.cell(47,3,'Empty')
 
         ws.cell(48, 1,'Context switching - times in microseconds - smaller is better')
         ws.merge_cells("A48:A56")
@@ -261,7 +278,10 @@ class Lmbench:
         ws.cell(53,3,content[6])
         ws.cell(54,3,content[7])
         ws.cell(55,3,content[8])
-        ws.cell(56,3,content[9].rstrip('\n'))
+        try:
+            ws.cell(56,3,content[9].rstrip('\n'))
+        except IndexError:
+            ws.cell(56,3,'Empty')
 
         ws.cell(57,1,'*Local* Communication latencies in microseconds - smaller is better')
         ws.merge_cells("A57:A66")
@@ -285,7 +305,10 @@ class Lmbench:
         ws.cell(63,3,content[7])
         ws.cell(64,3,content[8])
         ws.cell(65,3,content[9])
-        ws.cell(66,3,content[10].rstrip('\n'))
+        try:
+            ws.cell(66,3,content[10].rstrip('\n'))
+        except IndexError:
+            ws.cell(66,3,'Empty')
 
         # 网络测试前面选择不测,故此少了一组
 
@@ -311,7 +334,10 @@ class Lmbench:
         ws.cell(73, 3, '')
         ws.cell(74, 3, content[7])
         ws.cell(75, 3, '')
-        ws.cell(76, 3, content[8].rstrip('\n'))
+        try:
+            ws.cell(76, 3, content[8].rstrip('\n'))
+        except IndexError:
+            ws.cell(76,3,'Empty')
 
         ws.cell(77, 1, '*Local* Communication bandwidths in MB/s - bigger is better')
         ws.merge_cells("A77:A87")
@@ -337,7 +363,10 @@ class Lmbench:
         ws.cell(84,3,content[8])
         ws.cell(85,3,content[9])
         ws.cell(86,3,content[10])
-        ws.cell(87,3,content[11].rstrip('\n'))
+        try:
+            ws.cell(87,3,content[11].rstrip('\n'))
+        except IndexError:
+            ws.cell(87,3,'Empty')
 
         ws.cell(88,1,'Memory latencies in nanoseconds - smaller is better\n(WARNING - may not be correct, check graphs)')
         ws.merge_cells("A88:A95")
@@ -356,7 +385,10 @@ class Lmbench:
         ws.cell(91,3,content[4])
         ws.cell(92,3,content[5])
         ws.cell(93,3,content[6])
-        ws.cell(94,3,content[7].rstrip('\n'))
+        try:
+            ws.cell(94,3,content[7].rstrip('\n'))
+        except IndexError:
+            ws.cell(94,3,'Empty')
         ws.cell(95,3,'')
 
 

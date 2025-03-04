@@ -1,7 +1,8 @@
 from pathlib import Path
-import sys,subprocess,shutil,hashlib,requests,re
+import sys,subprocess,shutil,hashlib,requests,re,os
 from multiprocessing import Process
 from openpyxl.workbook import Workbook
+from tenacity import retry,stop_after_attempt,retry_if_exception_type
 
 
 
@@ -10,6 +11,12 @@ class Fio:
         self.path = Path('/root/osmts_tmp/fio')
         self.directory: Path = kwargs.get('saved_directory')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
+        self.urls:tuple = (
+            "https://fast-mirror.isrc.ac.cn/openeuler", # 下载速度最快
+            "https://repo.openeuler.openatom.cn",       # 下载速度慢
+            "https://repo.openeuler.org"                # 有时候无法访问
+        )
+        self.select_url = 0
         # 如果iso文件已经存在则不重复下载(用哈希值校验文件)
         if Path.exists(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso'):
             iso_hash = hashlib.sha256()
@@ -23,16 +30,28 @@ class Fio:
         self.download_iso_process.start()
 
 
-
+    @retry(stop=stop_after_attempt(3),retry=(retry_if_exception_type(requests.exceptions.HTTPError)))
     def download_iso_file(self):
         if self.path.exists():
             shutil.rmtree(self.path)
         self.path.mkdir()
         with requests.get(
-                'https://fast-mirror.isrc.ac.cn/openeuler/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso',
-                stream=True
+                f'{self.urls[self.select_url]}/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso',
+                stream=True,
+                headers={'Connection':'keep-alive','User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'}
         ) as response,open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
-            response.raise_for_status()
+            try:
+                response.raise_for_status()
+            except requests.exceptions.HTTPError as err:
+                if self.select_url < 3:
+                    print(f'网络不佳,下载fio测试ISO文件第{self.select_url + 1}次失败,正在重试')
+                    self.select_url += 1
+                    raise err
+                else:
+                    print('ISO文件多次下载都失败,尝试自建fio测试文件')
+                    with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso','wb') as file:
+                        file.write(os.urandom(4074729472))
+                    return
             for chunk in response.iter_content(64 * 1024):
                 file.write(chunk)
 

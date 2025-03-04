@@ -20,7 +20,7 @@ cd osmts
 * 运行前安装环境
 
 ```
-dnf install gcc python python3-devel python-pandas
+dnf install gcc python python3-devel python3-pip
 pip install --upgrade pip setuptools
 pip install -r requirements.txt
 
@@ -91,15 +91,15 @@ remove_osmts_tmp_dir = 1
 | nmap       | 完成   |
 | lmbench    | 完成   |
 | stream     | 完成   |
-| ltp stress | 完成  |
+| ltp stress | 完成   |
 | iozone     | 完成   |
-| libmicro   | 完成  |
+| libmicro   | 完成   |
 | fio        | 完成   |
 | netperf    | 完成   |
-| trinity    | 完成  |
+| trinity    | 完成   |
 | ltp cve    | 未完成  |
 | ltp posix  | 未完成  |
-| ltp        | 未完成  |
+| ltp        | 待分析  |
 
 
 ## 注意事项

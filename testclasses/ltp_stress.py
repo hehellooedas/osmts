@@ -41,7 +41,7 @@ class Ltp_stress(Process):
         # 编译
         if self.compiler == "gcc":
             build = subprocess.run(
-                "cd /root/osmts_tmp/ltp_stress && make autotools && ./configure && make -j $(nproc) && make install",
+                "cd /root/osmts_tmp/ltp_stress && make autotools && ./configure --prefix=/opt/ltp_stress && make -j $(nproc) && make install",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
@@ -61,7 +61,7 @@ class Ltp_stress(Process):
 
     def run_test(self):
         ltpstress_sh = subprocess.run(
-            "cd /opt/ltp/testscripts && mkdir -p /opt/ltp/output && ./ltpstress.sh -i 3600 -d /opt/ltp/output/ltpstress.data -I /opt/ltp/output/ltpstress.iodata -l /opt/ltp/output/ltpstress.log -n -p -S -m 512 -t 168",
+            "cd /opt/ltp_stress/testscripts && mkdir -p /opt/ltp_stress/output && ./ltpstress.sh -i 3600 -d /opt/ltp_stress/output/ltpstress.data -I /opt/ltp_stress/output/ltpstress.iodata -l /opt/ltp_stress/output/ltpstress.log -n -p -S -m 512 -t 168",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -74,13 +74,13 @@ class Ltp_stress(Process):
         # ltpstress.log：记录相关日志信息，主要是测试是否通过(pass or fail)
         # ltpstress.data：sar工具记录的日志文件，包括cpu,memory,i/o等
         with tarfile.open(self.directory / 'ltpstress.tar.xz','w:xz') as tar:
-            tar.add('/opt/ltp/output/ltpstress.data')
-            tar.add('/opt/ltp/output/ltpstress.iodata')
-            tar.add('/opt/ltp/output/ltpstress.log')
+            tar.add('/opt/ltp_stress/output/ltpstress.data')
+            tar.add('/opt/ltp_stress/output/ltpstress.iodata')
+            tar.add('/opt/ltp_stress/output/ltpstress.log')
         # ---------------------------------------------------------------
 
         # 分析ltpstress.log文件,找到其中fail的项目并统计
-        with open('/opt/ltp/output/ltpstress.log','r') as ltpstress_log:
+        with open('/opt/ltp_stress/output/ltpstress.log','r') as ltpstress_log:
             fail_testcases = sorted(set(line.strip() for line in ltpstress_log.readlines() if 'FAIL'in line))
             wb = Workbook()
             ws = wb.active
@@ -97,8 +97,8 @@ class Ltp_stress(Process):
     def post_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
-        if Path('/opt/ltp/').exists():
-            shutil.rmtree(Path('/opt/ltp/'))
+        if Path('/opt/ltp_stress/').exists():
+            shutil.rmtree(Path('/opt/ltp_stress/'))
 
 
     def run(self):

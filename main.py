@@ -1,7 +1,7 @@
 #! /usr/bin/env python3
 # encoding: utf-8
 
-import multiprocessing
+import multiprocessing,signal
 import sys,psutil,shutil,time
 import tomllib,ipaddress
 import subprocess,argparse,random,humanfriendly
@@ -12,7 +12,18 @@ from testclasses import osmts_tests
 osmts_tmp_dir = Path('/root/osmts_tmp/')
 fio_flag = False
 ltp_stress_flag = False
+ltp_posix_flag = False
+ltp_cve_flag = False
 netserver_created_by_osmts = False
+
+
+def signal_handler(signal, frame):
+    print(f"osmts捕获到了终端发送的Ctrl C信号,正在清理ltp stress进程.")
+    parent = psutil.Process(ltp_stress.pid)
+    for child in parent.children(recursive=True):
+        child.kill()
+    parent.kill()
+    sys.exit(1)
 
 
 def fio_judge():
@@ -161,12 +172,23 @@ if __name__ == '__main__':
         )
         ltp_stress.daemon = True
         ltp_stress.start()
+        signal.signal(signal.SIGINT, signal_handler)
+
+    if 'ltp_posix' in tasks:
+        tasks.remove('ltp_posix')
+        ltp_posix_flag = True
+    if 'ltp_cve' in tasks:
+        tasks.remove('ltp_cve')
+        ltp_cve_flag = True
+    if ltp_cve_flag or ltp_posix_flag:
+        if 'ltp' not in tasks:
+            tasks.append('ltp')
 
 
     # 所有检查都通过,则正式开始测试
     for task in tasks:
         # 构造测试类
-        osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir,merge=merge).run()
+        osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir,merge=merge,ltp_posix_flag=ltp_posix_flag,ltp_cve_flag=ltp_cve_flag).run()
 
 
     if fio_flag:

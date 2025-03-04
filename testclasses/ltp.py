@@ -1,5 +1,7 @@
 from pathlib import Path
 import sys,subprocess,shutil
+from testclasses.ltp_cve import Ltp_cve
+from testclasses.ltp_posix import Ltp_posix
 from openpyxl import Workbook
 
 
@@ -7,8 +9,9 @@ class Ltp:
     def __init__(self, **kwargs):
         self.path = Path('/root/osmts_tmp/ltp')
         self.directory: Path = kwargs.get('saved_directory')
-        self.compiler: str = kwargs.get('compiler')
         self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
+        self.ltp_posix_flag = kwargs.get('ltp_posix_flag')
+        self.ltp_cve_flag = kwargs.get('ltp_cve_flag')
         self.test_result = ''
 
 
@@ -16,7 +19,7 @@ class Ltp:
         if self.path.exists():
             shutil.rmtree(self.path)
         install_rpm = subprocess.run(
-            "yum install -y --skip-broken --nobest automake gcc clang pkgconf autoconf bison flex m4 kernel-headers glibc-headers clang findutils libtirpc libtirpc-devel pkg-config",
+            "yum install -y --skip-broken --nobest automake gcc clang pkgconf autoconf bison flex m4 kernel-headers glibc-headers findutils libtirpc libtirpc-devel pkg-config",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -69,6 +72,12 @@ class Ltp:
         print("开始进行ltp测试")
         self.pre_test()
         self.run_test()
+        print("ltp测试结束")
+
+        if self.ltp_cve_flag:
+            Ltp_cve(saved_directory=self.directory,remove_osmts_tmp_dir=self.remove_osmts_tmp_dir).run()
+        if self.ltp_posix_flag:
+            Ltp_posix(saved_directory=self.directory,remove_osmts_tmp_dir=self.remove_osmts_tmp_dir).run()
+
         if self.remove_osmts_tmp_dir:
             self.post_test()
-        print("ltp测试结束")

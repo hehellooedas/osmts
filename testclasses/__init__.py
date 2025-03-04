@@ -10,6 +10,7 @@ from testclasses.netperf import Netperf
 from testclasses.lmbench import Lmbench
 from testclasses.trinity import Trinity
 from testclasses.ltp_stress import Ltp_stress
+from testclasses.ltp_posix import Ltp_posix
 
 
 osmts_tests = {
@@ -48,5 +49,8 @@ osmts_tests = {
     ),
     "ltp_stress":(
         Ltp_stress
+    ),
+    "ltp_posix":(
+        Ltp_posix
     )
 }

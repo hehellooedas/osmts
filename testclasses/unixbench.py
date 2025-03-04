@@ -1,5 +1,4 @@
-import subprocess,fileinput,shutil,re
-import sys
+import subprocess,fileinput,shutil,re,sys
 from pathlib import Path
 from openpyxl import Workbook
 

@@ -14,9 +14,10 @@ class Fio:
         self.urls:tuple = (
             "https://fast-mirror.isrc.ac.cn/openeuler", # 下载速度最快
             "https://repo.openeuler.openatom.cn",       # 下载速度慢
-            "https://repo.openeuler.org"                # 有时候无法访问
+            "https://repo.openeuler.org",               # 有时候无法访问
+            "https://fast-mirror.isrc.ac.cn/openeuler"
         )
-        self.select_url = 0
+        self.select_url = -1
         # 如果iso文件已经存在则不重复下载(用哈希值校验文件)
         if Path.exists(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso'):
             iso_hash = hashlib.sha256()
@@ -30,7 +31,7 @@ class Fio:
         self.download_iso_process.start()
 
 
-    @retry(stop=stop_after_attempt(3),retry=(retry_if_exception_type(requests.exceptions.HTTPError)))
+    @retry(stop=stop_after_attempt(4),retry=(retry_if_exception_type(requests.exceptions.HTTPError)))
     def download_iso_file(self):
         if self.path.exists():
             shutil.rmtree(self.path)
@@ -42,11 +43,11 @@ class Fio:
         ) as response,open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
             try:
                 response.raise_for_status()
-            except requests.exceptions.HTTPError as err:
+            except requests.exceptions.HTTPError:
                 if self.select_url < 3:
-                    print(f'网络不佳,下载fio测试ISO文件第{self.select_url + 1}次失败,正在重试')
+                    print(f'网络不佳,下载fio测试ISO文件第{self.select_url + 1}次失败,正在重试...')
                     self.select_url += 1
-                    raise err
+                    raise requests.exceptions.HTTPError
                 else:
                     print('ISO文件多次下载都失败,尝试自建fio测试文件')
                     with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso','wb') as file:

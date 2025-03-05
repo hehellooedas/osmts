@@ -18,10 +18,12 @@ netserver_created_by_osmts = False
 
 
 def signal_handler(signal, frame):
-    print(f"osmts捕获到了终端发送的Ctrl C信号,正在清理ltp stress进程.")
+    print(f"osmts捕获到了终端发送的Ctrl C信号,正在清理ltp stress相关进程...")
     parent = psutil.Process(ltp_stress.pid)
     for child in parent.children(recursive=True):
+        print(f"子进程{child.name()}:pid={child.pid}已被kill.")
         child.kill()
+    print(f"父进程{parent.name()}:pid={parent.pid}已被kill.")
     parent.kill()
     sys.exit(1)
 
@@ -172,7 +174,10 @@ if __name__ == '__main__':
         )
         ltp_stress.daemon = True
         ltp_stress.start()
-        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler) # 捕获SIGINT信号
+        signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGHUP, signal_handler)
+
 
     if 'ltp_posix' in tasks:
         tasks.remove('ltp_posix')

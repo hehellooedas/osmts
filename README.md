@@ -106,6 +106,7 @@ remove_osmts_tmp_dir = 1
 1. 请不要在run_tests里添加“未完成”的项目.
 2. fio测试要下载iso文件、ltp stress测试很费时,单独开进程并行执行.main.py若被用户强制终止,则子进程也会dead.
 3. 若待测机器的/分区剩余容量过小,osmts会报错,避免因fio下载文件导致文件系统崩溃.
+4. osmts只能运行在类Unix操作系统上.
 
 ---
 ## 未来计划

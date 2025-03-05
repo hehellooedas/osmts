@@ -24,7 +24,8 @@ class Ltp_cve:
             print(f"ltp_cve测试出错.runltp进程报错:报错信息:{runltp.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = runltp.stdout.decode('utf-8')
-        print(self.test_result)
+        with open(self.path / 'ltp_cve.log', 'w') as file:
+            file.write(self.test_result)
 
 
     def run(self):

@@ -114,8 +114,9 @@ def from_tests_to_tasks(run_tests:list) -> list:
     )
     if install_rpms.returncode != 0:
         print("安装所有所需的rpm包失败.报错信息:{install_rpms.stderr.decode('utf-8')}")
+        print('')
         sys.exit(1)
-    print(f"本次osmts脚本执行将进行的测试:{tasks}(代表执行顺序),运行时请勿删除{osmts_tmp_dir}和{saved_directory}")
+    print(f"本次osmts脚本执行将进行的测试:{tasks}(代表执行顺序)\n运行时请勿删除{osmts_tmp_dir}和{saved_directory}")
     return testclasses
 
 

@@ -6,10 +6,11 @@ from openpyxl import Workbook
 
 class Lmbench:
     def __init__(self, **kwargs):
+        self.rpms = set()
         self.path = Path('/root/osmts_tmp/lmbench')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
+        self.rpms = {'libtirpc-devel'}
         self.test_result = ''
 
 
@@ -25,16 +26,6 @@ class Lmbench:
         )
         if git_clone.returncode != 0:
             print(f"lmbench测试出错:拉取源码失败.报错信息:{git_clone.stderr.decode('utf-8')})")
-            sys.exit(1)
-        # 安装rpm包
-        install_rpm = subprocess.run(
-            f"yum install -y libtirpc-devel {self.compiler} make -y",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if install_rpm.returncode != 0:
-            print(f"lmbench测试出错:安装rpm包失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
             sys.exit(1)
 
 
@@ -109,11 +100,6 @@ class Lmbench:
         if make_see.returncode != 0:
             print(f"lmbench测试:make see执行出错.报错信息:{make_see.stderr.decode('utf-8')}")
             sys.exit(1)
-
-
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
 
 
     def result2summary(self):
@@ -401,6 +387,4 @@ class Lmbench:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
         print("lmbench测试结束")

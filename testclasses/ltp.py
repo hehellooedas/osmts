@@ -1,32 +1,24 @@
+import os
 from pathlib import Path
 import sys,subprocess,shutil
-from testclasses.ltp_cve import Ltp_cve
-from testclasses.ltp_posix import Ltp_posix
 from openpyxl import Workbook
 
 
 class Ltp:
     def __init__(self, **kwargs):
+        self.rpms = {'automake','pkgconf','autoconf','bison','flex','m4','kernel-headers','glibc-headers','findutils','libtirpc','libtirpc-devel','pkg-config'}
         self.path = Path('/root/osmts_tmp/ltp')
-        self.directory: Path = kwargs.get('saved_directory')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
-        self.ltp_posix_flag = kwargs.get('ltp_posix_flag')
-        self.ltp_cve_flag = kwargs.get('ltp_cve_flag')
-        self.test_result = ''
+        self.directory: Path = kwargs.get('saved_directory') / 'ltp'
+        self.results_dir = Path('/opt/ltp/results')
+        self.output_dir = Path('/opt/ltp/output')
 
 
     def pre_test(self):
+        if self.directory.exists():
+            shutil.rmtree(self.directory)
+        self.directory.mkdir()
         if self.path.exists():
             shutil.rmtree(self.path)
-        install_rpm = subprocess.run(
-            "yum install -y --skip-broken --nobest automake gcc clang pkgconf autoconf bison flex m4 kernel-headers glibc-headers findutils libtirpc libtirpc-devel pkg-config",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if install_rpm.returncode != 0:
-            print(f"ltp测试出错:安装rpm包失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
-            sys.exit(1)
 
         git_clone = subprocess.run(
             "cd /root/osmts_tmp/ && git clone https://gitcode.com/gh_mirrors/ltp/ltp.git",
@@ -47,6 +39,16 @@ class Ltp:
         if make.returncode != 0:
             print(f"ltp测试出错.configure和make出错:报错信息:{make.stderr.decode('utf-8')}")
             sys.exit(1)
+        # 添加标记
+        Path('/opt/ltp/finish.sign').touch()
+
+        # 确保运行前/opt/ltp/results和/opt/ltp/output为空目录
+        if self.results_dir.exists():
+            shutil.rmtree(self.results_dir)
+            self.results_dir.mkdir()
+        if self.output_dir.exists():
+            shutil.rmtree(self.output_dir)
+            self.output_dir.mkdir()
 
 
     def run_test(self):
@@ -59,14 +61,13 @@ class Ltp:
         if runltp.returncode != 0:
             print(f"ltp测试出错.runltp进程报错:报错信息:{runltp.stderr.decode('utf-8')}")
             sys.exit(1)
-        self.test_result = runltp.stdout.decode('utf-8')
-        with open(self.directory / 'ltp.log', 'w') as file:
-            file.write(self.test_result)
-
-
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
+        # 测试结果存储在/opt/ltp/results,测试日志保存在/opt/ltp/output
+        for file in os.listdir(self.results_dir):
+            if 'LTP' in file:
+                shutil.copy(file,self.directory)
+        for file in os.listdir(self.output_dir):
+            if 'LTP' in file:
+                shutil.copy(file,self.directory)
 
 
     def run(self):
@@ -74,11 +75,3 @@ class Ltp:
         self.pre_test()
         self.run_test()
         print("ltp测试结束")
-
-        if self.ltp_cve_flag:
-            Ltp_cve(saved_directory=self.directory,remove_osmts_tmp_dir=self.remove_osmts_tmp_dir).run()
-        if self.ltp_posix_flag:
-            Ltp_posix(saved_directory=self.directory,remove_osmts_tmp_dir=self.remove_osmts_tmp_dir).run()
-
-        if self.remove_osmts_tmp_dir:
-            self.post_test()

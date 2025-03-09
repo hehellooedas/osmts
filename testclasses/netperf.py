@@ -6,17 +6,10 @@ from openpyxl import Workbook
 
 class Netperf(object):
     def __init__(self,**kwargs):
+        self.rpms = {'netperf'}
         self.directory:Path = kwargs.get('saved_directory')
         self.server_ip:str = kwargs.get('netperf_server_ip')
         self.netserver_created_by_osmts:bool = kwargs.get('netserver_created_by_osmts')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
-
-
-    def pre_test(self):
-        install_netperf = subprocess.run("dnf install netperf -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if install_netperf.returncode != 0:
-            print(f"netperf测试出错:rpm包安装失败.报错信息:{install_netperf.stderr.decode('utf-8')}")
-            sys.exit(1)
 
 
     def run_test(self):
@@ -147,8 +140,6 @@ class Netperf(object):
 
     def run(self):
         print("开始进行netperf测试")
-        self.pre_test()
         self.run_test()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
+        self.post_test()
         print("netperf测试结束")

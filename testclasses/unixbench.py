@@ -6,10 +6,10 @@ from openpyxl import Workbook
 
 class Unixbench:
     def __init__(self,**kwargs ):
+        self.rpms = {'perl','perl-CPAN'}
         self.path = Path('/root/osmts_tmp/unixbench')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result = ''
 
 
@@ -17,10 +17,7 @@ class Unixbench:
         if self.path.exists():
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True)
-        install_rpm = subprocess.run(f"dnf install make {self.compiler} perl perl-CPAN -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if install_rpm.returncode != 0:
-            print(f"unixbench测试出错:rpm包安装失败.报错信息:{install_rpm.stderr.decode()}")
-            sys.exit(1)
+
         clone = subprocess.run("cd /root/osmts_tmp/unixbench && git clone https://gitcode.com/gh_mirrors/by/byte-unixbench.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if clone.returncode != 0:
             print(f"unixbench测试出错:git clone执行失败.报错信息:{clone.stderr.decode('utf-8')}")
@@ -42,11 +39,6 @@ class Unixbench:
             print(f"unixbench测试出错:Run程序运行失败.报错信息:{run.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = run.stdout.decode('utf-8')
-
-
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
 
 
     def result2summary(self):
@@ -104,6 +96,4 @@ class Unixbench:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
         print("unixbench测试结束")

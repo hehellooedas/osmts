@@ -1,12 +1,11 @@
-from multiprocessing import Process
 from pathlib import Path
-import sys,subprocess,shutil,tarfile
+import sys,subprocess,shutil,tarfile,signal,os,psutil
 from openpyxl import Workbook
 
 
-class Ltp_stress(Process):
+class Ltp_stress():
     def __init__(self, **kwargs):
-        super().__init__()
+        self.rpms = {'automake','pkgconf','autoconf','bison','flex','m4','kernel-headers','glibc-headers','findutils','libtirpc','libtirpc-devel','pkg-config','sysstat'}
         self.path = Path('/root/osmts_tmp/ltp_stress')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
@@ -16,16 +15,6 @@ class Ltp_stress(Process):
     def pre_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
-        # 安装rpm包
-        install_rpm = subprocess.run(
-            "yum install -y --skip-broken --nobest git make automake gcc clang pkgconf autoconf bison flex m4 kernel-headers glibc-headers clang findutils libtirpc libtirpc-devel pkg-config sysstat",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if install_rpm.returncode != 0:
-            print(f"ltp_stress测试出错:安装rpm包失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
-            sys.exit(1)
 
         # 拉取源码
         git_clone = subprocess.run(
@@ -59,7 +48,20 @@ class Ltp_stress(Process):
             sys.exit(1)
 
 
+    def signal_handler(signal, frame):
+        print(f"osmts捕获到了终端发送的Ctrl C信号,正在清理ltp stress相关进程...")
+        parent = psutil.Process(os.getpid())
+        for child in parent.children(recursive=True):
+            print(f"子进程{child.name()}:pid={child.pid}已被kill.")
+            child.kill()
+        print(f"父进程{parent.name()}:pid={parent.pid}已被kill.")
+        parent.kill()
+        sys.exit(1)
+
+
     def run_test(self):
+        signal.signal(signal.SIGINT, self.signal_handler)
+        print('ltp_stress测试需要7x24小时,期间请勿中断osmts.')
         ltpstress_sh = subprocess.run(
             "cd /opt/ltp_stress/testscripts && mkdir -p /opt/ltp_stress/output && ./ltpstress.sh -i 3600 -d /opt/ltp_stress/output/ltpstress.data -I /opt/ltp_stress/output/ltpstress.iodata -l /opt/ltp_stress/output/ltpstress.log -n -p -S -m 512 -t 168",
             shell=True,
@@ -94,17 +96,8 @@ class Ltp_stress(Process):
 
 
 
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
-        if Path('/opt/ltp_stress/').exists():
-            shutil.rmtree(Path('/opt/ltp_stress/'))
-
-
     def run(self):
         print("开始进行ltp_stress")
         self.pre_test()
         self.run_test()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
         print("ltp_stress测试结束")

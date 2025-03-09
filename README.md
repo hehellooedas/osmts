@@ -66,7 +66,6 @@ saved_directory = "/root/osmts_result"
 merge = 0
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
-remove_osmts_tmp_dir = 1
 ```
 
 1. run_tests是一个列表，里面是需要测试的项目;
@@ -75,7 +74,6 @@ remove_osmts_tmp_dir = 1
 4. compiler是待测试的编译环境，应当填写gcc或者clang ,默认是gcc;
 5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000。
 6. 如果run_tests里存在“performance-test”，则osmts会自动把[性能测试文档](https://gitee.com/jean9823/openEuler_riscv_test/blob/master/%E5%9C%A8openEuler%20RISC-V%2024.03%20LTS%20%E4%B8%8A%E6%89%8B%E5%8A%A8%E6%89%A7%E8%A1%8C%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95.md)这里面的项目添加进去;
-7. remove_osmts_tmp_dir = 1表示在测试结束后删除存放测试文件的临时目录/root/osmts_tmp/,为0表示保留.
 
 
 
@@ -99,14 +97,15 @@ remove_osmts_tmp_dir = 1
 | trinity    | 完成   |
 | ltp cve    | 未完成  |
 | ltp posix  | 未完成  |
-| ltp        | 待分析  |
+| ltp        | 完成  |
 
 
 ## 注意事项
-1. 请不要在run_tests里添加“未完成”的项目.
+1. 进行ltp测试期间机器可能会ssh连不上,这很正常(ltp本身就是这样)机器并没有崩溃,耐心等待几天不要重启机器,否则丢失运行结果.
 2. fio测试要下载iso文件、ltp stress测试很费时,单独开进程并行执行.main.py若被用户强制终止,则子进程也会dead.
 3. 若待测机器的/分区剩余容量过小,osmts会报错,避免因fio下载文件导致文件系统崩溃.
 4. osmts只能运行在类Unix操作系统上.
+5. 测试机在osmts运行期间不要做其他用途.
 
 ---
 ## 未来计划

@@ -6,10 +6,10 @@ from openpyxl import Workbook
 
 class Stream:
     def __init__(self,**kwargs ):
+        self.rpms = set()
         self.path = Path('/root/osmts_tmp/stream')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result = ''
 
 
@@ -21,11 +21,6 @@ class Stream:
             print(f"stream测试出错:git拉取stream失败.报错信息:{git_clone.stderr.decode('utf-8')}")
             sys.exit(1)
 
-        # 安装编译器
-        install_rpm = subprocess.run(f"dnf install {self.compiler} -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if install_rpm.returncode != 0:
-            print(f"stream测试出错:gcc安装失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
-            sys.exit(1)
         # 编译stream.c
         compile = subprocess.run(f"cd /root/osmts_tmp/stream && {self.compiler} -O3 -fopenmp -DSTREAM_ARRAY_SIZE=35000000 -DNTIMES=50 stream.c -o stream_o3",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if compile.returncode != 0:
@@ -38,11 +33,6 @@ class Stream:
         if stream_o3.returncode != 0:
             print(f"stream测试出错:运行./stream_o3失败.报错信息:{stream_o3.stderr.decode('utf-8')}")
         self.test_result = stream_o3.stdout.decode('utf-8')
-
-
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
 
 
     def result2summary(self):
@@ -77,6 +67,4 @@ class Stream:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
         print("stream测试结束")

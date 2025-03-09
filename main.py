@@ -4,28 +4,15 @@
 import multiprocessing,signal
 import sys,psutil,shutil,time
 import tomllib,ipaddress
-import subprocess,argparse,random,humanfriendly
+import subprocess,argparse,humanfriendly
 from pathlib import Path
 from testclasses import osmts_tests
 
 
 osmts_tmp_dir = Path('/root/osmts_tmp/')
 fio_flag = False
-ltp_stress_flag = False
-ltp_posix_flag = False
-ltp_cve_flag = False
 netserver_created_by_osmts = False
 
-
-def signal_handler(signal, frame):
-    print(f"osmts捕获到了终端发送的Ctrl C信号,正在清理ltp stress相关进程...")
-    parent = psutil.Process(ltp_stress.pid)
-    for child in parent.children(recursive=True):
-        print(f"子进程{child.name()}:pid={child.pid}已被kill.")
-        child.kill()
-    print(f"父进程{parent.name()}:pid={parent.pid}已被kill.")
-    parent.kill()
-    sys.exit(1)
 
 
 def fio_judge():
@@ -94,9 +81,42 @@ def from_tests_to_tasks(run_tests:list) -> list:
         netperf_judge()
     if 'fio' in tasks:
         fio_judge()
+
+    # 调整测试脚本的执行顺序,确保ltp_stress在最后,fio在靠后位置,ltp_cve和ltp_posix在ltp后面
     tasks = list(tasks)
-    random.shuffle(tasks)
-    return tasks
+    if 'ltp' in tasks:
+        if 'ltp_cve' in tasks:
+            tasks.remove("ltp_cve")
+            tasks.append("ltp_cve")
+        if 'ltp_posix' in tasks:
+            tasks.remove("ltp_posix")
+            tasks.append("ltp_posix")
+    if 'fio' in tasks:
+        tasks.remove("fio")
+        tasks.append("fio")
+    if 'ltp_stress' in tasks:
+        tasks.remove("ltp_stress")
+        tasks.append("ltp_stress")
+
+
+    testclasses = []
+    all_need_rpms = set()
+    for task in tasks:
+        testclass = osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,merge=merge)
+        all_need_rpms |= testclass.rpms
+        testclasses.append(testclass)
+    # 统一安装所有所需的rpm包
+    install_rpms = subprocess.run(
+        f"dnf install -y --nobest --skip-broken gcc clang make git cmake {' '.join(all_need_rpms)}",
+        shell=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE
+    )
+    if install_rpms.returncode != 0:
+        print("安装所有所需的rpm包失败.报错信息:{install_rpms.stderr.decode('utf-8')}")
+        sys.exit(1)
+    print(f"本次osmts脚本执行将进行的测试:{tasks}(代表执行顺序),运行时请勿删除{osmts_tmp_dir}和{saved_directory}")
+    return testclasses
 
 
 
@@ -114,7 +134,7 @@ if __name__ == '__main__':
     if config == {}:
         print("您指定的配置文件是空的,请检查输入的toml格式文件")
         sys.exit(1)
-    run_tests = config.get("run_tests",None)
+    run_tests:list = config.get("run_tests",None)
     saved_directory = config.get("saved_directory",None)
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
@@ -147,63 +167,15 @@ if __name__ == '__main__':
         print(f"您指定的配置文件{osmts_config_file}中的字段run_tests为空,请检查输入的toml文件")
         sys.exit(1)
 
-    #安装必备的rpm包
-    install_git = subprocess.run("dnf install git make -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-    if install_git.returncode != 0:
-        print(f"安装git失败,请检查.报错信息:{install_git.stderr.decode('utf-8')}")
-        sys.exit(1)
 
-    tasks = from_tests_to_tasks(run_tests)
-    print(f"本次osmts脚本执行将进行的测试:{tasks},运行时请勿删除{osmts_tmp_dir}和{saved_directory}")
+    testclasses = from_tests_to_tasks(run_tests)
+
     if not osmts_tmp_dir.exists():
         osmts_tmp_dir.mkdir()
 
-    if fio_flag:
-        # 提前下载iso文件
-        fio = osmts_tests['fio'](saved_directory=saved_directory)
-        tasks.remove('fio')
-
-    # ltp stress独立测试
-    if 'ltp_stress' in tasks:
-        tasks.remove('ltp_stress')
-        ltp_stress_flag = True
-        ltp_stress:multiprocessing.Process = osmts_tests['ltp_stress'](
-            saved_directory=saved_directory,
-            compiler=compiler,
-            netperf_server_ip=netperf_server_ip
-        )
-        ltp_stress.daemon = True
-        ltp_stress.start()
-        signal.signal(signal.SIGINT, signal_handler) # 捕获SIGINT信号
-        signal.signal(signal.SIGTERM, signal_handler)
-        signal.signal(signal.SIGHUP, signal_handler)
-
-
-    if 'ltp_posix' in tasks:
-        tasks.remove('ltp_posix')
-        ltp_posix_flag = True
-    if 'ltp_cve' in tasks:
-        tasks.remove('ltp_cve')
-        ltp_cve_flag = True
-    if ltp_cve_flag or ltp_posix_flag:
-        if 'ltp' not in tasks:
-            tasks.append('ltp')
-
-
     # 所有检查都通过,则正式开始测试
-    for task in tasks:
-        # 构造测试类
-        osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,remove_osmts_tmp_dir=remove_osmts_tmp_dir,merge=merge,ltp_posix_flag=ltp_posix_flag,ltp_cve_flag=ltp_cve_flag).run()
+    for testclass in testclasses:
+        testclass.run()
 
-
-    if fio_flag:
-        fio.run()
-
-    if ltp_stress_flag:
-        print("osmts等待ltp_stress测试的7x24小时压力测试的结束...|如果osmts被信号强制退出,则ltp_stress测试也会停止.")
-        ltp_stress.join()
-
-    if remove_osmts_tmp_dir and osmts_tmp_dir.exists():
-        shutil.rmtree(osmts_tmp_dir)
 
     print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")

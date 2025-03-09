@@ -4,10 +4,10 @@ import sys,subprocess,shutil
 
 class Iozone:
     def __init__(self,**kwargs ):
+        self.rpms = set()
         self.path = Path('/root/osmts_tmp/iozone')
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
 
 
     def pre_test(self):
@@ -34,15 +34,9 @@ class Iozone:
             sys.exit(1)
 
 
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
-
 
     def run(self):
         print("开始进行iozone测试")
         self.pre_test()
         self.run_test()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
         print("iozone测试结束")

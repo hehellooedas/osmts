@@ -5,23 +5,13 @@ from openpyxl.workbook import Workbook
 
 class Trinity:
     def __init__(self,**kwargs ):
+        self.rpms = set()
         self.directory:Path = kwargs.get('saved_directory')
         self.compiler:str = kwargs.get('compiler')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result:str = ''
 
 
     def pre_test(self):
-        install_rpm = subprocess.run(
-            f"dnf install {self.compiler} make -y",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE
-        )
-        if install_rpm.returncode != 0:
-            print(f"trinity测试出错:编译器安装失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
-            sys.exit(1)
-
         user_exist = subprocess.run(
             "id trinity_test",
             shell=True,

@@ -8,9 +8,10 @@ from tenacity import retry,stop_after_attempt,retry_if_exception_type
 
 class Fio:
     def __init__(self, **kwargs):
+        self.rpms = {'fio'}
         self.path = Path('/root/osmts_tmp/fio')
-        self.directory: Path = kwargs.get('saved_directory')
-        self.remove_osmts_tmp_dir:bool = kwargs.get('remove_osmts_tmp_dir')
+        self.directory: Path = kwargs.get('saved_directory') / 'ltp'
+        self.test_result:str = ''
         self.urls:tuple = (
             "https://fast-mirror.isrc.ac.cn/openeuler", # 下载速度最快
             "https://repo.openeuler.openatom.cn",       # 下载速度慢
@@ -39,13 +40,17 @@ class Fio:
         with requests.get(
                 f'{self.urls[self.select_url]}/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso',
                 stream=True,
-                headers={'Connection':'keep-alive','User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0'}
+                headers={
+                    'Connection':'keep-alive',
+                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0',
+                    'Referer': 'https://gitee.com/April_Zhao/osmts'
+                }
         ) as response,open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
             try:
                 response.raise_for_status()
             except requests.exceptions.HTTPError:
                 if self.select_url < 3:
-                    print(f'网络不佳,下载fio测试ISO文件第{self.select_url + 1}次失败,正在重试...')
+                    print(f'网络不佳,下载fio测试ISO文件第{self.select_url + 2}次失败,正在重试...')
                     self.select_url += 1
                     raise requests.exceptions.HTTPError
                 else:
@@ -55,16 +60,6 @@ class Fio:
                     return
             for chunk in response.iter_content(64 * 1024):
                 file.write(chunk)
-
-
-
-    def pre_test(self):
-        install_fio = subprocess.run("dnf install fio -y", shell=True, stdout=subprocess.DEVNULL,
-                                     stderr=subprocess.PIPE)
-        if install_fio.returncode != 0:
-            print(f"fio运行出错:fio包安装失败.报错信息:{install_fio.stderr.decode('utf-8')}")
-            sys.exit(1)
-
 
 
     def run_test(self):
@@ -88,6 +83,7 @@ class Fio:
                     sys.exit(1)
                 # 保存fio命令的输出结果
                 result = fio.stdout.decode('utf-8')
+                self.test_result += result + '\n'
 
                 # 表头
                 ws.cell(baseline,1,f'{rw}-{bs}k')
@@ -370,19 +366,12 @@ class Fio:
 
                 baseline += 85
 
-
+        with open(self.directory / 'fio.log', 'w') as file:
+            file.write(self.test_result)
         wb.save(self.directory / 'fio.xlsx')
-
-
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
 
 
     def run(self):
         print("开始进行fio测试")
-        self.pre_test()
         self.run_test()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
         print("fio测试结束")

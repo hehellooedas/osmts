@@ -5,10 +5,10 @@ import sys,subprocess,shutil
 
 class Libmicro:
     def __init__(self, **kwargs):
+        self.rpms = set()
         self.path = Path('/root/osmts_tmp/libmicro')
         self.directory: Path = kwargs.get('saved_directory')
         self.compiler: str = kwargs.get('compiler')
-        self.remove_osmts_tmp_dir: bool = kwargs.get('remove_osmts_tmp_dir')
         self.test_result = ''
 
 
@@ -46,11 +46,6 @@ class Libmicro:
             file.write(self.test_result)
 
 
-    def post_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
-
-
     def result2summary(self):
         pass
 
@@ -60,6 +55,4 @@ class Libmicro:
         self.pre_test()
         self.run_test()
         self.result2summary()
-        if self.remove_osmts_tmp_dir:
-            self.post_test()
         print("libmicro测试结束")

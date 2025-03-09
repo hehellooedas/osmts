@@ -10,15 +10,10 @@ nmap测试:具体请查看文档https://gitee.com/jean9823/openEuler_riscv_test/
 
 class Nmap:
     def __init__(self, **kwargs):
+        self.rpms = {'nmap'}
         self.directory:Path = kwargs.get('saved_directory')
         self.test_result = ''
 
-
-    def pre_test(self):
-        install_rpm = subprocess.run("dnf install nmap -y",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if install_rpm.returncode != 0:
-            print(f"nmap测试出错:rpm包安装失败.报错信息:{install_rpm.stderr.decode('utf-8')}")
-            sys.exit(1)
 
 
     def run_test(self):
@@ -50,7 +45,6 @@ class Nmap:
 
     def run(self):
         print("开始进行nmap测试")
-        self.pre_test()
         self.run_test()
         self.result2summary()
         print("nmap测试结束")

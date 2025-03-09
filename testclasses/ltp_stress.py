@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys,subprocess,shutil,tarfile,signal,os,psutil
+import sys,subprocess,shutil,tarfile,signal,os,psutil,traceback
 from openpyxl import Workbook
 
 
@@ -48,27 +48,38 @@ class Ltp_stress():
             sys.exit(1)
 
 
-    def signal_handler(self,signal, frame):
-        print(f"osmts捕获到了终端发送的Ctrl C信号,正在清理ltp stress相关进程...")
-        parent = psutil.Process(os.getpid())
-        for child in parent.children(recursive=True):
-            print(f"子进程{child.name()}:pid={child.pid}已被terminate.")
-            child.terminate()
-        parent.terminate()
-
 
     def run_test(self):
-        signal.signal(signal.SIGINT, self.signal_handler)
         print('ltp_stress测试需要7x24小时,期间请勿中断osmts.')
-        ltpstress_sh = subprocess.run(
+        ltpstress_sh = subprocess.Popen(
             "cd /opt/ltp_stress/testscripts && mkdir -p /opt/ltp_stress/output && ./ltpstress.sh -i 3600 -d /opt/ltp_stress/output/ltpstress.data -I /opt/ltp_stress/output/ltpstress.iodata -l /opt/ltp_stress/output/ltpstress.log -n -p -S -m 512 -t 168",
             shell=True,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True
         )
-        if ltpstress_sh.returncode != 0:
-            print(f"ltp_stress测试出错:ltpstress.sh进程运行失败.报错信息:{ltpstress_sh.stderr.decode('utf-8')}")
-            sys.exit(1)
+
+        # 定义Ctrl+C信号处理函数
+        def signal_handler(sig, frame):
+            print('osmts检测到Ctrl+C键盘中断信号,正在终止ltp_stress压力测试...')
+            try:
+                # 尝试终止进程组内所有进程
+                os.killpg(os.getpgid(ltpstress_sh.pid), signal.SIGTERM)
+            except Exception as e:
+                print(f'终止进程组失败,报错信息{e}',file=sys.stderr)
+
+            try:
+                parent = psutil.Process(ltpstress_sh.pid)
+                for child in parent.children(recursive=True):
+                    child.kill()
+                parent.kill()
+            except psutil.NoSuchProcess:
+                pass
+            print(f'osmts创建的所有子进程均已终止\n当前完整堆栈信息:{traceback.print_stack(frame)}')
+            sys.exit(0)
+
+        signal.signal(signal.SIGINT, signal_handler)
+        ltpstress_sh.wait()
 
         # /opt/ltp/output/里有运行结果
         # ltpstress.log：记录相关日志信息，主要是测试是否通过(pass or fail)

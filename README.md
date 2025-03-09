@@ -84,25 +84,25 @@ netperf_server_ip = "127.0.0.1"
 ## 开发进度
 
 | 项目       | 支持程度 |
-| ---------- |------|
-| unixbench  | 完成   |
-| nmap       | 完成   |
-| lmbench    | 完成   |
-| stream     | 完成   |
-| ltp stress | 完成   |
-| iozone     | 完成   |
-| libmicro   | 完成   |
-| fio        | 完成   |
-| netperf    | 完成   |
-| trinity    | 完成   |
-| ltp cve    | 未完成  |
-| ltp posix  | 未完成  |
-| ltp        | 完成  |
+| ---------- |----|
+| unixbench  | 完成 |
+| nmap       | 完成 |
+| lmbench    | 完成 |
+| stream     | 完成 |
+| ltp stress | 完成 |
+| iozone     | 完成 |
+| libmicro   | 完成 |
+| fio        | 完成 |
+| netperf    | 完成 |
+| trinity    | 完成 |
+| ltp cve    | 完成 |
+| ltp posix  | 完成 |
+| ltp        | 完成 |
 
 
 ## 注意事项
 1. 进行ltp测试期间机器可能会ssh连不上,这很正常(ltp本身就是这样)机器并没有崩溃,耐心等待几天不要重启机器,否则丢失运行结果.
-2. fio测试要下载iso文件、ltp stress测试很费时,单独开进程并行执行.main.py若被用户强制终止,则子进程也会dead.
+2. fio测试要下载iso文件费时,单独开进程并行执行.ltp_stress测试执行时接收SIGINT会清理子进程.
 3. 若待测机器的/分区剩余容量过小,osmts会报错,避免因fio下载文件导致文件系统崩溃.
 4. osmts只能运行在类Unix操作系统上.
 5. 测试机在osmts运行期间不要做其他用途.

@@ -52,10 +52,8 @@ class Ltp_stress():
         print(f"osmts捕获到了终端发送的Ctrl C信号,正在清理ltp stress相关进程...")
         parent = psutil.Process(os.getpid())
         for child in parent.children(recursive=True):
-            print(f"子进程{child.name()}:pid={child.pid}已被kill.")
-            child.kill()
-        print(f"父进程{parent.name()}:pid={parent.pid}已被kill.")
-        parent.kill()
+            print(f"子进程{child.name()}:pid={child.pid}已被terminate.")
+            child.terminate()
         print(f'如果你对frame好奇的话可以看一看里面的内容\n{frame}')
 
 
@@ -97,7 +95,7 @@ class Ltp_stress():
 
 
     def run(self):
-        print("开始进行ltp_stress")
+        print("开始进行ltp_stress测试")
         self.pre_test()
         self.run_test()
         print("ltp_stress测试结束")

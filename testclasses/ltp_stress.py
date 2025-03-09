@@ -54,7 +54,7 @@ class Ltp_stress():
         for child in parent.children(recursive=True):
             print(f"子进程{child.name()}:pid={child.pid}已被terminate.")
             child.terminate()
-        print(f'如果你对frame好奇的话可以看一看里面的内容\n{frame}')
+        parent.terminate()
 
 
     def run_test(self):

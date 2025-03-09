@@ -124,3 +124,9 @@ fio测试类的输出结果如图所示:
 
 lmbench测试类的输出结果如图所示:
 ![netperf总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/lmbench_excel.png?raw=true)
+
+unixbench测试类的输出结果如图所示:
+![unixbench总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/unixbench_excel.png?raw=true)
+
+---
+osmts项目可以接收更多的测试项目,如果有需要可以[给本项目提交issue](https://gitee.com/April_Zhao/osmts/issues),或者参考testclasses目录里的测试类自建 <测试名.py>文件

@@ -67,14 +67,14 @@ class Ltp_stress():
                 os.killpg(os.getpgid(ltpstress_sh.pid), signal.SIGTERM)
             except Exception as e:
                 print(f'终止进程组失败,报错信息{e}',file=sys.stderr)
-
-            try:
-                parent = psutil.Process(ltpstress_sh.pid)
-                for child in parent.children(recursive=True):
-                    child.kill()
-                parent.kill()
-            except psutil.NoSuchProcess:
-                pass
+                print('尝试递归kill子进程...')
+                try:
+                    parent = psutil.Process(ltpstress_sh.pid)
+                    for child in parent.children(recursive=True):
+                        child.kill()
+                    parent.kill()
+                except psutil.NoSuchProcess:
+                    print('未找到子进程')
             print(f'osmts创建的所有子进程均已终止\n当前完整堆栈信息:{traceback.print_stack(frame)}')
             sys.exit(0)
 

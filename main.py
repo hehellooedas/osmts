@@ -70,6 +70,9 @@ def from_tests_to_tasks(run_tests:list) -> list:
     if "performance-test" in run_tests:
         tasks |= {"fio", "stream", "iozone", "unixbench", "libmicro", "nmap", "lmbench", "netperf"}
         run_tests.remove("performance-test")
+    if "ALL" in run_tests:
+        tasks |= set(support_tests)
+        run_tests.remove("ALL")
     for run_test in run_tests:
         if run_test not in support_tests:
             print(f"osmts当前支持的测试项目:{support_tests}")

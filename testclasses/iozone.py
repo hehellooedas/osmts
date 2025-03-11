@@ -6,7 +6,7 @@ class Iozone:
     def __init__(self,**kwargs ):
         self.rpms = set()
         self.path = Path('/root/osmts_tmp/iozone')
-        self.directory:Path = kwargs.get('saved_directory')
+        self.directory:Path = kwargs.get('saved_directory') / 'iozone'
         self.compiler:str = kwargs.get('compiler')
 
 
@@ -28,6 +28,8 @@ class Iozone:
 
 
     def run_test(self):
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True,parents=True)
         iozone = subprocess.run(f"cd /root/osmts_tmp/iozone/iozone3_506/src/current && ./iozone -Rab {self.directory}/iozone.xls",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if iozone.returncode != 0:
             print(f"iozone测试出错:iozone运行报错.报错信息:{iozone.stderr.decode('utf-8')}")

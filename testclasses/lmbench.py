@@ -8,13 +8,15 @@ class Lmbench:
     def __init__(self, **kwargs):
         self.rpms = set()
         self.path = Path('/root/osmts_tmp/lmbench')
-        self.directory: Path = kwargs.get('saved_directory')
+        self.directory: Path = kwargs.get('saved_directory') / 'lmbench'
         self.compiler: str = kwargs.get('compiler')
         self.rpms = {'libtirpc-devel'}
         self.test_result = ''
 
 
     def pre_test(self):
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True, parents=True)
         if self.path.exists():
             shutil.rmtree(self.path)
         # 获取lmbench源码
@@ -100,6 +102,7 @@ class Lmbench:
         if make_see.returncode != 0:
             print(f"lmbench测试:make see执行出错.报错信息:{make_see.stderr.decode('utf-8')}")
             sys.exit(1)
+        shutil.copyfile('/root/osmts_tmp/lmbench/results/summary.out',self.directory / 'lmbench_summary.out')
 
 
     def result2summary(self):

@@ -8,12 +8,14 @@ class Unixbench:
     def __init__(self,**kwargs ):
         self.rpms = {'perl','perl-CPAN'}
         self.path = Path('/root/osmts_tmp/unixbench')
-        self.directory:Path = kwargs.get('saved_directory')
+        self.directory:Path = kwargs.get('saved_directory') / 'unixbench'
         self.compiler:str = kwargs.get('compiler')
         self.test_result = ''
 
 
     def pre_test(self):
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True,parents=True)
         if self.path.exists():
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True)
@@ -39,6 +41,8 @@ class Unixbench:
             print(f"unixbench测试出错:Run程序运行失败.报错信息:{run.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = run.stdout.decode('utf-8')
+        with open(self.directory / 'unixbench,log','w') as file:
+            file.write(self.test_result)
 
 
     def result2summary(self):

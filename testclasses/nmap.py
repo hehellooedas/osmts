@@ -11,7 +11,7 @@ nmap测试:具体请查看文档https://gitee.com/jean9823/openEuler_riscv_test/
 class Nmap:
     def __init__(self, **kwargs):
         self.rpms = {'nmap'}
-        self.directory:Path = kwargs.get('saved_directory')
+        self.directory:Path = kwargs.get('saved_directory') / 'nmap'
         self.test_result = ''
 
 
@@ -38,7 +38,8 @@ class Nmap:
             ws.cell(index,3,service)
             index += 1
 
-
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True,parents=True)
         wb.save(self.directory / 'nmap.xlsx')
 
 

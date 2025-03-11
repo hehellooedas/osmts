@@ -105,7 +105,7 @@ netperf_server_ip = "127.0.0.1"
 1. 进行ltp测试期间机器可能会ssh连不上,这很正常(ltp本身就是这样)机器并没有崩溃,耐心等待几天不要重启机器,否则丢失运行结果.
 2. fio测试要下载iso文件费时,单独开进程并行执行.ltp_stress测试执行时接收SIGINT会清理子进程.
 3. 若待测机器的/分区剩余容量过小,osmts会报错,避免因fio下载文件导致文件系统崩溃.
-4. osmts只能运行在类Unix操作系统上,机器在测试期间不要作其他用途
+4. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
 
 ---
 ## 未来计划
@@ -128,5 +128,12 @@ lmbench测试类的输出结果如图所示:
 unixbench测试类的输出结果如图所示:
 ![unixbench总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/unixbench_excel.png?raw=true)
 
+ltp_stress测试类的输出结果如图所示:
+![ltp_stress总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/ltp_stress_excel.png?raw=true)
+_可以对excel文件中Result列进行筛选获取到其中FAIL的项目_
+
+![ltp_stress_iodata总结为excel的截图](https://github.com/hehellooedas/learn_riscv/blob/main/images/osmts_imgs/ltp_stress_iodata.png?raw=true)
+
 ---
-osmts项目可以接收更多的测试项目,如果有需要可以[给本项目提交issue](https://gitee.com/April_Zhao/osmts/issues),或者参考testclasses目录里的测试类自建 <测试名.py>文件
+
+osmts项目可以托管更多的测试项目,接入后可以一键批量运行测试,如果有需要可以[给本项目提交issue](https://gitee.com/April_Zhao/osmts/issues),或者参考testclasses目录里的测试类自建 <测试名.py>文件

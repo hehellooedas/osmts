@@ -7,12 +7,14 @@ class Ltp_stress():
     def __init__(self, **kwargs):
         self.rpms = {'automake','pkgconf','autoconf','bison','flex','m4','kernel-headers','glibc-headers','findutils','libtirpc','libtirpc-devel','pkg-config','sysstat'}
         self.path = Path('/root/osmts_tmp/ltp_stress')
-        self.directory: Path = kwargs.get('saved_directory')
+        self.directory: Path = kwargs.get('saved_directory') / 'ltp_stress'
         self.compiler: str = kwargs.get('compiler')
         self.remove_osmts_tmp_dir = kwargs.get('remove_osmts_tmp_dir')
 
 
     def pre_test(self):
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True, parents=True)
         if self.path.exists():
             shutil.rmtree(self.path)
 
@@ -90,18 +92,38 @@ class Ltp_stress():
             tar.add('/opt/ltp_stress/output/ltpstress.log')
         # ---------------------------------------------------------------
 
-        # 分析ltpstress.log文件,找到其中fail的项目并统计
+        # 分析ltpstress.log文件,进行统计
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'ltp stress report'
+        ws.append(['Testcase', 'Result', 'Exit Value'])
         with open('/opt/ltp_stress/output/ltpstress.log','r') as ltpstress_log:
-            fail_testcases = sorted(set(line.strip() for line in ltpstress_log.readlines() if 'FAIL'in line))
-            wb = Workbook()
-            ws = wb.active
-            ws.title = 'ltp stress fail testcases'
-            ws.append(['Testcase','Result','Exit Value'])
-            for fail_testcase in fail_testcases:
-                ws.append([item for item in fail_testcase.split(' ') if item != ''])
-            wb.save(self.directory / 'fail_testcases.xlsx')
+            testcases = sorted(set(line.strip() for line in ltpstress_log.readlines() if any(result in line for result in ('PASS','FAIL','CONF'))))
+            for testcase in testcases:
+                ws.append([item for item in testcase.split(' ') if item != ''])
+
 
         # 分析ltpstress.iodata
+        # Device  tps  kB_read/s  kB_wrtn/s  kB_dscd/s  kB_read  kB_wrtn  kB_dscd
+        wb.create_sheet(title='ltp stress iodata')
+        ws = wb['ltp stress iodata']
+        ws.append(['Device','tps','KB_read/s','KB_wrtn/s','KB_dscd/s','KB_read','KB_wrtn','KB_dscd'])
+        effect = False
+        with open('/opt/ltp_stress/output/ltpstress.iodata', 'r') as ltpstress_iodata:
+            lines = ltpstress_iodata.readlines()
+            for line in lines:
+                if 'Device' in line:
+                    effect = True
+                    continue
+                elif line == '\n':
+                    if effect:
+                        ws.append(['-----'] * 8)
+                    effect = False
+                    continue
+                if effect:
+                    ws.append(line.split())
+        wb.save(self.directory / 'ltp_stress_report.xlsx')
+
 
 
 

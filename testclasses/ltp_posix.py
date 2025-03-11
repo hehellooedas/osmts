@@ -11,7 +11,7 @@ class Ltp_posix(object):
     def __init__(self, **kwargs):
         self.rpms = {'automake', 'pkgconf', 'autoconf', 'bison', 'flex', 'm4', 'kernel-headers', 'glibc-headers',
                      'findutils', 'libtirpc', 'libtirpc-devel', 'pkg-config'}
-        self.directory: Path = kwargs.get('saved_directory')
+        self.directory: Path = kwargs.get('saved_directory') / 'ltp_posix'
         self.test_result = ''
         self.test_passed = 0
         self.test_failed = 0

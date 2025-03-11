@@ -10,7 +10,7 @@ class Fio:
     def __init__(self, **kwargs):
         self.rpms = {'fio'}
         self.path = Path('/root/osmts_tmp/fio')
-        self.directory: Path = kwargs.get('saved_directory') / 'ltp'
+        self.directory: Path = kwargs.get('saved_directory') / 'fio'
         self.test_result:str = ''
         self.urls:tuple = (
             "https://fast-mirror.isrc.ac.cn/openeuler", # 下载速度最快
@@ -365,7 +365,8 @@ class Fio:
                     ws.cell(baseline + 84, 3, match.group(9) + '%')
 
                 baseline += 85
-
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True, parents=True)
         with open(self.directory / 'fio.log', 'w') as file:
             file.write(self.test_result)
         wb.save(self.directory / 'fio.xlsx')

@@ -8,12 +8,14 @@ class Stream:
     def __init__(self,**kwargs ):
         self.rpms = set()
         self.path = Path('/root/osmts_tmp/stream')
-        self.directory:Path = kwargs.get('saved_directory')
+        self.directory:Path = kwargs.get('saved_directory') / 'stream'
         self.compiler:str = kwargs.get('compiler')
         self.test_result = ''
 
 
     def pre_test(self):
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True,parents=True)
         if self.path.exists():
             shutil.rmtree(self.path)
         git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/stream.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
@@ -33,6 +35,8 @@ class Stream:
         if stream_o3.returncode != 0:
             print(f"stream测试出错:运行./stream_o3失败.报错信息:{stream_o3.stderr.decode('utf-8')}")
         self.test_result = stream_o3.stdout.decode('utf-8')
+        with open(self.path / 'stream.log','w',encoding='utf-8') as file:
+            file.write(self.test_result)
 
 
     def result2summary(self):

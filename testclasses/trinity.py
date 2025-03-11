@@ -1,17 +1,19 @@
 from pathlib import Path
-import sys,subprocess,shutil,re
+import sys,subprocess,lzma
 from openpyxl.workbook import Workbook
 
 
 class Trinity:
     def __init__(self,**kwargs ):
         self.rpms = set()
-        self.directory:Path = kwargs.get('saved_directory')
+        self.directory:Path = kwargs.get('saved_directory') / 'trinity'
         self.compiler:str = kwargs.get('compiler')
         self.test_result:str = ''
 
 
     def pre_test(self):
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True,parents=True)
         user_exist = subprocess.run(
             "id trinity_test",
             shell=True,
@@ -83,7 +85,7 @@ class Trinity:
             print(f"trinity测试出错:configure和make失败.报错信息:{trinity.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = trinity.stdout.decode('utf-8')
-        with open(self.directory / 'trinity.log','w') as file:
+        with lzma.open(self.directory / 'trinity.log','wt',format=lzma.FORMAT_XZ) as file:
             file.write(self.test_result)
 
 

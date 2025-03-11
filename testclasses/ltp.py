@@ -14,9 +14,8 @@ class Ltp:
 
 
     def pre_test(self):
-        if self.directory.exists():
-            shutil.rmtree(self.directory)
-        self.directory.mkdir()
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True, parents=True)
         if self.path.exists():
             shutil.rmtree(self.path)
 

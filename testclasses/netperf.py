@@ -7,7 +7,7 @@ from openpyxl import Workbook
 class Netperf(object):
     def __init__(self,**kwargs):
         self.rpms = {'netperf'}
-        self.directory:Path = kwargs.get('saved_directory')
+        self.directory:Path = kwargs.get('saved_directory') / 'netperf'
         self.server_ip:str = kwargs.get('netperf_server_ip')
         self.netserver_created_by_osmts:bool = kwargs.get('netserver_created_by_osmts')
 
@@ -127,7 +127,8 @@ class Netperf(object):
         ws.cell(25, 2, result2[0])
         ws.cell(25, 3, result2[1])
 
-
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True,parents=True)
         wb.save(self.directory / 'netperf.xlsx')
 
 

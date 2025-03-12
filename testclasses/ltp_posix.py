@@ -50,7 +50,8 @@ class Ltp_posix(object):
         )
         if runltp.returncode != 0:
             print(f"ltp_posix测试出错.run-all-posix-option-group-tests.sh脚本报错:报错信息:{runltp.stderr.decode('utf-8')}")
-            sys.exit(1)
+
+
         self.test_result = runltp.stdout.decode('utf-8')
         with open(self.directory / 'ltp_posix.log', 'w') as file:
             file.write(self.test_result)

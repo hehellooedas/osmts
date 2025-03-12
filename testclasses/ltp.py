@@ -59,7 +59,8 @@ class Ltp:
         )
         if runltp.returncode != 0:
             print(f"ltp测试出错.runltp进程报错:报错信息:{runltp.stderr.decode('utf-8')}")
-            sys.exit(1)
+            print('这是正常现象,osmts继续运行')
+
         # 测试结果存储在/opt/ltp/results,测试日志保存在/opt/ltp/output
         for file in os.listdir(self.results_dir):
             if 'LTP' in file:

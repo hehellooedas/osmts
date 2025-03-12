@@ -39,7 +39,7 @@ class Libmicro:
                    stderr=subprocess.PIPE
         )
         if bench.returncode != 0:
-            print(f"libmicro测试出错:bench运行失败.报错信息:{bench.stderr.decode('utf-8')}")
+            print(f"libmicro测试出错:bench命令运行失败.报错信息:{bench.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = bench.stdout.decode('utf-8')
         if not self.directory.exists():

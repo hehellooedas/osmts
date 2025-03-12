@@ -81,6 +81,7 @@ class Fio:
                 if fio.returncode != 0:
                     print(f"fio测试出错:fio进程运行报错,此时rw为{rw}.报错信息:{fio.stderr.decode('utf-8')}")
                     sys.exit(1)
+
                 # 保存fio命令的输出结果
                 result = fio.stdout.decode('utf-8')
                 self.test_result += result + '\n'

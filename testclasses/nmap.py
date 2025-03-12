@@ -17,7 +17,12 @@ class Nmap:
 
 
     def run_test(self):
-        nmap = subprocess.run("nmap -sS -sU 127.0.0.1",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        nmap = subprocess.run(
+            "nmap -sS -sU 127.0.0.1",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         if nmap.returncode != 0:
             print(f"nmap测试出错:nmap进程运行出错.报错信息:{nmap.stderr.decode('utf-8')}")
             sys.exit(1)

@@ -64,6 +64,7 @@ class Netperf(object):
             TCP_STREAM = subprocess.run(f"netperf -t TCP_STREAM -H {self.server_ip} -p 10000 -l 60 -- -m {message_size_bytes}",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             if TCP_STREAM.returncode != 0:
                 print(f"netperf测试出错:TCP_STREAM测试运行失败.报错信息:{TCP_STREAM.stderr}")
+                sys.exit(1)
             result = re.findall(r'\d+\.\d+|\d+', TCP_STREAM.stdout.decode('utf-8').split('\n')[6])
             for col,value in enumerate(result):
                 ws.cell(line,col+2,value)

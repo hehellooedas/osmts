@@ -111,7 +111,7 @@ netperf_server_ip = "127.0.0.1"
 ## 未来计划
 1. 开发更多测试脚本进行汇总;
 2. 对已有的测试结果进行审查看是否有数据遗漏;
-3. osmts项目在sg2042 Milk-V Pioneer上检测通过,在其他设备上待测试.
+3. osmts项目在sg2042 Milk-V Pioneer和Sipeed Lichee pi 4A开发板上检测通过,在其他设备上待测试.
 
 
 ---

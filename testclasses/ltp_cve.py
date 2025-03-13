@@ -29,7 +29,7 @@ class Ltp_cve:
                 stderr=subprocess.PIPE,
             )
             if git_clone.returncode != 0:
-                print(f"ltp测试出错.git clone拉取ltp源码失败:{git_clone.stderr.decode('utf-8')}")
+                print(f"ltp_cve测试出错.git clone拉取ltp源码失败:{git_clone.stderr.decode('utf-8')}")
                 sys.exit(1)
 
             make = subprocess.run(
@@ -39,7 +39,7 @@ class Ltp_cve:
                 stderr=subprocess.PIPE,
             )
             if make.returncode != 0:
-                print(f"ltp测试出错.configure和make出错:报错信息:{make.stderr.decode('utf-8')}")
+                print(f"ltp_cve测试出错.configure和make出错:报错信息:{make.stderr.decode('utf-8')}")
                 sys.exit(1)
             Path('/opt/ltp/finish.sign').touch()
         else:

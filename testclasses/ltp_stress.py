@@ -125,10 +125,20 @@ class Ltp_stress():
         wb.save(self.directory / 'ltp_stress_report.xlsx')
 
 
+    def post_test(self):
+        # ltp_stress运行后/tmp/目录下会产生缓存文件占满整个tmpfs,因此务必清除
+        subprocess.run(
+            "rm -rf /tmp/ltpstress*",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+
 
 
     def run(self):
         print("开始进行ltp_stress测试")
         self.pre_test()
         self.run_test()
+        self.post_test()
         print("ltp_stress测试结束")

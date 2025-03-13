@@ -19,6 +19,8 @@ class Ltp_posix(object):
     
     
     def pre_test(self):
+        if not self.directory.exists():
+            self.directory.mkdir(exist_ok=True,parents=True)
         if not Path('/opt/ltp').exists():
             git_clone = subprocess.run(
                 "cd /root/osmts_tmp/ && git clone https://gitcode.com/gh_mirrors/ltp/ltp.git",
@@ -31,7 +33,7 @@ class Ltp_posix(object):
                 sys.exit(1)
 
         make = subprocess.run(
-            f"cd /root/osmts_tmp/ltp/testcases/open_posix_testsuite && ./configue && make all -j $(nproc)",
+            f"cd /root/osmts_tmp/ltp/testcases/open_posix_testsuite && ./configure && make all -j $(nproc)",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -43,7 +45,7 @@ class Ltp_posix(object):
 
     def run_test(self):
         runltp = subprocess.run(
-            "cd /root/osmts_tmp/ltptestcases/open_posix_testsuite/bin && ./run-all-posix-option-group-tests.sh",
+            "cd /root/osmts_tmp/ltp/testcases/open_posix_testsuite/bin && ./run-all-posix-option-group-tests.sh",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

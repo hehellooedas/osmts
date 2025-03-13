@@ -109,16 +109,20 @@ def from_tests_to_tasks(run_tests:list) -> list:
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
     # 统一安装所有所需的rpm包
+    dnf_command = f"dnf install -y --nobest --skip-broken gcc clang make git cmake {' '.join(all_need_rpms)}"
     install_rpms = subprocess.run(
-        f"dnf install -y --nobest --skip-broken gcc clang make git cmake {' '.join(all_need_rpms)}",
+        args=dnf_command,
         shell=True,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.PIPE
     )
     if install_rpms.returncode != 0:
-        print("安装所有所需的rpm包失败.报错信息:{install_rpms.stderr.decode('utf-8')}")
-        print('')
-        sys.exit(1)
+        print(f"安装所有所需的rpm包失败.报错信息:{install_rpms.stderr.decode('utf-8')}")
+        print(f'用户可以手动执行以下命令安装所需的rpm包:  {dnf_command}  ')
+        cont = input('是否继续往下运行osmts?(Y/n)')
+        if cont in ('N','n'):
+            sys.exit(1)
+
     print(f"本次osmts脚本执行将进行的测试:{tasks}(代表执行顺序)\n运行时请勿删除{osmts_tmp_dir}和{saved_directory}")
     return testclasses
 

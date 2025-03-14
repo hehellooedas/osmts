@@ -1,8 +1,8 @@
 #! /usr/bin/env python3
 # encoding: utf-8
 
-import multiprocessing,signal
-import sys,psutil,shutil,time
+
+import sys,psutil,time
 import tomllib,ipaddress
 import subprocess,argparse,humanfriendly
 from pathlib import Path

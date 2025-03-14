@@ -2,7 +2,7 @@ from pathlib import Path
 import sys,subprocess,shutil,os
 
 """
-ltp cve测试在ltp测试的基础上运行
+ltp cve测试在ltp测试的基础上运行,是ltp其中一个测试
 """
 
 class Ltp_cve:
@@ -66,9 +66,11 @@ class Ltp_cve:
         for file in os.listdir(self.results_dir):
             if 'LTP' in file:
                 shutil.copy(self.results_dir / file,self.directory)
+                Path(self.results_dir / file).unlink()
         for file in os.listdir(self.output_dir):
             if 'LTP' in file:
                 shutil.copy(self.output_dir / file,self.directory)
+                Path(self.output_dir / file).unlink()
 
 
 

@@ -1,10 +1,9 @@
 from pathlib import Path
-import sys,subprocess,shutil
-from openpyxl import Workbook
+import sys,subprocess
 
 
 """
-ltp posix测试在ltp测试的基础上运行
+ltp posix测试在ltp源码的基础上单独编译运行
 """
 
 class Ltp_posix(object):

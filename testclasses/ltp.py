@@ -1,7 +1,12 @@
 import os
 from pathlib import Path
 import sys,subprocess,shutil
-from openpyxl import Workbook
+
+
+"""
+文档:https://blog.sina.com.cn/s/blog_7695e9f40100yjme.html
+"""
+
 
 
 class Ltp:
@@ -61,13 +66,16 @@ class Ltp:
             print(f"ltp测试出错.runltp进程报错:报错信息:{runltp.stderr.decode('utf-8')}")
             print('这是正常现象,osmts继续运行')
 
+
         # 测试结果存储在/opt/ltp/results,测试日志保存在/opt/ltp/output
         for file in os.listdir(self.results_dir):
             if 'LTP' in file:
-                shutil.copy(file,self.directory)
+                shutil.copy(self.results_dir / file,self.directory)
+                Path(self.results_dir / file).unlink()
         for file in os.listdir(self.output_dir):
             if 'LTP' in file:
-                shutil.copy(file,self.directory)
+                shutil.copy(self.output_dir / file,self.directory)
+                Path(self.output_dir / file).unlink()
 
 
     def run(self):

@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import sys,subprocess,shutil
+from openpyxl import Workbook
 
 
 """
@@ -68,10 +69,20 @@ class Ltp:
 
 
         # 测试结果存储在/opt/ltp/results,测试日志保存在/opt/ltp/output
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'ltp report'
+        ws.append(['Testcase', 'Result', 'Exit Value'])
         for file in os.listdir(self.results_dir):
-            if 'LTP' in file:
-                shutil.copy(self.results_dir / file,self.directory)
-                Path(self.results_dir / file).unlink()
+            if '.log' in file:
+                with open(self.output_dir / file, 'r') as ltpstress_log:
+                    testcases = sorted(set(line.strip() for line in ltpstress_log.readlines() if
+                                           any(result in line for result in ('PASS', 'FAIL', 'CONF'))))
+                    for testcase in testcases:
+                        ws.append([item for item in testcase.split(' ') if item != ''])
+                    wb.save(self.directory / 'ltp.xlsx')
+            shutil.copy(self.results_dir / file,self.directory)
+            Path(self.results_dir / file).unlink()
         for file in os.listdir(self.output_dir):
             if 'LTP' in file:
                 shutil.copy(self.output_dir / file,self.directory)

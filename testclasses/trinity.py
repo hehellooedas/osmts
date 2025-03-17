@@ -85,7 +85,7 @@ class Trinity:
             print(f"trinity测试出错:configure和make失败.报错信息:{trinity.stderr.decode('utf-8')}")
             sys.exit(1)
         self.test_result = trinity.stdout.decode('utf-8')
-        with lzma.open(self.directory / 'trinity.log','wt',format=lzma.FORMAT_XZ) as file:
+        with lzma.open(self.directory / 'trinity.log.xz','wt',format=lzma.FORMAT_XZ) as file:
             file.write(self.test_result)
 
 

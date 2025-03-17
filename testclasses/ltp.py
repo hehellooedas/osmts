@@ -73,16 +73,19 @@ class Ltp:
         ws = wb.active
         ws.title = 'ltp report'
         ws.append(['Testcase', 'Result', 'Exit Value'])
+        # 对/opt/ltp/results目录里的日志进行分析
         for file in os.listdir(self.results_dir):
             if '.log' in file:
-                with open(self.output_dir / file, 'r') as ltpstress_log:
-                    testcases = sorted(set(line.strip() for line in ltpstress_log.readlines() if
+                with open(self.results_dir / file, 'r') as ltp_log:
+                    testcases = sorted(set(line.strip() for line in ltp_log.readlines() if
                                            any(result in line for result in ('PASS', 'FAIL', 'CONF'))))
                     for testcase in testcases:
                         ws.append([item for item in testcase.split(' ') if item != ''])
                     wb.save(self.directory / 'ltp.xlsx')
             shutil.copy(self.results_dir / file,self.directory)
             Path(self.results_dir / file).unlink()
+
+        # 复制/opt/ltp/output目录里的总结信息
         for file in os.listdir(self.output_dir):
             if 'LTP' in file:
                 shutil.copy(self.output_dir / file,self.directory)

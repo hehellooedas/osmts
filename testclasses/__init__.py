@@ -11,6 +11,9 @@ from testclasses.lmbench import Lmbench
 from testclasses.trinity import Trinity
 from testclasses.ltp_stress import Ltp_stress
 from testclasses.ltp_posix import Ltp_posix
+from testclasses.llvmcase import Llvmcase
+from testclasses.dejagnu import DejaGnu
+from testclasses.anghabench import AnghaBench
 
 
 osmts_tests = {
@@ -52,5 +55,14 @@ osmts_tests = {
     ),
     "ltp_posix":(
         Ltp_posix
+    ),
+    "llvmcase":(
+        Llvmcase
+    ),
+    "dejagnu":(
+        DejaGnu
+    ),
+    "anghabench":(
+        AnghaBench
     )
 }

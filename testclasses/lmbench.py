@@ -6,7 +6,6 @@ from openpyxl import Workbook
 
 class Lmbench:
     def __init__(self, **kwargs):
-        self.rpms = set()
         self.path = Path('/root/osmts_tmp/lmbench')
         self.directory: Path = kwargs.get('saved_directory') / 'lmbench'
         self.compiler: str = kwargs.get('compiler')

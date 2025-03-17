@@ -83,8 +83,8 @@ netperf_server_ip = "127.0.0.1"
 
 ## 开发进度
 
-| 项目       | 支持程度 |
-| ---------- |----|
+| 项目         | 支持程度 |
+|------------|----|
 | unixbench  | 完成 |
 | nmap       | 完成 |
 | lmbench    | 完成 |
@@ -98,6 +98,8 @@ netperf_server_ip = "127.0.0.1"
 | ltp cve    | 完成 |
 | ltp posix  | 完成 |
 | ltp        | 完成 |
+| dejagnu    | 完成 |
+| llvmcase   | 完成 |
 
 
 

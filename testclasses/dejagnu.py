@@ -24,7 +24,7 @@ class DejaGnu:
             stderr=subprocess.PIPE,
         )
         if git_clone.returncode != 0:
-            print(f'dejagnu测试出错.拉取源码失败,报错信息:{git_clone.stderr.decode('utf-8')}')
+            print(f"dejagnu测试出错.拉取源码失败,报错信息:{git_clone.stderr.decode('utf-8')}")
             sys.exit(1)
 
 
@@ -36,7 +36,7 @@ class DejaGnu:
             stderr=subprocess.PIPE,
         )
         if gcc.returncode != 0:
-            print(f'dejagnu测试出错.runtest --tool gcc命令运行失败,报错信息:{gcc.stderr.decode('utf-8')}')
+            print(f"dejagnu测试出错.runtest --tool gcc命令运行失败,报错信息:{gcc.stderr.decode('utf-8')}")
             sys.exit(1)
 
 
@@ -47,7 +47,7 @@ class DejaGnu:
             stderr=subprocess.PIPE,
         )
         if cpp.returncode != 0:
-            print(f'dejagnu测试出错.runtest --tool g++命令运行失败,报错信息:{cpp.stderr.decode('utf-8')}')
+            print(f"dejagnu测试出错.runtest --tool g++命令运行失败,报错信息:{cpp.stderr.decode('utf-8')}")
             sys.exit(1)
 
 
@@ -58,7 +58,7 @@ class DejaGnu:
             stderr=subprocess.PIPE,
         )
         if gfortran.returncode != 0:
-            print(f'dejagnu测试出错.runtest --tool gfortran命令运行失败,报错信息:{gfortran.stderr.decode('utf-8')}')
+            print(f"dejagnu测试出错.runtest --tool gfortran命令运行失败,报错信息:{gfortran.stderr.decode('utf-8')}")
             sys.exit(1)
 
 

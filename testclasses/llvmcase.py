@@ -33,7 +33,7 @@ class Llvmcase():
             stderr=subprocess.PIPE,
         )
         if build_llvm.returncode != 0:
-            print(f'llvmcase测试出错.编译llvm失败,报错信息:{build_llvm.stderr.decode('utf-8')}')
+            print(f"llvmcase测试出错.编译llvm失败,报错信息:{build_llvm.stderr.decode('utf-8')}")
             sys.exit(1)
 
 
@@ -45,7 +45,7 @@ class Llvmcase():
             stderr=subprocess.STDOUT
         )
         if run_clang.returncode != 0:
-            print(f'llvmcase测试出错.clang -v运行报错,报错信息:{run_clang.stderr.decode('utf-8')}')
+            print(f"llvmcase测试出错.clang -v运行报错,报错信息:{run_clang.stderr.decode('utf-8')}")
             print('不过osmts仍会继续运行')
 
         with open(self.directory / 'llvmcase.log', 'w') as file:

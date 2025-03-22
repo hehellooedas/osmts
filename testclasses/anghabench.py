@@ -30,7 +30,7 @@ class AnghaBench:
             stderr=subprocess.PIPE,
         )
         if git_clone.returncode != 0:
-            print(f'AnghaBench测试出错.git clone运行失败,报错信息:{git_clone.stderr.decode('utf-8')}')
+            print(f"AnghaBench测试出错.git clone运行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
             sys.exit(1)
 
 

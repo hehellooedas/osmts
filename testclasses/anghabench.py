@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys,subprocess,shutil,os,fnmatch,time
+import sys,subprocess,shutil,os,fnmatch,time,tarfile
 from openpyxl import Workbook
 
 
@@ -50,16 +50,22 @@ class AnghaBench:
             for filename in fnmatch.filter(filenames, '*.c'):
                 matches.append((filename,os.path.join(root,filename)))
         for match in matches:
+            # 记录编译文件名
             ws.cell(line, 1, match[0])
             start_time = time.time()
+
             compile = subprocess.run(
                 f"gcc {match[1]} -c -o {match[1]}.o",
                 shell=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT
             )
+
+            # 记录编译时间
             time_consuming = time.time() - start_time
-            ws.cell(line, 3, f"{time_consuming}秒")
+            ws.cell(line, 3, f"{time_consuming}s")
+
+            # 记录编译结果
             if compile.returncode != 0: #编译失败
                 self.failed += 1
                 ws.cell(line,2,"failed")
@@ -67,14 +73,23 @@ class AnghaBench:
                 self.passed += 1
                 ws.cell(line,2,"passed")
             self.total += 1
-            with open(self.log_files / f'{match[0]}.log','w') as log:
-                log.write(compile.stdout.decode('utf-8'))
+
+            # 记录日志(空日志不创建文件)
+            result = compile.stdout.decode('utf-8')
+            if result != '':
+                with open(self.log_files / f'{match[0]}.log','w') as log:
+                    log.write(result)
+
             line += 1
+
         ws.cell(line,1,f"总共编译文件数{self.total}")
         ws.cell(line, 2, f"通过编译数{self.passed}")
         ws.cell(line, 3, f"失败编译数{self.failed}")
 
         wb.save(self.directory / 'AnghaBench.xlsx')
+
+        with tarfile.open(self.directory / 'AnghaBench.tar.xz',"w:xz") as tar:
+            tar.add(self.log_files)
 
 
     def run(self):

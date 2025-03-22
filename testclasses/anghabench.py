@@ -67,13 +67,14 @@ class AnghaBench:
                 self.passed += 1
                 ws.cell(line,2,"passed")
             self.total += 1
-            with open(self.log_files / f'{match[0]}.txt','w') as log:
+            with open(self.log_files / f'{match[0]}.log','w') as log:
                 log.write(compile.stdout.decode('utf-8'))
             line += 1
         ws.cell(line,1,f"总共编译文件数{self.total}")
         ws.cell(line, 2, f"通过编译数{self.passed}")
         ws.cell(line, 3, f"失败编译数{self.failed}")
 
+        wb.save(self.directory / 'AnghaBench.xlsx')
 
 
     def run(self):

@@ -47,6 +47,7 @@ class Llvmcase():
         if run_clang.returncode != 0:
             print(f'llvmcase测试出错.clang -v运行报错,报错信息:{run_clang.stderr.decode('utf-8')}')
             print('不过osmts仍会继续运行')
+
         with open(self.directory / 'llvmcase.log', 'w') as file:
             file.write(run_clang.stdout.decode('utf-8'))
 

@@ -1,6 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil,os,fnmatch,time,tarfile
+import sys,subprocess,shutil,os,fnmatch,time,tarfile,threading
 from openpyxl import Workbook
+from concurrent.futures import ThreadPoolExecutor
 
 
 class AnghaBench:
@@ -9,9 +10,18 @@ class AnghaBench:
         self.path = Path('/root/osmts_tmp/AnghaBench')
         self.directory: Path = kwargs.get('saved_directory') / 'anghabench'
         self.log_files:Path = self.directory / 'log_files'
-        self.passed = 0
         self.failed = 0
         self.total = 0
+        self.lock = threading.Lock()
+        self.wb = Workbook()
+        self.ws = self.wb.active
+        self.ws.title = 'AnghaBench'
+
+        self.ws.cell(1,1,"AnghaBench测试中编译未通过项目汇总")
+        self.ws.merge_cells("A1:C1")
+        self.ws.cell(2,1,"c文件名")
+        self.ws.cell(2,2,"编译耗时")
+        self.ws.cell(2,3,"日志文件")
 
 
     def pre_test(self):
@@ -34,62 +44,43 @@ class AnghaBench:
             sys.exit(1)
 
 
+    def match2result(self,match):
+        start_time = time.time()
+        compile = subprocess.run(
+            f"gcc {match[1]} -c -o {match[1]}.o",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
+        )
+        # 记录编译时间
+        time_consuming = time.time() - start_time
+        if compile.returncode != 0:
+            with self.lock:
+                self.failed += 1
+                if (result := compile.stdout.decode('utf-8')) != '':
+                    log_name = match[0] + '.log'
+                    self.ws.append([match[0],f"{time_consuming:.4f}s",log_name])
+                    with open(self.log_files / log_name, 'w') as log:
+                        log.write(result)
+                else:
+                    self.ws.append([match[0],f"{time_consuming:.4f}s","日志为空,不生成日志文件"])
+
+
+
     def run_test(self):
-        wb = Workbook()
-        ws = wb.active
-        ws.title = 'AnghaBench'
-
-        ws.cell(1,1,"AnghaBench测试中编译未通过项目汇总")
-        ws.merge_cells("A1:C1")
-        ws.cell(2,1,"c文件名")
-        ws.cell(2,2,"编译耗时")
-        ws.cell(2,3,"日志文件")
-
-        line = 3
-
         matches = []
         for root,dirnames,filenames in os.walk(self.path):
             for filename in fnmatch.filter(filenames, '*.c'):
                 matches.append((filename,os.path.join(root,filename)))
-        for match in matches:
-            start_time = time.time()
+        self.total = len(matches)
 
-            compile = subprocess.run(
-                f"gcc {match[1]} -c -o {match[1]}.o",
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT
-            )
-
-            # 记录编译时间
-            time_consuming = time.time() - start_time
-
-            # 记录编译结果
-            if compile.returncode != 0: #编译失败
-                self.failed += 1
-                ws.cell(line, 1, match[0])
-                ws.cell(line, 2, f"{time_consuming:.4f}s")
-                # 记录日志(空日志不创建文件)
-                if (result := compile.stdout.decode('utf-8')) != '':
-                    log_name = match[0] + '.log'
-                    ws.cell(line, 3, log_name)
-                    with open(self.log_files / log_name, 'w') as log:
-                        log.write(result)
-                else:
-                    ws.cell(line, 3, "日志为空,不生成日志文件")
-
-                line += 1
-            else: #编译成功则不记录(否则数据太多)
-                self.passed += 1
-            self.total += 1
-
+        with ThreadPoolExecutor() as pool:
+            pool.map(self.match2result,matches)
 
         # 汇总结果
-        ws.cell(line,1,f"总共编译文件数{self.total}")
-        ws.cell(line, 2, f"通过编译数{self.passed}")
-        ws.cell(line, 3, f"失败编译数{self.failed}")
+        self.ws.append([f"总共编译文件数{self.total}",f"通过编译数{self.total - self.failed}",f"失败编译数{self.failed}"])
 
-        wb.save(self.directory / 'AnghaBench.xlsx')
+        self.wb.save(self.directory / 'AnghaBench.xlsx')
 
         with tarfile.open(self.directory / 'AnghaBench.tar.xz',"w:xz") as tar:
             tar.add(self.log_files)

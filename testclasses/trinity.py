@@ -1,6 +1,6 @@
 from pathlib import Path
 import sys,subprocess,lzma
-from openpyxl.workbook import Workbook
+
 
 
 class Trinity:

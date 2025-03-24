@@ -1,6 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil,os,asyncio
+import sys,subprocess,shutil
 from openpyxl import Workbook
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Csmith:
@@ -12,8 +13,31 @@ class Csmith:
         self.bin: Path = self.directory / 'bin'
 
 
-    async def source2bin(self):
-        pass
+    def create_source_and_bin(self,number):
+        # 创建随机c文件
+        csmith = subprocess.run(
+            "/root/osmts_tmp/csmith/install/bin/csmith",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        if csmith.returncode != 0:
+            print(f"csmith测试出错.生成c代码失败,报错信息:{csmith.stderr.decode('utf-8')}")
+            sys.exit(1)
+        with open(f"{self.source}/csmith{number}.c", "w") as file:
+            file.write(csmith.stdout.decode('utf-8'))
+
+        # 分别用gcc和clang编译c文件
+        compile = subprocess.run(
+            f"gcc {self.source}/csmith{number}.c -I {self.path}/install/include -o {self.bin}/csmith{number}_gcc && "
+            f"clang {self.source}/csmith{number}.c -I {self.path}/install/include -o {self.bin}/csmith{number}_clang",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        if compile.returncode != 0:
+            print(f"csmith测试出错.编译c代码失败,报错信息:{compile.stderr.decode('utf-8')}")
+            sys.exit(1)
 
 
     def pre_test(self):
@@ -50,18 +74,9 @@ class Csmith:
             sys.exit(1)
 
         # 批量生成c代码
-        for i in range(1000):
-            csmith = subprocess.run(
-                "/root/osmts_tmp/csmith/install/bin/csmith",
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            if csmith.returncode != 0:
-                print(f"csmith测试出错.生成c代码失败,报错信息:{csmith.stderr.decode('utf-8')}")
-                sys.exit(1)
-            with open(f"{self.source}/csmith{i+1}.c", "w") as file:
-                file.write(csmith.stdout.decode('utf-8'))
+        with ThreadPoolExecutor() as pool:
+            pool.map(self.create_source_and_bin, [i for i in range(1,1001)])
+
 
 
     def run_test(self):

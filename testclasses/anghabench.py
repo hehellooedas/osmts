@@ -42,6 +42,7 @@ class AnghaBench:
         ws.cell(1,1,"c文件名")
         ws.cell(1,2,"编译结果")
         ws.cell(1,3,"编译耗时")
+        ws.cell(1,4,"日志文件")
 
         line = 2
 
@@ -76,8 +77,12 @@ class AnghaBench:
 
             # 记录日志(空日志不创建文件)
             if (result := compile.stdout.decode('utf-8')) != '':
-                with open(self.log_files / f'{match[0]}.log','w') as log:
+                log_name = match[0] + '.log'
+                ws.cell(line,4,log_name)
+                with open(self.log_files / log_name,'w') as log:
                     log.write(result)
+            else:
+                ws.cell(line,4,"日志为空,不生成日志文件")
 
             line += 1
 

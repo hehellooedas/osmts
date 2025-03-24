@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys,subprocess,shutil
 from openpyxl import Workbook
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor,as_completed
 
 
 class Csmith:
@@ -79,42 +79,62 @@ class Csmith:
         with ThreadPoolExecutor() as pool:
             pool.map(self.create_source_and_bin, [i for i in range(1,1001)])
 
+        print(f'源码文件生成在{self.source}目录,已完成')
+        print(f'二进制文件生成在{self.bin}目录,已完成')
+
+
+    def check_each_csmith(self,number:int) -> tuple:
+        gcc = subprocess.Popen(
+            f"{self.directory}/bin/csmith{number}_gcc",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        clang = subprocess.Popen(
+            f"{self.directory}/bin/csmith{number}_clang",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        gcc_checksum,gcc_stderr = gcc.communicate()
+        clang_checksum,clang_stderr = clang.communicate()
+        if gcc.returncode != 0:
+            print(f'Csmith测试出错.csmith{number}_gcc运行失败,报错信息：:{gcc_stderr}')
+        if clang.returncode != 0:
+            print(f'Csmith测试出错.csmith{number}_clang运行失败,报错信息：:{clang_stderr}')
+        return (gcc_checksum,clang_stderr)
 
 
     def run_test(self):
-        wb = Workbook()
-        ws = wb.active
-        ws.title = 'Csmith'
-        ws.cell(1,1,"程序名")
-        ws.cell(1,2,"检验和是否一致")
-        ws.cell(1,3,"gcc checksum")
-        ws.cell(1,4,"clang checksum")
+        with ThreadPoolExecutor() as pool:
+            # 先提交任务
+            futures = [pool.submit(self.check_each_csmith,i) for i in range(1,1001)]
 
-        for i in range(1,1001):
-            ws.cell(i + 1,1,f"csmith{i}_gcc")
-            gcc = subprocess.run(
-                f"{self.directory}/bin/csmith{i}_gcc",
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL
-            )
-            clang = subprocess.run(
-                f"{self.directory}/bin/csmith{i}_clang",
-                shell=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.DEVNULL
-            )
-            gcc_checksum = gcc.stdout.decode('utf-8')
-            clang_checksum = clang.stdout.decode('utf-8')
-            if gcc_checksum == clang_checksum:
-                ws.cell(i + 1,2,"是")
-            else:
-                ws.cell(i + 1, 2, "否")
-                ws.cell(i + 1, 3, gcc_checksum)
-                ws.cell(i + 1, 4, clang_checksum)
+            wb = Workbook()
+            ws = wb.active
+            ws.title = 'Csmith'
+            ws.cell(1, 1, "程序名")
+            ws.cell(1, 2, "检验和是否一致")
+            ws.cell(1, 3, "gcc checksum")
+            ws.cell(1, 4, "clang checksum")
+            for i in range(1, 1001):
+                ws.cell(i + 1, 1, f"csmith{i}.c")
+            line = 2
 
+            # 获取返回值
+            for future in as_completed(futures):
+                gcc_checksum,clang_checksum = future.result()
+                if gcc_checksum == clang_checksum:
+                    ws.cell(line, 2, "是")
+                else:
+                    ws.cell(line, 2, "否")
+                    ws.cell(line, 3, gcc_checksum)
+                    ws.cell(line, 4, clang_checksum)
+                line += 1
 
-        wb.save(self.directory / 'csmith.xlsx')
+            wb.save(self.directory / 'csmith.xlsx')
 
 
     def run(self):

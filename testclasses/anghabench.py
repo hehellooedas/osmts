@@ -63,7 +63,7 @@ class AnghaBench:
 
             # 记录编译时间
             time_consuming = time.time() - start_time
-            ws.cell(line, 3, f"{time_consuming}s")
+            ws.cell(line, 3, f"{time_consuming:.4f}s")
 
             # 记录编译结果
             if compile.returncode != 0: #编译失败
@@ -75,8 +75,7 @@ class AnghaBench:
             self.total += 1
 
             # 记录日志(空日志不创建文件)
-            result = compile.stdout.decode('utf-8')
-            if result != '':
+            if (result := compile.stdout.decode('utf-8')) != '':
                 with open(self.log_files / f'{match[0]}.log','w') as log:
                     log.write(result)
 

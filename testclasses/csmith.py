@@ -104,7 +104,7 @@ class Csmith:
             print(f'Csmith测试出错.csmith{number}_gcc运行失败,报错信息：:{gcc_stderr}')
         if clang.returncode != 0:
             print(f'Csmith测试出错.csmith{number}_clang运行失败,报错信息：:{clang_stderr}')
-        return (gcc_checksum,clang_stderr)
+        return (gcc_checksum,clang_checksum)
 
 
     def run_test(self):

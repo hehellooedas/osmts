@@ -66,7 +66,6 @@ class AnghaBench:
                     self.ws.append([match[0],f"{time_consuming:.4f}s","日志为空,不生成日志文件"])
 
 
-
     def run_test(self):
         matches = []
         for root,dirnames,filenames in os.walk(self.path):

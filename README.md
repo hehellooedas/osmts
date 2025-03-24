@@ -101,7 +101,7 @@ netperf_server_ip = "127.0.0.1"
 | dejagnu    | 完成 |
 | llvmcase   | 完成 |
 | anghabench | 完成 |
-
+| csmith     | 完成 |
 
 
 ## 注意事项

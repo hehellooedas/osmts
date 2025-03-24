@@ -14,6 +14,7 @@ from testclasses.ltp_posix import Ltp_posix
 from testclasses.llvmcase import Llvmcase
 from testclasses.dejagnu import DejaGnu
 from testclasses.anghabench import AnghaBench
+from testclasses.csmith import Csmith
 
 
 osmts_tests = {
@@ -64,5 +65,8 @@ osmts_tests = {
     ),
     "anghabench":(
         AnghaBench
+    ),
+    "csmith":(
+        Csmith
     )
 }

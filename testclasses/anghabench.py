@@ -39,20 +39,19 @@ class AnghaBench:
         ws = wb.active
         ws.title = 'AnghaBench'
 
-        ws.cell(1,1,"c文件名")
-        ws.cell(1,2,"编译结果")
-        ws.cell(1,3,"编译耗时")
-        ws.cell(1,4,"日志文件")
+        ws.cell(1,1,"AnghaBench测试中编译未通过项目汇总")
+        ws.merge_cells("A1:C1")
+        ws.cell(2,1,"c文件名")
+        ws.cell(2,2,"编译耗时")
+        ws.cell(2,3,"日志文件")
 
-        line = 2
+        line = 3
 
         matches = []
         for root,dirnames,filenames in os.walk(self.path):
             for filename in fnmatch.filter(filenames, '*.c'):
                 matches.append((filename,os.path.join(root,filename)))
         for match in matches:
-            # 记录编译文件名
-            ws.cell(line, 1, match[0])
             start_time = time.time()
 
             compile = subprocess.run(
@@ -64,28 +63,28 @@ class AnghaBench:
 
             # 记录编译时间
             time_consuming = time.time() - start_time
-            ws.cell(line, 3, f"{time_consuming:.4f}s")
 
             # 记录编译结果
             if compile.returncode != 0: #编译失败
                 self.failed += 1
-                ws.cell(line,2,"failed")
-            else:
+                ws.cell(line, 1, match[0])
+                ws.cell(line, 2, f"{time_consuming:.4f}s")
+                # 记录日志(空日志不创建文件)
+                if (result := compile.stdout.decode('utf-8')) != '':
+                    log_name = match[0] + '.log'
+                    ws.cell(line, 3, log_name)
+                    with open(self.log_files / log_name, 'w') as log:
+                        log.write(result)
+                else:
+                    ws.cell(line, 3, "日志为空,不生成日志文件")
+
+                line += 1
+            else: #编译成功则不记录(否则数据太多)
                 self.passed += 1
-                ws.cell(line,2,"passed")
             self.total += 1
 
-            # 记录日志(空日志不创建文件)
-            if (result := compile.stdout.decode('utf-8')) != '':
-                log_name = match[0] + '.log'
-                ws.cell(line,4,log_name)
-                with open(self.log_files / log_name,'w') as log:
-                    log.write(result)
-            else:
-                ws.cell(line,4,"日志为空,不生成日志文件")
 
-            line += 1
-
+        # 汇总结果
         ws.cell(line,1,f"总共编译文件数{self.total}")
         ws.cell(line, 2, f"通过编译数{self.passed}")
         ws.cell(line, 3, f"失败编译数{self.failed}")

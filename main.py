@@ -6,6 +6,7 @@ import sys,psutil,time
 import tomllib,ipaddress
 import subprocess,argparse,humanfriendly
 from pathlib import Path
+from openpyxl import Workbook
 from testclasses import osmts_tests
 
 
@@ -148,6 +149,10 @@ if __name__ == '__main__':
     netperf_server_ip = config.get("netperf_server_ip", None)
     remove_osmts_tmp_dir = bool(config.get("remove_osmts_tmp_dir", None))
     merge = bool(config.get("merge", None))
+    if merge:
+        osmts_wb = Workbook()
+    else:
+        osmts_wb = None
     csmith_count:int = config.get("csmith_count", 1000)
     if csmith_count < 10:
         print('csmith_count数量过小,不建议小于10,现在设置csmith_count=1000')

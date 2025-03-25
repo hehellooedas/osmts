@@ -9,8 +9,8 @@ from openpyxl import Workbook
 
 class Jotai:
     def __init__(self, **kwargs):
-        self.rpms = {'gcc-*'}
-        self.path = Path('/root/osmts_tmp/jotai')
+        self.rpms = set()
+        self.path = Path('/root/osmts_tmp/jotai-benchmarks')
         self.directory: Path = kwargs.get('saved_directory') / 'jotai'
 
         self.anghaLeaves = Path('/root/osmts_tmp/jotai-benchmarks/benchmarks/anghaLeaves')
@@ -46,8 +46,8 @@ class Jotai:
     def pre_test(self):
         if self.path.exists():
             shutil.rmtree(self.path)
-        if not self.path.exists():
-            self.path.mkdir(parents=True)
+        if not self.directory.exists():
+            self.directory.mkdir(parents=True)
 
         # 拉取jotai-benchmarks源码
         git_clone = subprocess.run(
@@ -76,14 +76,14 @@ class Jotai:
         if compile.returncode != 0:
             with self.anghaLeaves_lock:
                 self.anghaLeaves_failed += 1
-                self.ws_anghaLeaves.append([source_file, 'compile failed'],log_file)
+                self.ws_anghaLeaves.append([source_file, 'compile failed',log_file])
             with open(log_file,'w') as log:
                 log.write(compile.stdout.decode('utf-8'))
             return # 编译失败就不再往下运行了
 
         # 运行
         run = subprocess.run(
-            f"{self.anghaLeaves_output}/{source_file}.out",
+            f"{self.anghaLeaves_output}/{source_file}.out 0",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -112,13 +112,13 @@ class Jotai:
         if compile.returncode != 0:
             with self.anghaMath_lock:
                 self.anghaMath_failed += 1
-                self.ws_anghaMath.append([source_file, 'compile failed'],log_file)
+                self.ws_anghaMath.append([source_file, 'compile failed',log_file])
             with open(log_file,'w') as log:
                 log.write(compile.stdout.decode('utf-8'))
             return
 
         run = subprocess.run(
-            f"{self.anghaMath_output}/{source_file}.out",
+            f"{self.anghaMath_output}/{source_file}.out 0",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

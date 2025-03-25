@@ -140,6 +140,9 @@ _可以对excel文件中Result列进行筛选获取到其中FAIL的项目_
 
 ![ltp_stress_iodata总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/ltp_stress_iodata.png)
 
+AnghaBench测试类的输出结果如图所示:
+![AnghaBench总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/anghabench_excel.png)
+
 ---
 
 osmts项目可以托管更多的测试项目,接入后可以一键批量运行测试,如果有需要可以[给本项目提交issue](https://gitee.com/April_Zhao/osmts/issues),或者参考testclasses目录里的测试类自建 <测试名.py>文件

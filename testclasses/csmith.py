@@ -11,6 +11,7 @@ class Csmith:
         self.directory: Path = kwargs.get('saved_directory') / 'csmith'
         self.source:Path = self.directory / 'source'
         self.bin: Path = self.directory / 'bin'
+        self.csmith_count:int = kwargs.get('csmith_count',1000) + 1
 
 
     def create_source_and_bin(self,number):
@@ -77,7 +78,7 @@ class Csmith:
 
         # 批量生成c代码
         with ThreadPoolExecutor() as pool:
-            pool.map(self.create_source_and_bin, [i for i in range(1,1001)])
+            pool.map(self.create_source_and_bin, [i for i in range(1,self.csmith_count)])
 
         print(f'源码文件生成在{self.source}目录,已完成')
         print(f'二进制文件生成在{self.bin}目录,已完成')
@@ -110,7 +111,7 @@ class Csmith:
     def run_test(self):
         with ThreadPoolExecutor() as pool:
             # 先提交任务
-            futures = [pool.submit(self.check_each_csmith,i) for i in range(1,1001)]
+            futures = [pool.submit(self.check_each_csmith,i) for i in range(1,self.csmith_count)]
 
             wb = Workbook()
             ws = wb.active

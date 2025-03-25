@@ -105,7 +105,7 @@ def from_tests_to_tasks(run_tests:list) -> list:
     testclasses = []
     all_need_rpms = set()
     for task in tasks:
-        testclass = osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,merge=merge)
+        testclass = osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,merge=merge,csmith_count=csmith_count)
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
     # 统一安装所有所需的rpm包
@@ -148,6 +148,13 @@ if __name__ == '__main__':
     netperf_server_ip = config.get("netperf_server_ip", None)
     remove_osmts_tmp_dir = bool(config.get("remove_osmts_tmp_dir", None))
     merge = bool(config.get("merge", None))
+    csmith_count:int = config.get("csmith_count", 1000)
+    if csmith_count < 10:
+        print('csmith_count数量过小,不建议小于10,现在设置csmith_count=1000')
+        csmith_count = 1000
+    elif csmith_count > 2000:
+        print('csmith_count数量过大,不建议大于2000,现在设置csmith_count=1000')
+        csmith_count = 1000
 
 
     if saved_directory is None:

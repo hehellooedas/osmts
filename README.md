@@ -66,14 +66,16 @@ saved_directory = "/root/osmts_result"
 merge = 0
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
+csmith_count = 1000
 ```
 
 1. run_tests是一个列表，里面是需要测试的项目;
 2. run_tests里的值可以是开发进度里的任意个项目,如果出现'performance-test'则自动添加"fio", "stream", "iozone", "unixbench", "libmicro", "nmap", "lmbench", "netperf";
-3. 如果出现ALL,则添加所有测试项目进去;
+3. 如果run_tests=["ALL"],则添加所有测试项目进去;
 3. saved_directory填写测试结果存放的目录，main.py运行结束后会在这个目录产生excel文件，默认为'/root/osmts_result';
 4. compiler是待测试的编译环境，应当填写gcc或者clang ,默认是gcc;
-5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000。
+5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000;
+6. csmith_count是csmith测试生成和编译随机c文件的数量,取值范围[10,2000],默认为1000.
 
 
 

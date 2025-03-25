@@ -45,6 +45,7 @@ class AnghaBench:
 
 
     def match2result(self,match):
+        log_name = match[0] + '.log'
         start_time = time.time()
         compile = subprocess.run(
             f"gcc {match[1]} -c -o {match[1]}.o",
@@ -58,7 +59,6 @@ class AnghaBench:
             with self.lock:
                 self.failed += 1
                 if (result := compile.stdout.decode('utf-8')) != '':
-                    log_name = match[0] + '.log'
                     self.ws.append([match[0],f"{time_consuming:.4f}s",log_name])
                     with open(self.log_files / log_name, 'w') as log:
                         log.write(result)

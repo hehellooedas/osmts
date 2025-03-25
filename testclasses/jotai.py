@@ -50,16 +50,18 @@ class Jotai:
             self.directory.mkdir(parents=True)
 
         # 创建anghaLeaves系列目录
-        if self.anghaLeaves.exists():
-            shutil.rmtree(self.anghaLeaves)
-        self.anghaLeaves.mkdir(parents=True)
+        if self.anghaLeaves_output.exists():
+            shutil.rmtree(self.anghaLeaves_output)
+        if self.anghaLeaves_logs.exists():
+            shutil.rmtree(self.anghaLeaves_logs)
         self.anghaLeaves_output.mkdir(parents=True)
         self.anghaLeaves_logs.mkdir(parents=True)
 
         # 创建anghaMath系列目录
-        if self.anghaMath.exists():
-            shutil.rmtree(self.anghaMath)
-        self.anghaMath.mkdir(parents=True)
+        if self.anghaMath_output.exists():
+            shutil.rmtree(self.anghaMath_output)
+        if self.anghaMath_logs.exists():
+            shutil.rmtree(self.anghaMath_logs)
         self.anghaMath_output.mkdir(parents=True)
         self.anghaMath_logs.mkdir(parents=True)
 

@@ -104,6 +104,7 @@ csmith_count = 1000
 | llvmcase   | 完成 |
 | anghabench | 完成 |
 | csmith     | 完成 |
+| jotai      | 完成 |
 
 
 ## 注意事项
@@ -142,6 +143,10 @@ _可以对excel文件中Result列进行筛选获取到其中FAIL的项目_
 
 AnghaBench测试类的输出结果如图所示:
 ![AnghaBench总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/anghabench_excel.png)
+
+jotai测试类的输出结果如图所示:
+![jotai总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/jotai_excel.png)
+
 
 ---
 

@@ -100,8 +100,8 @@ class Csmith:
             stderr=subprocess.DEVNULL
         )
         if gcc.returncode != 0 or clang.returncode != 0:
-            return (None,None)
-        return (gcc.stdout.decode('utf-8'), clang.stdout.decode('utf-8'))
+            return (number,None,None)
+        return (number,gcc.stdout.decode('utf-8'), clang.stdout.decode('utf-8'))
 
 
     def run_test(self):
@@ -118,11 +118,11 @@ class Csmith:
             ws.cell(1, 4, "clang checksum")
             for i in range(1, 1001):
                 ws.cell(i + 1, 1, f"csmith{i}.c")
-            line = 2
 
             # 获取返回值
             for future in as_completed(futures):
-                gcc_checksum,clang_checksum = future.result()
+                line,gcc_checksum,clang_checksum = future.result()
+                line += 1
                 if gcc_checksum is None and clang_checksum is None:
                     ws.cell(line, 2, "程序运行超时,不符合条件")
                 elif gcc_checksum == clang_checksum:
@@ -131,7 +131,6 @@ class Csmith:
                     ws.cell(line, 2, "否")
                     ws.cell(line, 3, gcc_checksum)
                     ws.cell(line, 4, clang_checksum)
-                line += 1
 
             wb.save(self.directory / 'csmith.xlsx')
 

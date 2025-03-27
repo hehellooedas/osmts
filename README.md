@@ -105,6 +105,7 @@ csmith_count = 1000
 | anghabench | 完成 |
 | csmith     | 完成 |
 | jotai      | 完成 |
+| jtreg      | 完成 |
 
 
 ## 注意事项

@@ -1,6 +1,5 @@
 import shutil
 import subprocess
-import sys
 import tarfile
 import requests
 from pathlib import Path
@@ -37,6 +36,11 @@ def remove_rpm(package_name):
         stderr=subprocess.DEVNULL,
     )
 
+def clean_java_environment():
+    remove_rpm("java-1.8.0-openjdk*")
+    remove_rpm("java-11-openjdk*")
+    remove_rpm("java-17-openjdk*")
+
 
 class Jtreg:
     def __init__(self, **kwargs):
@@ -63,9 +67,9 @@ class Jtreg:
         self.path.mkdir(parents=True)
 
         # 获取tar包
-        with ThreadPoolExecutor(max_workers=4) as pool:
+        with ThreadPoolExecutor(max_workers=5) as pool:
             pool.map(self.get_tar, ('jtreg','OpenJDK8-test','OpenJDK11-test','OpenJDK17-test'))
-        sys.exit(1)
+            pool.submit(clean_java_environment)
 
 
     def run_test(self):
@@ -73,11 +77,15 @@ class Jtreg:
         print('  开始进行OpenJDK 8测试')
         install_rpm('java-1.8.0-openjdk*')
         jtreg = subprocess.run(
-            "export JT_HOME=",
+            "export JT_HOME=/root/osmts_tmp/jtreg/jtreg-4.2 && cd /root/osmts_tmp/jtreg/OpenJDK8-test && "
+            "/root/osmts_tmp/jtreg/jtreg-4.2/bin/jtreg -va -ignore:quiet -jit -conc:auto -timeout:16 -tl:3590 "
+            "hotspot/test:hotspot_tier1 langtools/test:langtools_tier1 jdk/test:jdk_tier1",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
+        with open(self.directory / 'OpenJDK8.log', 'w') as log:
+            log.write(jtreg.stdout.decode('utf-8'))
         remove_rpm('java-1.8.0-openjdk*')
         print('  OpenJDK 8测试结束')
 
@@ -85,7 +93,16 @@ class Jtreg:
         # OpenJDK11 测试
         print('  开始进行OpenJDK 11测试')
         install_rpm('java-11-openjdk*')
-
+        jtreg = subprocess.run(
+            "export JT_HOME=/root/osmts_tmp/jtreg/jtreg-7.3.1 && cd /root/osmts_tmp/jtreg/OpenJDK11-test && "
+            "/root/osmts_tmp/jtreg/jtreg-7.3.1/bin/jtreg -va -ignore:quiet -jit -conc:auto -timeout:16 -tl:3590 "
+            "langtools:tier1 hotspot/jtreg:tier1 jdk:tier1 jaxp:tier1",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        with open(self.directory / 'OpenJDK11.log', 'w') as log:
+            log.write(jtreg.stdout.decode('utf-8'))
         remove_rpm('java-11-openjdk*')
         print('  OpenJDK 11测试结束')
 
@@ -93,7 +110,16 @@ class Jtreg:
         # OpenJDK17 测试
         print('  开始进行OpenJDK 17测试')
         install_rpm('java-17-openjdk*')
-        
+        jtreg = subprocess.run(
+            "export JT_HOME=/root/osmts_tmp/jtreg/jtreg-7.3.1 && cd /root/osmts_tmp/jtreg/OpenJDK17-test && "
+            "/root/osmts_tmp/jtreg/jtreg-7.3.1/bin/jtreg -va -ignore:quiet -jit -conc:auto -timeout:16 -tl:3590 "
+            "jtreg:tier1 langtools:tier1 jdk:tier1 jaxp:tier1 lib-test:tier1",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        with open(self.directory / 'OpenJDK17.log', 'w') as log:
+            log.write(jtreg.stdout.decode('utf-8'))
         remove_rpm('java-17-openjdk*')
         print('  OpenJDK 17测试结束')
 

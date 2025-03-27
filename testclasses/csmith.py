@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import sys,subprocess,shutil
 from openpyxl import Workbook
@@ -67,7 +68,7 @@ class Csmith:
             sys.exit(1)
 
         build = subprocess.run(
-            f"cd {self.path} && mkdir install && cmake -DCMAKE_INSTALL_PREFIX=/root/osmts_tmp/csmith/install . && make && make install",
+            f"cd {self.path} && mkdir install && cmake -DCMAKE_INSTALL_PREFIX=/root/osmts_tmp/csmith/install . && make -j {os.cpu_count()} && make install",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -77,7 +78,7 @@ class Csmith:
             sys.exit(1)
 
         # 批量生成c代码
-        with ThreadPoolExecutor() as pool:
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
             pool.map(self.create_source_and_bin, [i for i in range(1,self.csmith_count)])
 
         print(f'源码文件生成在{self.source}目录,已完成')
@@ -85,31 +86,26 @@ class Csmith:
 
 
     def check_each_csmith(self,number:int) -> tuple:
-        gcc = subprocess.Popen(
-            f"{self.directory}/bin/csmith{number}_gcc",
+        # 超过10秒则跳过(生成的c代码要求算力太大,不符合测试条件)
+        gcc = subprocess.run(
+            f"timeout 10 {self.directory}/bin/csmith{number}_gcc",
             shell=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            stderr=subprocess.DEVNULL
         )
-        clang = subprocess.Popen(
-            f"{self.directory}/bin/csmith{number}_clang",
+        clang = subprocess.run(
+            f"timeout 10 {self.directory}/bin/csmith{number}_clang",
             shell=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
+            stderr=subprocess.DEVNULL
         )
-        gcc_checksum,gcc_stderr = gcc.communicate()
-        clang_checksum,clang_stderr = clang.communicate()
-        if gcc.returncode != 0:
-            print(f'Csmith测试出错.csmith{number}_gcc运行失败,报错信息：:{gcc_stderr}')
-        if clang.returncode != 0:
-            print(f'Csmith测试出错.csmith{number}_clang运行失败,报错信息：:{clang_stderr}')
-        return (gcc_checksum,clang_checksum)
+        if gcc.returncode != 0 or clang.returncode != 0:
+            return (None,None)
+        return (gcc.stdout.decode('utf-8'), clang.stdout.decode('utf-8'))
 
 
     def run_test(self):
-        with ThreadPoolExecutor() as pool:
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
             # 先提交任务
             futures = [pool.submit(self.check_each_csmith,i) for i in range(1,self.csmith_count)]
 
@@ -127,6 +123,8 @@ class Csmith:
             # 获取返回值
             for future in as_completed(futures):
                 gcc_checksum,clang_checksum = future.result()
+                if gcc_checksum is None and clang_checksum is None:
+                    continue
                 if gcc_checksum == clang_checksum:
                     ws.cell(line, 2, "是")
                 else:

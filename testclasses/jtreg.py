@@ -4,6 +4,7 @@ import sys
 import tarfile
 import requests
 from pathlib import Path
+from io import BytesIO
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
 
@@ -50,7 +51,7 @@ class Jtreg:
             headers=headers
         )
         response.raise_for_status()
-        with tarfile.open(fileobj=response.raw, mode="r:xz") as tar:
+        with tarfile.open(fileobj=BytesIO(response.content), mode="r:xz") as tar:
             tar.extractall(path=self.path)
 
 

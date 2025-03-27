@@ -124,8 +124,8 @@ class Csmith:
             for future in as_completed(futures):
                 gcc_checksum,clang_checksum = future.result()
                 if gcc_checksum is None and clang_checksum is None:
-                    continue
-                if gcc_checksum == clang_checksum:
+                    ws.cell(line, 2, "程序运行超时,不符合条件")
+                elif gcc_checksum == clang_checksum:
                     ws.cell(line, 2, "是")
                 else:
                     ws.cell(line, 2, "否")

@@ -16,6 +16,7 @@ from testclasses.dejagnu import DejaGnu
 from testclasses.anghabench import AnghaBench
 from testclasses.csmith import Csmith
 from testclasses.jotai import Jotai
+from testclasses.jtreg import Jtreg
 
 
 osmts_tests = {
@@ -72,5 +73,8 @@ osmts_tests = {
     ),
     "jotai":(
         Jotai
+    ),
+    "jtreg":(
+        Jtreg
     )
 }

@@ -7,22 +7,19 @@ from pathlib import Path
 from openpyxl import Workbook
 
 
-max_workers = asyncio.Semaphore(os.cpu_count() * 100) # 限制并发度
-
 
 async def rpm_check_each(package_name):
-    async with max_workers:
-        rpm_check = await asyncio.create_subprocess_shell(
-            f"rpm -K /root/osmts_tmp/gpgcheck/{package_name}",
-            stdout=asyncio.subprocess.DEVNULL,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        await asyncio.sleep(1.5)
-        _,stderr = await rpm_check.communicate()
-        if rpm_check.returncode != 0:
-            return True,package_name, stderr.decode('utf-8')
-        else:
-            return False,None,None
+    rpm_check = await asyncio.create_subprocess_shell(
+        f"rpm -K /root/osmts_tmp/gpgcheck/{package_name}",
+        stdout=asyncio.subprocess.DEVNULL,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    await asyncio.sleep(1.5)
+    _,stderr = await rpm_check.communicate()
+    if rpm_check.returncode != 0:
+        return True,package_name, stderr.decode('utf-8')
+    else:
+        return False,None,None
 
 
 
@@ -39,8 +36,9 @@ class GpgCheck:
 
 
     async def rpm_check_all(self):
+        packages = list(os.walk(self.path))[0][2]
         # 对每个rpm包创建一个测试任务
-        tasks = [asyncio.create_task(rpm_check_each(package)) for package in self.packages]
+        tasks = [asyncio.create_task(rpm_check_each(package)) for package in packages]
         futures = await asyncio.gather(*tasks)
         for future in futures:
             failed, package_name, error_log = future
@@ -102,20 +100,21 @@ class GpgCheck:
             else:
                 self.packages.append(package)
 
-        # 根据包名批量下载所有需要测试的rpm包
+        # 根据包名批量下载并测试rpm包
         for package_list in numpy.array_split(self.packages,100):
-            install_packages = ' '.join(package_list)
             rpm_download = subprocess.run(
-                f"dnf download {install_packages} --destdir={self.path}",
+                f"dnf download {' '.join(package_list)} --destdir={self.path}",
                 shell=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
             )
             if rpm_download.returncode != 0:
-                print(f"gpgcheck测试出错.下载所有待测的rpm包失败,报错信息:{rpm_download.stderr.decode('utf-8')}")
-                sys.exit(1)
+                print(f"gpgcheck测试出错.下载待测的rpm包失败,报错信息:{rpm_download.stderr.decode('utf-8')}")
+                print(f"本批次下载出错的rpm包为:{package_list}")
 
-        asyncio.run(self.rpm_check_all())
+            asyncio.run(self.rpm_check_all())
+            shutil.rmtree(self.path)
+            self.path.mkdir(parents=True)
         self.wb.save(self.directory / 'gpgcheck.xlsx')
 
 

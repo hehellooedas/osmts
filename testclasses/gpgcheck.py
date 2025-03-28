@@ -2,6 +2,7 @@ import shutil
 import subprocess
 import sys,os
 import asyncio
+import numpy
 from pathlib import Path
 from openpyxl import Workbook
 
@@ -101,16 +102,18 @@ class GpgCheck:
             else:
                 self.packages.append(package)
 
-        # 根据包名一次性下载所有需要测试的rpm包
-        rpm_download = subprocess.run(
-            f"dnf download {self.packages} --destdir={self.path}",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if rpm_download.returncode != 0:
-            print(f"gpgcheck测试出错.下载所有待测的rpm包失败,报错信息:{rpm_download.stderr.decode('utf-8')}")
-            sys.exit(1)
+        # 根据包名批量下载所有需要测试的rpm包
+        for package_list in numpy.array_split(self.packages,100):
+            install_packages = ' '.join(package_list)
+            rpm_download = subprocess.run(
+                f"dnf download {install_packages} --destdir={self.path}",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            if rpm_download.returncode != 0:
+                print(f"gpgcheck测试出错.下载所有待测的rpm包失败,报错信息:{rpm_download.stderr.decode('utf-8')}")
+                sys.exit(1)
 
         asyncio.run(self.rpm_check_all())
         self.wb.save(self.directory / 'gpgcheck.xlsx')

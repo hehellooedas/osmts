@@ -1,12 +1,13 @@
 import shutil
 import subprocess
-import sys
+import sys,os
 import asyncio
 from pathlib import Path
 from openpyxl import Workbook
 
 
-max_workers = asyncio.Semaphore(5000)
+max_workers = asyncio.Semaphore(os.cpu_count() * 100) # 限制并发度
+
 
 async def rpm_check_each(package_name):
     async with max_workers:
@@ -52,12 +53,15 @@ class GpgCheck:
         if self.path.exists():
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True)
+
+        # 更新缓存以便后面下载
         subprocess.run(
-            "dnf update -y",
+            "dnf clean all && dnf makecache",
             shell=True,
             stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
         )
 
+        # 引入openEuler的gpg验证密钥
         import_gpg_key = subprocess.run(
             "rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openEuler",
             shell=True,
@@ -68,6 +72,7 @@ class GpgCheck:
             print(f"gpgcheck测试出错.import gpg文件失败,报错信息:{import_gpg_key.stderr.decode('utf-8')}")
             sys.exit(1)
 
+        # 获取已安装的所有rpm包名
         dnf_list = subprocess.run(
             "dnf list available | awk '/Available Packages/{flag=1; next} flag' | awk '{print $1}'",
             shell=True,

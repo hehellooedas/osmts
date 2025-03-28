@@ -17,6 +17,8 @@ from testclasses.anghabench import AnghaBench
 from testclasses.csmith import Csmith
 from testclasses.jotai import Jotai
 from testclasses.jtreg import Jtreg
+from testclasses.openscap import OpenSCAP
+from testclasses.gpgcheck import GpgCheck
 
 
 osmts_tests = {
@@ -76,5 +78,11 @@ osmts_tests = {
     ),
     "jtreg":(
         Jtreg
+    ),
+    "openscap":(
+        OpenSCAP
+    ),
+    "gpgcheck":(
+        GpgCheck
     )
 }

@@ -116,7 +116,7 @@ class Csmith:
             ws.cell(1, 2, "检验和是否一致")
             ws.cell(1, 3, "gcc checksum")
             ws.cell(1, 4, "clang checksum")
-            for i in range(1, 1001):
+            for i in range(1, self.csmith_count):
                 ws.cell(i + 1, 1, f"csmith{i}.c")
 
             # 获取返回值

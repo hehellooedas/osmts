@@ -31,19 +31,12 @@ class GpgCheck:
         self.rpms = set()
         self.path = Path('/root/osmts_tmp/gpgcheck')
         self.directory: Path = kwargs.get('saved_directory') / 'gpgcheck'
-        self.rpm_package_number = 0
+        self.rpm_package_count = 0
         self.packages = []
 
         # 操作Excel表格
         self.wb = Workbook()
         self.ws = self.wb.active
-        self.ws.title = 'gpgcheck'
-        self.ws.cell(1,1,f"当前系统已安装rpm包的数量:{self.rpm_package_count}")
-        self.ws.merge_cells('A1:B1')
-        self.ws.cell(2,1,"gpgcheck失败的rpm包统计")
-        self.ws.merge_cells('A2:B2')
-        self.ws.cell(3,1,"package name")
-        self.ws.cell(3,2,"报错日志")
 
 
     async def rpm_check_all(self):
@@ -89,6 +82,14 @@ class GpgCheck:
             sys.exit(1)
         self.rpm_package_list = dnf_list.stdout.decode('utf-8').splitlines()
         self.rpm_package_count = len(self.rpm_package_list)
+        
+        self.ws.title = 'gpgcheck'
+        self.ws.cell(1,1,f"当前系统已安装rpm包的数量:{self.rpm_package_count}")
+        self.ws.merge_cells('A1:B1')
+        self.ws.cell(2,1,"gpgcheck失败的rpm包统计")
+        self.ws.merge_cells('A2:B2')
+        self.ws.cell(3,1,"package name")
+        self.ws.cell(3,2,"报错日志")
 
 
     def run_test(self):

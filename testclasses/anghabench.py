@@ -1,5 +1,7 @@
 from pathlib import Path
 import sys,shutil,os,fnmatch,tarfile,subprocess
+from pySmartDL import SmartDL
+import lzma,json
 from openpyxl import Workbook
 import asyncio,aiofiles
 
@@ -11,6 +13,7 @@ class AnghaBench:
         self.path = Path('/root/osmts_tmp/AnghaBench')
         self.directory: Path = kwargs.get('saved_directory') / 'anghabench'
         self.log_files:Path = self.directory / 'log_files'
+        self.matches:list = []
 
         self.failed = 0
         self.total = 0
@@ -30,19 +33,45 @@ class AnghaBench:
             self.directory.mkdir(parents=True,exist_ok=True)
             self.log_files.mkdir(parents=True,exist_ok=True)
         if self.path.exists():
-            shutil.rmtree(self.path)
-        self.path.mkdir(parents=True)
+            download = SmartDL(
+                urls = "https://gitee.com/April_Zhao/osmts/releases/download/v1.0/osmts_AnghaBench_files.json.xz",
+                threads = 16,
+                dest = str('/tmp/osmts_AnghaBench_files.json.xz'),
+                progress_bar = False,
+                timeout = 10,
+                request_args = {
+                    "headers" : {
+                    'Connection': 'keep-alive',
+                    # User-Agent会自动生成
+                    'Referer': 'https://gitee.com/April_Zhao/osmts'
+                    }
+                }
+            )
+            download.add_hash_verification(algorithm='sha256',hash='255b237599c6af3ec9f02900529beb00f557907addcfaf757e635947edd3b262')
+            download.start(blocking=True)
+            decompress_data = lzma.decompress(open(f'/tmp/osmts_AnghaBench_files.json.xz','rb').read())
+            pre_matches = json.loads(decompress_data)
+            matches = []
+            for root, dirnames, filenames in os.walk(self.path):
+                for filename in fnmatch.filter(filenames, '*.c'):
+                    matches.append((filename, os.path.join(root, filename)))
+            if matches == pre_matches:
+                self.matches = matches
+            else:
+                shutil.rmtree(self.path)
+                self.path.mkdir(parents=True)
 
-        # 拉取AnghaBench的源码
-        git_clone = subprocess.run(
-            f"cd /root/osmts_tmp/ && git clone https://gitcode.com/qq_61653333/AnghaBench.git",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if git_clone.returncode != 0:
-            print(f"AnghaBench测试出错.git clone运行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        if self.matches == []:
+            # 拉取AnghaBench的源码
+            git_clone = subprocess.run(
+                f"cd /root/osmts_tmp/ && git clone https://gitcode.com/qq_61653333/AnghaBench.git",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            if git_clone.returncode != 0:
+                print(f"AnghaBench测试出错.git clone运行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
+                sys.exit(1)
 
 
     async def match2result(self):
@@ -69,15 +98,15 @@ class AnghaBench:
 
 
     async def run_test(self):
-        matches = []
-        for root,dirnames,filenames in os.walk(self.path):
-            for filename in fnmatch.filter(filenames, '*.c'):
-                matches.append((filename,os.path.join(root,filename)))
-        self.total = len(matches)
+        if self.matches == []:
+            for root,dirnames,filenames in os.walk(self.path):
+                for filename in fnmatch.filter(filenames, '*.c'):
+                    self.matches.append((filename,os.path.join(root,filename)))
+        self.total = len(self.matches)
 
-        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 4)
-        workers = [asyncio.create_task(self.match2result()) for _ in range(os.cpu_count() * 2)]
-        for match in matches:
+        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 10)
+        workers = [asyncio.create_task(self.match2result()) for _ in range(os.cpu_count() * 5)]
+        for match in self.matches:
             await self.queue.put(match)
         await self.queue.join()
         for worker in workers:

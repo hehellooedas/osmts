@@ -2,13 +2,14 @@
 # encoding: utf-8
 
 
-import sys,psutil,time
+import sys,psutil,time,uvloop
 import tomllib,ipaddress
 import subprocess,argparse,humanfriendly
 from pathlib import Path
 from openpyxl import Workbook
 from testclasses import osmts_tests
 
+uvloop.install()
 
 osmts_tmp_dir = Path('/root/osmts_tmp/')
 fio_flag = False

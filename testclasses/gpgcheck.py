@@ -8,21 +8,6 @@ from openpyxl import Workbook
 
 
 
-async def rpm_check_each(package_name):
-    rpm_check = await asyncio.create_subprocess_shell(
-        f"rpm -K /root/osmts_tmp/gpgcheck/{package_name}",
-        stdout=asyncio.subprocess.DEVNULL,
-        stderr=asyncio.subprocess.PIPE,
-    )
-    await asyncio.sleep(1.5)
-    _,stderr = await rpm_check.communicate()
-    if rpm_check.returncode != 0:
-        return True,package_name, stderr.decode('utf-8')
-    else:
-        return False,None,None
-
-
-
 class GpgCheck:
     def __init__(self, **kwargs):
         self.rpms = set()
@@ -35,15 +20,23 @@ class GpgCheck:
         self.ws = self.wb.active
 
 
+    async def rpm_check_each(self,package_name):
+        rpm_check = await asyncio.create_subprocess_shell(
+            f"rpm -K /root/osmts_tmp/gpgcheck/{package_name}",
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        await asyncio.sleep(1.5)
+        _, stderr = await rpm_check.communicate()
+        if rpm_check.returncode != 0: # rpm -K运行失败
+            self.ws.append([package_name, stderr.decode('utf-8')])
+
+
     async def rpm_check_all(self):
         packages = list(os.walk(self.path))[0][2]
         # 对每个rpm包创建一个测试任务
-        tasks = [asyncio.create_task(rpm_check_each(package)) for package in packages]
-        futures = await asyncio.gather(*tasks)
-        for future in futures:
-            failed, package_name, error_log = future
-            if failed:
-                self.ws.append([package_name, error_log])
+        tasks = [asyncio.create_task(self.rpm_check_each(package)) for package in packages]
+        await asyncio.gather(*tasks)
 
 
     def pre_test(self):
@@ -101,7 +94,7 @@ class GpgCheck:
                 self.packages.append(package)
 
         # 根据包名批量下载并测试rpm包
-        for package_list in numpy.array_split(self.packages,100):
+        for package_list in numpy.array_split(self.packages,200):
             rpm_download = subprocess.run(
                 f"dnf download {' '.join(package_list)} --destdir={self.path}",
                 shell=True,

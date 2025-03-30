@@ -1,8 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil,hashlib,requests,re,os
-from multiprocessing import Process
+import sys,subprocess,re
 from openpyxl.workbook import Workbook
-from tenacity import retry,stop_after_attempt,retry_if_exception_type
+from pySmartDL import SmartDL
 
 
 
@@ -12,54 +11,29 @@ class Fio:
         self.path = Path('/root/osmts_tmp/fio')
         self.directory: Path = kwargs.get('saved_directory') / 'fio'
         self.test_result:str = ''
-        self.urls:tuple = (
-            "https://fast-mirror.isrc.ac.cn/openeuler", # 下载速度最快
-            "https://repo.openeuler.openatom.cn",       # 下载速度慢
-            "https://repo.openeuler.org",               # 有时候无法访问
-            "https://fast-mirror.isrc.ac.cn/openeuler"
-        )
-        self.select_url = -1
-        # 如果iso文件已经存在则不重复下载(用哈希值校验文件)
-        if Path.exists(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso'):
-            iso_hash = hashlib.sha256()
-            with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso','rb') as file:
-                while chunk := file.read(8192):
-                    iso_hash.update(chunk)
-            if iso_hash.hexdigest() == '74e9ac072b6b72744f21fec030fbe67ea331047ae44b26277f9d5ef41ab6776d':
-                self.download_iso_process = None
-                return
-        self.download_iso_process:Process = Process(target=self.download_iso_file,daemon=True)
-        self.download_iso_process.start()
 
-
-    @retry(stop=stop_after_attempt(4),retry=(retry_if_exception_type(requests.exceptions.HTTPError)))
-    def download_iso_file(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
-        self.path.mkdir()
-        with requests.get(
-                f'{self.urls[self.select_url]}/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso',
-                stream=True,
-                headers={
-                    'Connection':'keep-alive',
-                    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:136.0) Gecko/20100101 Firefox/136.0',
-                    'Referer': 'https://gitee.com/April_Zhao/osmts'
+        self.download_iso_file:SmartDL = SmartDL(
+            urls = [
+                "https://fast-mirror.isrc.ac.cn/openeuler/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso", # 下载速度最快
+                "https://repo.openeuler.openatom.cn/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso",       # 下载速度慢
+                "https://repo.openeuler.org/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso",               # 有时候无法访问
+                "https://mirrors.ustc.edu.cn/openeuler/openEuler-preview/openEuler-24.03-LLVM-Preview/ISO/riscv64/openEuler-24.03-LLVM-riscv64-dvd.iso",    # USTC repo
+            ],
+            dest = str(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso'),
+            threads = 16,
+            progress_bar = False,
+            timeout = 10,
+            request_args = {
+                "headers" : {
+                'Connection': 'keep-alive',
+                # User-Agent会自动生成
+                'Referer': 'https://gitee.com/April_Zhao/osmts'
                 }
-        ) as response,open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso', 'wb') as file:
-            try:
-                response.raise_for_status()
-            except requests.exceptions.HTTPError:
-                if self.select_url < 3:
-                    print(f'网络不佳,下载fio测试ISO文件第{self.select_url + 2}次失败,正在重试...')
-                    self.select_url += 1
-                    raise requests.exceptions.HTTPError
-                else:
-                    print('ISO文件多次下载都失败,尝试自建fio测试文件')
-                    with open(self.path / 'openEuler-24.03-LLVM-riscv64-dvd.iso','wb') as file:
-                        file.write(os.urandom(4074729472))
-                    return
-            for chunk in response.iter_content(64 * 1024):
-                file.write(chunk)
+            }
+        )
+        # 如果iso文件已经存在则不重复下载(用哈希值校验文件)
+        self.download_iso_file.add_hash_verification(algorithm='sha256',hash='74e9ac072b6b72744f21fec030fbe67ea331047ae44b26277f9d5ef41ab6776d')
+        self.download_iso_file.start(blocking=False)
 
 
     def run_test(self):
@@ -67,8 +41,8 @@ class Fio:
         ws = wb.active
         ws.title = "fio"
         baseline = 1
-        if self.download_iso_process is not None:
-            self.download_iso_process.join()
+        if self.download_iso_file is not None:
+            self.download_iso_file.wait()
         filename = "/root/osmts_tmp/fio/openEuler-24.03-LLVM-riscv64-dvd.iso"
         numjobs = 10
         iodepth = 10

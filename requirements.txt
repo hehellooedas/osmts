@@ -3,5 +3,6 @@ requests
 psutil
 pexpect
 humanfriendly
-tenacity
+pysmartdl
 numpy
+uvloop

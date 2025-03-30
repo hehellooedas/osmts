@@ -21,20 +21,26 @@ headers = {
 
 
 def install_rpm(package_name):
-    subprocess.run(
+    dnf = subprocess.run(
         f"dnf install -y {package_name}",
         shell=True,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
     )
+    if dnf.returncode != 0:
+        print(f"jtreg测试安装{package_name}失败,报错信息:{dnf.stderr.decode('utf-8')}")
+
 
 def remove_rpm(package_name):
-    subprocess.run(
+    dnf = subprocess.run(
         f"dnf remove -y {package_name}",
         shell=True,
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
     )
+    if dnf.returncode != 0:
+        print(f"jtreg测试安装{package_name}失败,报错信息:{dnf.stderr.decode('utf-8')}")
+
 
 def clean_java_environment():
     remove_rpm("java-1.8.0-openjdk*")

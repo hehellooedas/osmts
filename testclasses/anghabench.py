@@ -1,8 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil,os,fnmatch,time,tarfile,threading
+import sys,shutil,os,fnmatch,tarfile,subprocess
 from openpyxl import Workbook
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
+import asyncio,aiofiles
 
 
 
@@ -12,18 +11,18 @@ class AnghaBench:
         self.path = Path('/root/osmts_tmp/AnghaBench')
         self.directory: Path = kwargs.get('saved_directory') / 'anghabench'
         self.log_files:Path = self.directory / 'log_files'
+
         self.failed = 0
         self.total = 0
-        self.lock = threading.Lock()
+
         self.wb = Workbook()
         self.ws = self.wb.active
         self.ws.title = 'AnghaBench'
 
         self.ws.cell(1,1,"AnghaBench测试中编译未通过项目汇总")
-        self.ws.merge_cells("A1:C1")
+        self.ws.merge_cells("A1:B1")
         self.ws.cell(2,1,"c文件名")
-        self.ws.cell(2,2,"编译耗时")
-        self.ws.cell(2,3,"日志文件")
+        self.ws.cell(2,2,"日志文件")
 
 
     def pre_test(self):
@@ -46,37 +45,43 @@ class AnghaBench:
             sys.exit(1)
 
 
-    def match2result(self,match):
-        log_name = match[0] + '.log'
-        start_time = time.time()
-        compile = subprocess.run(
-            f"gcc {match[1]} -c -o {match[1]}.o",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        # 记录编译时间
-        time_consuming = time.time() - start_time
-        if compile.returncode != 0:
-            with self.lock:
+    async def match2result(self):
+        while True:
+            match:list = await self.queue.get()
+            log_name = match[0] + '.log'
+            compile = await asyncio.create_subprocess_shell(
+                f"gcc {match[1]} -c -o {match[1]}.o",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT
+            )
+            await asyncio.sleep(0.5)
+            stdout, stderr = await compile.communicate()
+            self.queue.task_done()
+
+            if compile.returncode != 0:
                 self.failed += 1
-                if (result := compile.stdout.decode('utf-8')) != '':
-                    self.ws.append([match[0],f"{time_consuming:.4f}s",log_name])
-                    with open(self.log_files / log_name, 'w') as log:
-                        log.write(result)
+                if (result := stdout.decode('utf-8')) != '':
+                    self.ws.append([match[0],log_name])
+                    async with aiofiles.open(self.log_files / log_name, 'w') as log:
+                        await log.write(result)
                 else:
-                    self.ws.append([match[0],f"{time_consuming:.4f}s","日志为空,不生成日志文件"])
+                    self.ws.append([match[0],"日志为空,不生成日志文件"])
 
 
-    def run_test(self):
+    async def run_test(self):
         matches = []
         for root,dirnames,filenames in os.walk(self.path):
             for filename in fnmatch.filter(filenames, '*.c'):
                 matches.append((filename,os.path.join(root,filename)))
         self.total = len(matches)
 
-        with ThreadPoolExecutor() as pool:
-            pool.map(self.match2result,matches)
+        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 4)
+        workers = [asyncio.create_task(self.match2result()) for _ in range(os.cpu_count() * 2)]
+        for match in matches:
+            await self.queue.put(match)
+        await self.queue.join()
+        for worker in workers:
+            worker.cancel()
 
         # 汇总结果
         self.ws.append([f"总共编译文件数{self.total}",f"通过编译数{self.total - self.failed}",f"失败编译数{self.failed}"])
@@ -90,5 +95,5 @@ class AnghaBench:
     def run(self):
         print('开始进行AnghaBench测试')
         self.pre_test()
-        self.run_test()
+        asyncio.run(self.run_test())
         print('AnghaBench测试结束')

@@ -93,6 +93,7 @@ class GpgCheck:
             else:
                 self.packages.append(package)
 
+        print(f"当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
         # 根据包名批量下载并测试rpm包
         for package_list in numpy.array_split(self.packages,200):
             rpm_download = subprocess.run(

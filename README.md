@@ -111,8 +111,10 @@ csmith_count = 1000
 ## 注意事项
 1. 进行ltp测试期间机器可能会ssh连不上,在sg2042上这很正常,机器并没有崩溃,耐心等待几天不要重启机器,否则丢失运行结果.如果对机器状态有疑惑可以连上串口查看是否kernel panic.
 2. ltp_cve实际上已经被包含在了ltp里,在ltp存在的情况下可以不测试ltp_cve.
-3. fio测试要下载iso文件费时,单独开进程并行执行.ltp_stress测试执行时接收SIGINT会清理子进程.
+3. ltp_stress测试执行时接收SIGINT会清理子进程.
 4. 若待测机器的/分区剩余容量过小,osmts会报错,避免因fio下载文件导致文件系统崩溃.
+5. gpgcheck测试中会下载大量的rpm包,为加快速度,需要修改/etc/dnf/dnf.conf,添加一行max_parallel_downloads=20,并行下载rpm包,但这个数字不要太大否则会报Error: Bad value of LRO_MAXPARALLELDOWNLOADS
+错误;
 5. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
 
 ---

@@ -107,7 +107,7 @@ def from_tests_to_tasks(run_tests:list) -> list:
     testclasses = []
     all_need_rpms = set()
     for task in tasks:
-        testclass = osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,merge=merge,csmith_count=csmith_count)
+        testclass = osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,merge=merge,csmith_count=csmith_count,believe_tmp=believe_tmp)
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
     # 统一安装所有所需的rpm包
@@ -148,7 +148,7 @@ if __name__ == '__main__':
     saved_directory = config.get("saved_directory",None)
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
-    remove_osmts_tmp_dir = bool(config.get("remove_osmts_tmp_dir", None))
+    believe_tmp = bool(config.get("believe_tmp", None))
     merge = bool(config.get("merge", None))
     if merge:
         osmts_wb = Workbook()

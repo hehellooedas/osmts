@@ -1,7 +1,5 @@
 from pathlib import Path
-import sys,shutil,os,fnmatch,tarfile,subprocess
-from pySmartDL import SmartDL
-import lzma,json
+import sys,shutil,os,fnmatch,tarfile,subprocess,signal
 from openpyxl import Workbook
 import asyncio,aiofiles
 
@@ -10,10 +8,12 @@ import asyncio,aiofiles
 class AnghaBench:
     def __init__(self, **kwargs):
         self.rpms = set()
+        self.believe_tmp:bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/AnghaBench')
         self.directory: Path = kwargs.get('saved_directory') / 'anghabench'
         self.log_files:Path = self.directory / 'log_files'
         self.matches:list = []
+        self.appended_list:list = []
 
         self.failed = 0
         self.total = 0
@@ -29,39 +29,15 @@ class AnghaBench:
 
 
     def pre_test(self):
-        if not self.directory.exists():
-            self.directory.mkdir(parents=True,exist_ok=True)
-            self.log_files.mkdir(parents=True,exist_ok=True)
-        if self.path.exists():
-            download = SmartDL(
-                urls = "https://gitee.com/April_Zhao/osmts/releases/download/v1.0/osmts_AnghaBench_files.json.xz",
-                threads = 16,
-                dest = str('/tmp/osmts_AnghaBench_files.json.xz'),
-                progress_bar = False,
-                timeout = 10,
-                request_args = {
-                    "headers" : {
-                    'Connection': 'keep-alive',
-                    # User-Agent会自动生成
-                    'Referer': 'https://gitee.com/April_Zhao/osmts'
-                    }
-                }
-            )
-            download.add_hash_verification(algorithm='sha256',hash='255b237599c6af3ec9f02900529beb00f557907addcfaf757e635947edd3b262')
-            download.start(blocking=True)
-            decompress_data = lzma.decompress(open(f'/tmp/osmts_AnghaBench_files.json.xz','rb').read())
-            pre_matches = json.loads(decompress_data)
-            matches = []
-            for root, dirnames, filenames in os.walk(self.path):
-                for filename in fnmatch.filter(filenames, '*.c'):
-                    matches.append((filename, os.path.join(root, filename)))
-            if matches == pre_matches:
-                self.matches = matches
-            else:
-                shutil.rmtree(self.path)
-                self.path.mkdir(parents=True)
+        if self.directory.exists():
+            shutil.rmtree(self.directory)
+        self.directory.mkdir(parents=True)
+        self.log_files.mkdir(parents=True)
 
-        if self.matches == []:
+        if self.path.exists() and self.believe_tmp:
+            pass
+        else:
+            shutil.rmtree(self.path, ignore_errors=True)
             # 拉取AnghaBench的源码
             git_clone = subprocess.run(
                 f"cd /root/osmts_tmp/ && git clone https://gitcode.com/qq_61653333/AnghaBench.git",
@@ -83,18 +59,17 @@ class AnghaBench:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT
             )
-            await asyncio.sleep(0.5)
             stdout, stderr = await compile.communicate()
             self.queue.task_done()
 
             if compile.returncode != 0:
                 self.failed += 1
                 if (result := stdout.decode('utf-8')) != '':
-                    self.ws.append([match[0],log_name])
+                    self.appended_list.append([match[0],log_name])
                     async with aiofiles.open(self.log_files / log_name, 'w') as log:
                         await log.write(result)
                 else:
-                    self.ws.append([match[0],"日志为空,不生成日志文件"])
+                    self.appended_list.append([match[0],''])
 
 
     async def run_test(self):
@@ -104,14 +79,17 @@ class AnghaBench:
                     self.matches.append((filename,os.path.join(root,filename)))
         self.total = len(self.matches)
 
-        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 10)
-        workers = [asyncio.create_task(self.match2result()) for _ in range(os.cpu_count() * 5)]
+        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 20)
+        workers = [asyncio.create_task(self.match2result()) for _ in range(os.cpu_count() * 10)]
         for match in self.matches:
             await self.queue.put(match)
         await self.queue.join()
+
         for worker in workers:
             worker.cancel()
 
+        for item in self.appended_list:
+            self.ws.append(item)
         # 汇总结果
         self.ws.append([f"总共编译文件数{self.total}",f"通过编译数{self.total - self.failed}",f"失败编译数{self.failed}"])
 

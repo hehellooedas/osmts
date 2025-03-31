@@ -60,8 +60,6 @@ class AnghaBench:
                 stderr=asyncio.subprocess.STDOUT
             )
             stdout, stderr = await compile.communicate()
-            self.queue.task_done()
-
             if compile.returncode != 0:
                 self.failed += 1
                 if (result := stdout.decode('utf-8')) != '':
@@ -70,6 +68,7 @@ class AnghaBench:
                         await log.write(result)
                 else:
                     self.appended_list.append([match[0],''])
+            self.queue.task_done()
 
 
     async def run_test(self):
@@ -79,8 +78,11 @@ class AnghaBench:
                     self.matches.append((filename,os.path.join(root,filename)))
         self.total = len(self.matches)
 
-        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 20)
-        workers = [asyncio.create_task(self.match2result()) for _ in range(os.cpu_count() * 10)]
+        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 100)
+        workers = [asyncio.create_task(self.match2result()) for _ in range(os.cpu_count() * 50)]
+
+        print(f"当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
+
         for match in self.matches:
             await self.queue.put(match)
         await self.queue.join()

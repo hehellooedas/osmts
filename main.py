@@ -155,11 +155,11 @@ if __name__ == '__main__':
     else:
         osmts_wb = None
     csmith_count:int = config.get("csmith_count", 1000)
-    if csmith_count < 10:
-        print('csmith_count数量过小,不建议小于10,现在设置csmith_count=1000')
+    if csmith_count < 100:
+        print('csmith_count数量过小,不建议小于100,现在设置csmith_count=1000')
         csmith_count = 1000
-    elif csmith_count > 2000:
-        print('csmith_count数量过大,不建议大于2000,现在设置csmith_count=1000')
+    elif csmith_count > 5000:
+        print('csmith_count数量过大,不建议大于5000,现在设置csmith_count=1000')
         csmith_count = 1000
 
 

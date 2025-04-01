@@ -75,7 +75,7 @@ csmith_count = 1000
 3. saved_directory填写测试结果存放的目录，main.py运行结束后会在这个目录产生excel文件，默认为'/root/osmts_result';
 4. compiler是待测试的编译环境，应当填写gcc或者clang ,默认是gcc;
 5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000;
-6. csmith_count是csmith测试生成和编译随机c文件的数量,取值范围[10,2000],默认为1000.
+6. csmith_count是csmith测试生成和编译随机c文件的数量,取值范围[100,5000],默认为1000.
 
 
 

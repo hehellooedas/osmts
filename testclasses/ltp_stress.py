@@ -63,22 +63,22 @@ class Ltp_stress():
 
         # 定义Ctrl+C信号处理函数
         def signal_handler(sig, frame):
-            print('osmts检测到Ctrl+C键盘中断信号,正在终止ltp_stress压力测试...')
+            print('  osmts检测到Ctrl+C键盘中断信号,正在终止ltp_stress压力测试...')
             try:
                 # 尝试终止进程组内所有进程
                 os.killpg(os.getpgid(ltpstress_sh.pid), signal.SIGTERM)
             except Exception as e:
-                print(f'终止进程组失败,报错信息{e}',file=sys.stderr)
-                print('尝试递归kill子进程...')
+                print(f'  终止进程组失败,报错信息{e}',file=sys.stderr)
+                print('  尝试递归kill子进程...')
                 try:
                     parent = psutil.Process(ltpstress_sh.pid)
                     for child in parent.children(recursive=True):
                         child.kill()
                     parent.kill()
                 except psutil.NoSuchProcess:
-                    print('未找到子进程')
-            print(f'osmts创建的所有子进程均已终止\n当前完整堆栈信息:{traceback.print_stack(frame)}')
-            sys.exit(0)
+                    print('  未找到子进程')
+            print(f'  osmts创建的所有子进程均已终止\n当前完整堆栈信息:{traceback.print_stack(frame)}')
+            sys.exit(1)
 
         signal.signal(signal.SIGINT, signal_handler)
         ltpstress_sh.wait()

@@ -6,28 +6,31 @@ from openpyxl import Workbook
 
 class Lmbench:
     def __init__(self, **kwargs):
+        self.rpms = {'libtirpc-devel'}
+        self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/lmbench')
         self.directory: Path = kwargs.get('saved_directory') / 'lmbench'
         self.compiler: str = kwargs.get('compiler')
-        self.rpms = {'libtirpc-devel'}
         self.test_result = ''
 
 
     def pre_test(self):
         if not self.directory.exists():
             self.directory.mkdir(exist_ok=True, parents=True)
-        if self.path.exists():
+        if self.path.exists() and self.path.is_file():
+            pass
+        else:
             shutil.rmtree(self.path)
-        # 获取lmbench源码
-        git_clone = subprocess.run(
-            "cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/lmbench.git",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if git_clone.returncode != 0:
-            print(f"lmbench测试出错:拉取源码失败.报错信息:{git_clone.stderr.decode('utf-8')})")
-            sys.exit(1)
+            # 获取lmbench源码
+            git_clone = subprocess.run(
+                "cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/lmbench.git",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            if git_clone.returncode != 0:
+                print(f"lmbench测试出错:拉取源码失败.报错信息:{git_clone.stderr.decode('utf-8')})")
+                sys.exit(1)
 
 
     def run_test(self):

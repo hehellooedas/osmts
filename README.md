@@ -20,7 +20,7 @@ cd osmts
 * 运行前安装环境
 
 ```
-dnf install gcc python python3-devel python3-pip
+dnf install gcc python python3-devel python3-pip tmux
 pip install --upgrade pip setuptools
 pip install -r requirements.txt
 
@@ -37,6 +37,7 @@ ntpdate cn.pool.ntp.org
 * 直接运行脚本
 
 ```commandline
+tmux new-session -s "osmts"
 # main.py应当直接以root身份运行
 chmod +x main.py
 ./main.py

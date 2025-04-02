@@ -111,7 +111,7 @@ def from_tests_to_tasks(run_tests:list) -> list:
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
     # 统一安装所有所需的rpm包
-    dnf_command = f"dnf install -y --nobest --skip-broken gcc clang make git cmake {' '.join(all_need_rpms)}"
+    dnf_command = f"dnf install -y --nobest --skip-broken gcc clang make git cmake htop iotop python3-ipython {' '.join(all_need_rpms)}"
     install_rpms = subprocess.run(
         args=dnf_command,
         shell=True,

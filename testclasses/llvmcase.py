@@ -5,6 +5,7 @@ import sys,subprocess,shutil
 class Llvmcase():
     def __init__(self, **kwargs):
         self.rpms = {'gcc-g++', 'gcc-gfortran', 'cmake', 'ninja-build'}
+        self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/llvm-project')
         self.directory: Path = kwargs.get('saved_directory') / 'llvmcase'
 
@@ -12,18 +13,20 @@ class Llvmcase():
     def pre_test(self):
         if not self.directory.exists():
             self.directory.mkdir(parents=True,exist_ok=True)
-        if self.path.exists():
-            shutil.rmtree(self.path)
-        # 拉取源码
-        git_clone = subprocess.run(
-            "cd /root/osmts_tmp/ && git clone https://gitcode.com/pollyduan/llvm-project.git",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if git_clone.returncode != 0:
-            print(f"llvmcase测试出错.git clone执行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        if self.path.exists() and self.believe_tmp:
+            pass
+        else:
+            shutil.rmtree(self.path, ignore_errors=True)
+            # 拉取源码
+            git_clone = subprocess.run(
+                "cd /root/osmts_tmp/ && git clone https://gitcode.com/pollyduan/llvm-project.git",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            if git_clone.returncode != 0:
+                print(f"llvmcase测试出错.git clone执行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
+                sys.exit(1)
 
         # 编译llvm
         build_llvm = subprocess.run(

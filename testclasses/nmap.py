@@ -15,7 +15,6 @@ class Nmap:
         self.test_result = ''
 
 
-
     def run_test(self):
         nmap = subprocess.run(
             "nmap -sS -sU 127.0.0.1",

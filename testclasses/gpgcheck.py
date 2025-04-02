@@ -43,7 +43,7 @@ class GpgCheck:
         if not self.directory.exists():
             self.directory.mkdir()
         if self.path.exists():
-            shutil.rmtree(self.path)
+            shutil.rmtree(self.path,ignore_errors=True)
         self.path.mkdir(parents=True)
 
         # 更新缓存以便后面下载

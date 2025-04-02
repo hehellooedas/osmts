@@ -6,6 +6,7 @@ import sys,subprocess,shutil
 class Libmicro:
     def __init__(self, **kwargs):
         self.rpms = set()
+        self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/libmicro')
         self.directory: Path = kwargs.get('saved_directory') / 'libmicro'
         self.compiler: str = kwargs.get('compiler')
@@ -13,13 +14,15 @@ class Libmicro:
 
 
     def pre_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
-        # 获取源码
-        git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/libmicro.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if git_clone.returncode != 0:
-            print(f"libmicro测试出错:拉取libmicro源码错误.报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        if self.path.exists() and self.believe_tmp:
+            pass
+        else:
+            shutil.rmtree(self.path, ignore_errors=True)
+            # 获取源码
+            git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/libmicro.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+            if git_clone.returncode != 0:
+                print(f"libmicro测试出错:拉取libmicro源码错误.报错信息:{git_clone.stderr.decode('utf-8')}")
+                sys.exit(1)
 
         # 开始编译
         if self.compiler == "gcc":

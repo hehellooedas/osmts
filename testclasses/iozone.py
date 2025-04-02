@@ -5,6 +5,7 @@ import sys,subprocess,shutil
 class Iozone:
     def __init__(self,**kwargs ):
         self.rpms = set()
+        self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/iozone')
         self.directory:Path = kwargs.get('saved_directory') / 'iozone'
         self.compiler:str = kwargs.get('compiler')
@@ -15,7 +16,7 @@ class Iozone:
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True, exist_ok=True)
         # 获取iozone的源码
-        git_clone = subprocess.run("cd /root/osmts_tmp/iozone && wget https://www.iozone.org/src/current/iozone3_506.tar && tar -xvf iozone3_506.tar",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+        git_clone = subprocess.run("cd /root/osmts_tmp/iozone && wget https://www.iozone.org/src/current/iozone3_506.tar && tar -xf iozone3_506.tar",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if git_clone.returncode != 0:
             print(f"iozone测试出错:下载/解压iozone源码压缩包失败.报错信息:{git_clone.stderr.decode('utf-8')}")
             sys.exit(1)
@@ -34,7 +35,6 @@ class Iozone:
         if iozone.returncode != 0:
             print(f"iozone测试出错:iozone运行报错.报错信息:{iozone.stderr.decode('utf-8')}")
             sys.exit(1)
-
 
 
     def run(self):

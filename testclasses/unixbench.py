@@ -7,6 +7,7 @@ from openpyxl import Workbook
 class Unixbench:
     def __init__(self,**kwargs ):
         self.rpms = {'perl','perl-CPAN'}
+        self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/unixbench')
         self.directory:Path = kwargs.get('saved_directory') / 'unixbench'
         self.compiler:str = kwargs.get('compiler')
@@ -16,27 +17,32 @@ class Unixbench:
     def pre_test(self):
         if not self.directory.exists():
             self.directory.mkdir(exist_ok=True,parents=True)
-        if self.path.exists():
-            shutil.rmtree(self.path)
-        self.path.mkdir(parents=True)
-
-        clone = subprocess.run("cd /root/osmts_tmp/unixbench && git clone https://gitcode.com/gh_mirrors/by/byte-unixbench.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if clone.returncode != 0:
-            print(f"unixbench测试出错:git clone执行失败.报错信息:{clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        if self.path.exists() and self.believe_tmp:
+            pass
+        else:
+            shutil.rmtree(self.path, ignore_errors=True)
+            clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitcode.com/gh_mirrors/by/byte-unixbench.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+            if clone.returncode != 0:
+                print(f"unixbench测试出错:git clone执行失败.报错信息:{clone.stderr.decode('utf-8')}")
+                sys.exit(1)
         if self.compiler == 'clang':
-            for line in fileinput.input('/root/osmts_tmp/unixbench/byte-unixbench/UnixBench/Makefile', inplace=True):
+            for line in fileinput.input('/root/osmts_tmp/byte-unixbench/UnixBench/Makefile', inplace=True):
                 if 'CC=gcc' in line:  # 仅在包含'CC=gcc'的行进行替换
                     line = line.replace('CC=gcc', 'CC=clang')
                 print(line, end='') #inplace=True会把stdout重定向到文件中
-        make = subprocess.run("cd /root/osmts_tmp/unixbench/byte-unixbench/UnixBench && make",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+        make = subprocess.run("cd /root/osmts_tmp/byte-unixbench/UnixBench && make",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
         if make.returncode != 0:
             print(f"unixbench测试出错:make执行失败.报错信息:{make.stderr.decode('utf-8')}")
             sys.exit(1)
 
 
     def run_test(self):
-        run = subprocess.run("cd /root/osmts_tmp/unixbench/byte-unixbench/UnixBench/ && ./Run -c 1 -c $(nproc)",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        run = subprocess.run(
+            "cd /root/osmts_tmp/byte-unixbench/UnixBench/ && ./Run -c 1 -c $(nproc)",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
         if run.returncode != 0:
             print(f"unixbench测试出错:Run程序运行失败.报错信息:{run.stderr.decode('utf-8')}")
             sys.exit(1)

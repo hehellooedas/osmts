@@ -7,6 +7,7 @@ from openpyxl import Workbook
 class Stream:
     def __init__(self,**kwargs ):
         self.rpms = set()
+        self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/stream')
         self.directory:Path = kwargs.get('saved_directory') / 'stream'
         self.compiler:str = kwargs.get('compiler')
@@ -16,12 +17,16 @@ class Stream:
     def pre_test(self):
         if not self.directory.exists():
             self.directory.mkdir(exist_ok=True,parents=True)
-        if self.path.exists():
-            shutil.rmtree(self.path)
-        git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/stream.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if git_clone.returncode != 0:
-            print(f"stream测试出错:git拉取stream失败.报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+
+        # believe_tmp表明尽可能相信/root/osmts_tmp/
+        if self.path.exists() and self.believe_tmp:
+            pass
+        else:
+            shutil.rmtree(self.path, ignore_errors=True)
+            git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/stream.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+            if git_clone.returncode != 0:
+                print(f"stream测试出错:git拉取stream失败.报错信息:{git_clone.stderr.decode('utf-8')}")
+                sys.exit(1)
 
         # 编译stream.c
         compile = subprocess.run(f"cd /root/osmts_tmp/stream && {self.compiler} -O3 -fopenmp -DSTREAM_ARRAY_SIZE=35000000 -DNTIMES=50 stream.c -o stream_o3",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)

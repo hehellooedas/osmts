@@ -10,6 +10,7 @@ from openpyxl import Workbook
 class Jotai:
     def __init__(self, **kwargs):
         self.rpms = set()
+        self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/jotai-benchmarks')
         self.directory: Path = kwargs.get('saved_directory') / 'jotai'
 
@@ -44,10 +45,22 @@ class Jotai:
 
 
     def pre_test(self):
-        if self.path.exists():
-            shutil.rmtree(self.path)
         if not self.directory.exists():
             self.directory.mkdir(parents=True)
+        if self.path.exists() and self.believe_tmp:
+            pass
+        else:
+            shutil.rmtree(self.path, ignore_errors=True)
+            # 拉取jotai-benchmarks源码
+            git_clone = subprocess.run(
+                "cd /root/osmts_tmp && git clone https://gitcode.com/qq_61653333/jotai-benchmarks.git",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+            if git_clone.returncode != 0:
+                print(f"jotai测试.git clone执行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
+                sys.exit(1)
 
         # 创建anghaLeaves系列目录
         if self.anghaLeaves_output.exists():
@@ -64,17 +77,6 @@ class Jotai:
             shutil.rmtree(self.anghaMath_logs)
         self.anghaMath_output.mkdir(parents=True)
         self.anghaMath_logs.mkdir(parents=True)
-
-        # 拉取jotai-benchmarks源码
-        git_clone = subprocess.run(
-            "cd /root/osmts_tmp && git clone https://gitcode.com/qq_61653333/jotai-benchmarks.git",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if git_clone.returncode != 0:
-            print(f"jotai测试.git clone执行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
 
 
     # 编译并运行anghaLeaves程序组

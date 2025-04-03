@@ -1,8 +1,8 @@
 from pathlib import Path
 import sys,shutil,os,fnmatch,tarfile,subprocess,resource
 from openpyxl import Workbook
-import asyncio,threading
 from concurrent.futures import ThreadPoolExecutor
+
 
 
 class AnghaBench:
@@ -13,8 +13,7 @@ class AnghaBench:
         self.directory: Path = kwargs.get('saved_directory') / 'anghabench'
         self.log_files:Path = self.directory / 'log_files'
         self.matches:list = []
-        self.appended_list:list = []
-        self.Lock = threading.Lock()
+        self.failed_compile:list = []
 
         self.failed = 0
         self.total = 0
@@ -25,8 +24,7 @@ class AnghaBench:
 
         self.ws.cell(1,1,"AnghaBench测试中编译未通过项目汇总")
         self.ws.merge_cells("A1:B1")
-        self.ws.cell(2,1,"c文件名")
-        self.ws.cell(2,2,"日志文件")
+        self.ws.append(['c文件名','日志文件'])
 
 
     def pre_test(self):
@@ -53,18 +51,18 @@ class AnghaBench:
 
 
     def match2result(self,match):
-        log_name = match[0] + '.log'
         compile = subprocess.run(
             f"gcc {match[1]} -c -o {match[1]}.o",
             shell=True,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT
         )
         if compile.returncode != 0:
-            with self.Lock:
-                self.appended_list.append([match[0], log_name])
-            with open(self.log_files / log_name, 'w') as log:
+            with open(self.log_files / (match[0] + '.log'), 'w') as log:
                 log.write(compile.stdout.decode('utf-8'))
+            return match[0]
+        else:
+            return None
 
 
     def run_test(self):
@@ -74,11 +72,15 @@ class AnghaBench:
                     self.matches.append((filename,os.path.join(root,filename)))
         self.total = len(self.matches)
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
-            executor.map(self.match2result, self.matches)
+            results = executor.map(self.match2result, self.matches)
+            for result in results:
+                if result is not None:
+                    self.failed_compile.append(result)
         
-        for item in self.appended_list:
-            self.ws.append(item)
-        self.failed = len(self.appended_list)
+        for item in set(self.failed_compile):
+            self.ws.append([item, item + '.log'])
+
+        self.failed = len(self.failed_compile)
         # 汇总结果
         self.ws.append([f"总共编译文件数{self.total}",f"通过编译数{self.total - self.failed}",f"失败编译数{self.failed}"])
 

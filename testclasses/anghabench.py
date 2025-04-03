@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys,shutil,os,fnmatch,tarfile,subprocess,resource
 from openpyxl import Workbook
-import asyncio,aiofiles,threading
+import asyncio,threading
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -14,7 +14,6 @@ class AnghaBench:
         self.log_files:Path = self.directory / 'log_files'
         self.matches:list = []
         self.appended_list:list = []
-        self.limit_coroutine = asyncio.Semaphore(os.cpu_count() * 128)
         self.Lock = threading.Lock()
 
         self.failed = 0
@@ -53,35 +52,30 @@ class AnghaBench:
                 sys.exit(1)
 
 
-    async def match2result(self,match):
-        with self.limit_coroutine:
-            log_name = match[0] + '.log'
-            compile = await asyncio.create_subprocess_shell(
-                f"gcc {match[1]} -c -o {match[1]}.o",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.STDOUT
-            )
-            stdout, _ = await compile.communicate()
-            if compile.returncode != 0:
-                with self.Lock:
-                    self.appended_list.append([match[0], log_name])
-                async with aiofiles.open(self.log_files / log_name, 'w') as log:
-                    await log.write(stdout.decode('utf-8'))
+    def match2result(self,match):
+        log_name = match[0] + '.log'
+        compile = subprocess.run(
+            f"gcc {match[1]} -c -o {match[1]}.o",
+            shell=True,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.STDOUT
+        )
+        if compile.returncode != 0:
+            with self.Lock:
+                self.appended_list.append([match[0], log_name])
+            with open(self.log_files / log_name, 'w') as log:
+                log.write(compile.stdout.decode('utf-8'))
 
 
-    async def run_test(self):
+    def run_test(self):
         if self.matches == []:
             for root,dirnames,filenames in os.walk(self.path):
                 for filename in fnmatch.filter(filenames, '*.c'):
                     self.matches.append((filename,os.path.join(root,filename)))
         self.total = len(self.matches)
-
-        print(f"  当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
-        loop = asyncio.get_event_loop()
-        with ThreadPoolExecutor() as executor:
-            tasks = [loop.run_in_executor(executor, self.match2result, match) for match in self.matches]
-            await asyncio.gather(*tasks)
-
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as executor:
+            executor.map(self.match2result, self.matches)
+        
         for item in self.appended_list:
             self.ws.append(item)
         self.failed = len(self.appended_list)
@@ -97,5 +91,5 @@ class AnghaBench:
     def run(self):
         print('开始进行AnghaBench测试')
         self.pre_test()
-        asyncio.run(self.run_test())
+        self.run_test()
         print('AnghaBench测试结束')

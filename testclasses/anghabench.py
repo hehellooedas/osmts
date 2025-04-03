@@ -1,8 +1,7 @@
 from pathlib import Path
 import sys,shutil,os,fnmatch,tarfile,subprocess,signal,resource
 from openpyxl import Workbook
-import asyncio,threading
-from concurrent.futures import ThreadPoolExecutor
+import asyncio,aiofiles
 
 
 
@@ -18,7 +17,6 @@ class AnghaBench:
 
         self.failed = 0
         self.total = 0
-        self.lock = threading.Lock()
 
         self.wb = Workbook()
         self.ws = self.wb.active
@@ -53,19 +51,6 @@ class AnghaBench:
                 sys.exit(1)
 
 
-    def recordResult(self,stdout,file_name,log_name):
-        with self.lock:
-            self.failed += 1
-        if (result := stdout.decode('utf-8')) != '':
-            with self.lock:
-                self.appended_list.append([file_name, log_name])
-            with open(self.log_files / log_name, 'w') as log:
-                log.write(result)
-        else:
-            with self.lock:
-                self.appended_list.append([file_name, ''])
-
-
     async def match2result(self):
         try:
             while True:
@@ -78,10 +63,12 @@ class AnghaBench:
                 )
                 stdout, _ = await compile.communicate()
                 if compile.returncode != 0:
-                    await asyncio.to_thread(self.recordResult,stdout,match[0],log_name)
+                    self.appended_list.append([match[0], log_name])
+                    async with aiofiles.open(self.log_files / log_name, 'w') as log:
+                        await log.write(stdout.decode('utf-8'))
                 self.queue.task_done()
-        except asyncio.CancelledError:
-            print(f"  {asyncio.current_task().get_name()}正在被取消...")
+        except asyncio.CancelledError: # 取消协程
+            pass
 
 
     async def run_test(self):
@@ -91,18 +78,18 @@ class AnghaBench:
                     self.matches.append((filename,os.path.join(root,filename)))
         self.total = len(self.matches)
 
-        self.queue = asyncio.Queue(maxsize=os.cpu_count() * 100)
-        workers = [asyncio.create_task(self.match2result(),name=f"compile_worker-{i}") for i in range(os.cpu_count() * 50)]
+        self.queue = asyncio.Queue(maxsize=pow(os.cpu_count(),2)*2)
+        workers = [asyncio.create_task(self.match2result()) for i in range(pow(os.cpu_count(),2))]
 
         print(f"  当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
-        executor = ThreadPoolExecutor(max_workers=os.cpu_count())
+
         loop = asyncio.get_event_loop()
-        loop.set_default_executor(executor)
+
         def signal_handler():
             print("  osmts检测到Ctrl+C键盘中断信号,正在终止AnghaBench测试...")
             for worker in workers:
                 worker.cancel()
-            print(f"运行至此,编译失败的数量为{self.failed}")
+            print(f"运行至此,编译失败的数量为{len(self.appended_list)}")
             sys.exit(1)
         loop.add_signal_handler(signal.SIGINT, signal_handler)
 
@@ -112,9 +99,10 @@ class AnghaBench:
         print(f"  AnghaBench测试编译结束,正在清理所有compile_worker...")
         for worker in workers:
             worker.cancel()
-        executor.shutdown()
+
         for item in self.appended_list:
             self.ws.append(item)
+        self.failed = len(self.appended_list)
         # 汇总结果
         self.ws.append([f"总共编译文件数{self.total}",f"通过编译数{self.total - self.failed}",f"失败编译数{self.failed}"])
 

@@ -5,5 +5,4 @@ pexpect
 humanfriendly
 pysmartdl
 numpy
-uvloop
 aiofiles

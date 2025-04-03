@@ -107,7 +107,16 @@ def from_tests_to_tasks(run_tests:list) -> list:
     testclasses = []
     all_need_rpms = set()
     for task in tasks:
-        testclass = osmts_tests[task](saved_directory=saved_directory,compiler=compiler,netperf_server_ip=netperf_server_ip,netserver_created_by_osmts=netserver_created_by_osmts,merge=merge,csmith_count=csmith_count,believe_tmp=believe_tmp)
+        testclass = osmts_tests[task](
+            saved_directory=saved_directory,
+            compiler=compiler,
+            netperf_server_ip=netperf_server_ip,
+            netserver_created_by_osmts=netserver_created_by_osmts,
+            merge=merge,
+            csmith_count=csmith_count,
+            believe_tmp=believe_tmp,
+            yarpgen_count=yarpgen_count
+        )
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
     # 统一安装所有所需的rpm包
@@ -154,6 +163,7 @@ if __name__ == '__main__':
         osmts_wb = Workbook()
     else:
         osmts_wb = None
+    # csmith测试输入参数
     csmith_count:int = config.get("csmith_count", 1000)
     if csmith_count < 100:
         print('csmith_count数量过小,不建议小于100,现在设置csmith_count=1000')
@@ -161,6 +171,14 @@ if __name__ == '__main__':
     elif csmith_count > 5000:
         print('csmith_count数量过大,不建议大于5000,现在设置csmith_count=1000')
         csmith_count = 1000
+    # yarpgen测试输入参数
+    yarpgen_count:int = config.get("yarpgen_count",100)
+    if yarpgen_count < 10:
+        print("yarpgen_count数量过小,不建议小于10,现在设置yarpgen_count=100")
+        yarpgen_count = 100
+    elif yarpgen_count > 1000:
+        print("yarpgen_count数量过大,不建议大于1000,现在设置yarpgen_count=100")
+        yarpgen_count = 100
 
 
     if saved_directory is None:

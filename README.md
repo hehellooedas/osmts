@@ -68,6 +68,8 @@ merge = 0
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
 csmith_count = 1000
+yarpgen_count = 100
+believe_tmp = 0
 ```
 
 1. run_tests是一个列表，里面是需要测试的项目;
@@ -76,7 +78,9 @@ csmith_count = 1000
 3. saved_directory填写测试结果存放的目录，main.py运行结束后会在这个目录产生excel文件，默认为'/root/osmts_result';
 4. compiler是待测试的编译环境，应当填写gcc或者clang ,默认是gcc;
 5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000;
-6. csmith_count是csmith测试生成和编译随机c文件的数量,取值范围[100,5000],默认为1000.
+6. csmith_count是csmith测试生成和编译随机c文件的数量,取值范围[100,5000],默认为1000;
+7. yarpgen_count是yarpgen测试生成随机c++文件的数量,取值范围[10,1000],默认为100
+8. believe_tmp=1表示尽可能使用本地已下载好的资源而不是从远程获取,调试用.
 
 
 
@@ -116,7 +120,8 @@ csmith_count = 1000
 4. 若待测机器的/分区剩余容量过小,osmts会报错,避免因fio下载文件导致文件系统崩溃.
 5. gpgcheck测试中会下载大量的rpm包,为加快速度,需要修改/etc/dnf/dnf.conf,添加一行max_parallel_downloads=20,并行下载rpm包,但这个数字不要太大否则会报Error: Bad value of LRO_MAXPARALLELDOWNLOADS
 错误;
-5. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
+6. 部分测试用到了asyncio协程,从目前的结果来看不建议使用uvloop调度器;
+7. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
 
 ---
 ## 未来计划

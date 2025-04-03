@@ -78,8 +78,10 @@ class AnghaBench:
                     self.matches.append((filename,os.path.join(root,filename)))
         self.total = len(self.matches)
 
-        self.queue = asyncio.Queue(maxsize=pow(os.cpu_count(),2)*2)
-        workers = [asyncio.create_task(self.match2result()) for i in range(pow(os.cpu_count(),2))]
+        self.queue = asyncio.Queue(maxsize=len(self.matches))
+        for match in self.matches:
+            await self.queue.put(match)
+        workers = [asyncio.create_task(self.match2result()) for i in range(os.cpu_count() * 128)]
 
         print(f"  当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
 
@@ -93,8 +95,6 @@ class AnghaBench:
             sys.exit(1)
         loop.add_signal_handler(signal.SIGINT, signal_handler)
 
-        for match in self.matches:
-            await self.queue.put(match)
         await self.queue.join()
         print(f"  AnghaBench测试编译结束,正在清理所有compile_worker...")
         for worker in workers:

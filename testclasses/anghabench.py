@@ -1,8 +1,8 @@
 from pathlib import Path
-import sys,shutil,os,fnmatch,tarfile,subprocess,signal,resource
+import sys,shutil,os,fnmatch,tarfile,subprocess,resource
 from openpyxl import Workbook
-import asyncio,aiofiles
-
+import asyncio,aiofiles,threading
+from concurrent.futures import ThreadPoolExecutor
 
 
 class AnghaBench:
@@ -14,6 +14,8 @@ class AnghaBench:
         self.log_files:Path = self.directory / 'log_files'
         self.matches:list = []
         self.appended_list:list = []
+        self.limit_coroutine = asyncio.Semaphore(os.cpu_count() * 128)
+        self.Lock = threading.Lock()
 
         self.failed = 0
         self.total = 0
@@ -51,24 +53,20 @@ class AnghaBench:
                 sys.exit(1)
 
 
-    async def match2result(self):
-        try:
-            while True:
-                match:list = await self.queue.get()
-                log_name = match[0] + '.log'
-                compile = await asyncio.create_subprocess_shell(
-                    f"gcc {match[1]} -c -o {match[1]}.o",
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.STDOUT
-                )
-                stdout, _ = await compile.communicate()
-                if compile.returncode != 0:
+    async def match2result(self,match):
+        with self.limit_coroutine:
+            log_name = match[0] + '.log'
+            compile = await asyncio.create_subprocess_shell(
+                f"gcc {match[1]} -c -o {match[1]}.o",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT
+            )
+            stdout, _ = await compile.communicate()
+            if compile.returncode != 0:
+                with self.Lock:
                     self.appended_list.append([match[0], log_name])
-                    async with aiofiles.open(self.log_files / log_name, 'w') as log:
-                        await log.write(stdout.decode('utf-8'))
-                self.queue.task_done()
-        except asyncio.CancelledError: # 取消协程
-            pass
+                async with aiofiles.open(self.log_files / log_name, 'w') as log:
+                    await log.write(stdout.decode('utf-8'))
 
 
     async def run_test(self):
@@ -78,27 +76,11 @@ class AnghaBench:
                     self.matches.append((filename,os.path.join(root,filename)))
         self.total = len(self.matches)
 
-        self.queue = asyncio.Queue(maxsize=len(self.matches))
-        for match in self.matches:
-            await self.queue.put(match)
-        workers = [asyncio.create_task(self.match2result()) for i in range(os.cpu_count() * 128)]
-
         print(f"  当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
-
         loop = asyncio.get_event_loop()
-
-        def signal_handler():
-            print("  osmts检测到Ctrl+C键盘中断信号,正在终止AnghaBench测试...")
-            for worker in workers:
-                worker.cancel()
-            print(f"运行至此,编译失败的数量为{len(self.appended_list)}")
-            sys.exit(1)
-        loop.add_signal_handler(signal.SIGINT, signal_handler)
-
-        await self.queue.join()
-        print(f"  AnghaBench测试编译结束,正在清理所有compile_worker...")
-        for worker in workers:
-            worker.cancel()
+        with ThreadPoolExecutor() as executor:
+            tasks = [loop.run_in_executor(executor, self.match2result, match) for match in self.matches]
+            await asyncio.gather(*tasks)
 
         for item in self.appended_list:
             self.ws.append(item)

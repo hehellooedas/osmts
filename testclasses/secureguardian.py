@@ -40,6 +40,9 @@ class SecureGuardian:
             print(f"secureguardian测试出错.run_checks命令运行失败,报错信息:{run_checks.stderr.decode('utf-8')}")
             return
         self.test_result = run_checks.stdout.decode('utf-8')
+        shutil.copy2("/usr/local/secureguardian/reports/all_checks.results.html", self.directory)
+        shutil.copy2("/usr/local/secureguardian/reports/all_checks.results.json", self.directory)
+
 
     def result2summary(self):
         wb = Workbook()
@@ -48,10 +51,6 @@ class SecureGuardian:
 
         for version,status in re.findall(r"检查 (\d+\.\d+\.\d+) 执行完成：(成功|失败)", self.test_result):
             ws.append([version,status])
-        subprocess.run(
-            f"cp -f /usr/local/secureguardian/reports {self.directory}",
-            shell=True
-        )
 
 
     def run(self):

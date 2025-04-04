@@ -55,7 +55,7 @@ class Yarpgen:
 
     def create_source_code_and_run(self,id) -> dict:
         directory = self.testdir / str(id)
-
+        directory.mkdir(parents=True)
         # 生成随机c++代码
         create_source_code = subprocess.run(
             f"cd {directory} && {self.yarpgen} && cat init.h func.cpp driver.cpp > random.cpp",

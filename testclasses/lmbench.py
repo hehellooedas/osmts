@@ -386,7 +386,6 @@ class Lmbench:
         wb.save(self.directory / 'lmbench.xlsx')
 
 
-
     def run(self):
         print("开始进行lmbench测试")
         self.pre_test()

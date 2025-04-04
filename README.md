@@ -106,6 +106,7 @@ believe_tmp = 0
 | ltp posix  | 完成 |
 | ltp        | 完成 |
 | dejagnu    | 完成 |
+| yarpgen    | 完成 |
 | llvmcase   | 完成 |
 | anghabench | 完成 |
 | csmith     | 完成 |

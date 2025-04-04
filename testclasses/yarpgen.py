@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 import sys,subprocess,shutil
 from openpyxl import Workbook
-from concurrent.futures import ThreadPoolExecutor,as_completed
+from concurrent.futures import ThreadPoolExecutor
 
 
 class Yarpgen:
@@ -11,7 +11,12 @@ class Yarpgen:
         self.believe_tmp: bool = kwargs.get('believe_tmp')
         self.path = Path('/root/osmts_tmp/yarpgen')
         self.directory: Path = kwargs.get('saved_directory') / 'yarpgen'
+        self.yarpgen = Path('/root/osmts_tmp/yarpgen/build/yarpgen')
+        self.testdir = Path('/root/osmts_tmp/yarpgen/testdir')
         self.yarpgen_count = kwargs.get('yarpgen_count')
+
+        self.passed = 0
+        self.failed = 0
 
 
     def pre_test(self):
@@ -32,8 +37,13 @@ class Yarpgen:
                 print(f"yarpgen测试出错.git clone失败,报错信息:{git_clone.stderr.decode('utf-8')}")
                 sys.exit(1)
 
+        if self.testdir.exists():
+            shutil.rmtree(self.testdir)
+        self.testdir.mkdir(parents=True)
+
+        # 构建yarpgen命令
         build = subprocess.run(
-            "cd /root/osmts_tmp/yarpgen && mkdir build && cd build && cmake .. && make",
+            f"cd /root/osmts_tmp/yarpgen && mkdir build && cd build && cmake .. && make -j {os.cpu_count()}",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -43,10 +53,67 @@ class Yarpgen:
             sys.exit(1)
 
 
+    def create_source_code_and_run(self,id) -> dict:
+        directory = self.testdir / 'id'
+
+        # 生成随机c++代码
+        create_source_code = subprocess.run(
+            f"cd {directory} && {self.yarpgen} && cat init.h func.cpp driver.cpp > random.cpp",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+        if create_source_code.returncode != 0:
+            print(f"yarpgen测试{id}出错.创建随机c++源代码文件失败,报错信息:{create_source_code.stderr.decode('utf-8')}")
+            sys.exit(1)
+
+        # 编译c++代码
+        compile = subprocess.run(
+            f"g++ {directory}/random.cpp -O0 -o {directory}/g++_O0.out &&" # 不开优化编译
+            f"g++ {directory}/random.cpp -O3 -o {directory}/g++_O3.out",         # O3优化编译
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+        if compile.returncode != 0:
+            print(f"yarpgen测试{id}出错.编译c++源代码失败,报错信息:{compile.stderr.decode('utf-8')}")
+            sys.exit(1)
+
+        # 执行并判断
+        O1_result = subprocess.run(
+            f"{directory}/g++_O1.out",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        ).stdout.decode('utf-8')
+        O3_result = subprocess.run(
+            f"{directory}/g++_O3.out",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+        ).stdout.decode('utf-8')
+        return {
+            "id":id,
+            "same":(O1_result == O3_result)
+        }
+
 
     def run_test(self):
-        with ThreadPoolExecutor() as pool:
-            pass
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'yarpgen'
+        ws.append(['请进入/root/osmts_tmp/yarpgen/testdir查看所有结果'])
+        ws.append(['出错项目id'])
+
+        with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
+            results = pool.map(self.create_source_code_and_run, range(1, self.yarpgen_count + 1))
+            for result in results:
+                if result.get('same'):
+                    self.passed += 1
+                else:
+                    self.failed += 1
+                    ws.append([result.get('id',"获取id失败")])
+        wb.save(self.directory / 'yarpgen.xlsx')
 
 
     def run(self):

@@ -76,12 +76,18 @@ class Yarpgen:
             stderr=subprocess.PIPE,
         )
         if compile.returncode != 0:
-            print(f"yarpgen测试{id}出错.编译c++源代码失败,报错信息:{compile.stderr.decode('utf-8')}")
-            sys.exit(1)
+            print(f"yarpgen测试{id}出错.编译c++源代码失败,具体报错信息请前往{directory}/error.log查看")
+            with open(directory / 'error.log', 'w') as log:
+                log.write(compile.stderr.decode('utf-8'))
+            return {
+                "id": id,
+                "success": False,
+                "reason":"编译报错"
+            }
 
         # 执行并判断
         O1_result = subprocess.run(
-            f"{directory}/g++_O1.out",
+            f"{directory}/g++_O0.out",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
@@ -94,7 +100,8 @@ class Yarpgen:
         ).stdout.decode('utf-8')
         return {
             "id":id,
-            "same":(O1_result == O3_result)
+            "success":(O1_result == O3_result),
+            "reason":"运行结果不一致"
         }
 
 
@@ -103,16 +110,17 @@ class Yarpgen:
         ws = wb.active
         ws.title = 'yarpgen'
         ws.append(['请进入/root/osmts_tmp/yarpgen/testdir查看所有结果'])
-        ws.append(['出错项目id'])
+        ws.append(['出错项目id','出错原因'])
 
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
             results = pool.map(self.create_source_code_and_run, range(1, self.yarpgen_count + 1))
             for result in results:
-                if result.get('same'):
+                if result.get('success'):
                     self.passed += 1
                 else:
                     self.failed += 1
-                    ws.append([result.get('id',"获取id失败")])
+                    ws.append([result.get('id',"获取id失败"),result.get('reason','原因未知')])
+        ws.append(["计数统计",f"passwd数量:{self.passed}",f"failed数量:{self.failed}"])
         wb.save(self.directory / 'yarpgen.xlsx')
 
 

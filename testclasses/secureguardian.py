@@ -1,4 +1,5 @@
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +15,9 @@ class SecureGuardian:
 
 
     def pre_test(self):
+        if self.directory.exists():
+            shutil.rmtree(self.directory)
+        self.directory.mkdir(parents=True)
         install_secureguardian = subprocess.run(
             "dnf install -y https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems5/repositories/openEuler-24.09:epol/openEuler:24.09/x86_64/history/223fa6b8-65fc-11ef-9cf1-324c421ef8df/steps/upload/cbs.6161130/secureguardian-1.0.0-1.oe2409.noarch.rpm",
             shell=True,

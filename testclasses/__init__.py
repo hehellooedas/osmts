@@ -19,6 +19,8 @@ from testclasses.jotai import Jotai
 from testclasses.jtreg import Jtreg
 from testclasses.openscap import OpenSCAP
 from testclasses.gpgcheck import GpgCheck
+from testclasses.yarpgen import Yarpgen
+from testclasses.secureguardian import SecureGuardian
 
 
 osmts_tests = {
@@ -84,5 +86,11 @@ osmts_tests = {
     ),
     "gpgcheck":(
         GpgCheck
+    ),
+    "yarpgen":(
+        Yarpgen
+    ),
+    "secureguardian":(
+        SecureGuardian
     )
 }

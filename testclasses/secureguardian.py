@@ -51,7 +51,7 @@ class SecureGuardian:
 
         for version,status in re.findall(r"检查 (\d+\.\d+\.\d+) 执行完成：(成功|失败)", self.test_result):
             ws.append([version,status])
-        wb.save(self.directory / 'secureguardian.results')
+        wb.save(self.directory / 'secureguardian.xlsx')
 
 
     def run(self):

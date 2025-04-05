@@ -2,6 +2,7 @@ from pathlib import Path
 import sys,subprocess,re
 from openpyxl.workbook import Workbook
 from pySmartDL import SmartDL
+from tqdm import tqdm
 
 
 
@@ -46,6 +47,7 @@ class Fio:
         filename = "/root/osmts_tmp/fio/openEuler-24.03-LLVM-riscv64-dvd.iso"
         numjobs = 10
         iodepth = 10
+        pbar = tqdm(total=48,desc="fio运行进度")
         for rw in ("read","write","rw","randread","randwrite","randrw"):
             for bs in (4,16,32,64,128,256,512,1024):
                 if rw == "randrw" or rw == "rw":
@@ -340,6 +342,8 @@ class Fio:
                     ws.cell(baseline + 84, 3, match.group(9) + '%')
 
                 baseline += 85
+                pbar.update(1)
+        pbar.close()
         if not self.directory.exists():
             self.directory.mkdir(exist_ok=True, parents=True)
         with open(self.directory / 'fio.log', 'w') as file:

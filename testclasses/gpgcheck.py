@@ -93,9 +93,9 @@ class GpgCheck:
             else:
                 self.packages.append(package)
 
-        print(f"当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
+        print(f"  当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
         # 根据包名批量下载并测试rpm包
-        for package_list in tqdm(numpy.array_split(self.packages,200),desc='处理包批次',unit='次'):
+        for package_list in tqdm(numpy.array_split(self.packages,200),desc='处理包进度',unit='次'):
             rpm_download = subprocess.run(
                 f"dnf download {' '.join(package_list)} --destdir={self.path}",
                 shell=True,

@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 import sys,subprocess,shutil
 from openpyxl import Workbook
+from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor,as_completed
 
 
@@ -120,7 +121,7 @@ class Csmith:
                 ws.cell(i + 1, 1, f"csmith{i}.c")
 
             # 获取返回值
-            for future in as_completed(futures):
+            for future in tqdm(as_completed(futures),total=len(futures),desc="csmith完成进度"):
                 line,gcc_checksum,clang_checksum = future.result()
                 line += 1
                 if gcc_checksum is None and clang_checksum is None:

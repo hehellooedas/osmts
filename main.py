@@ -128,7 +128,11 @@ def from_tests_to_tasks(run_tests:list) -> list:
         stderr=subprocess.PIPE
     )
     if install_rpms.returncode != 0:
-        print(f"安装所有所需的rpm包失败.报错信息:{install_rpms.stderr.decode('utf-8')}")
+        error_log = install_rpms.stderr.decode('utf-8')
+        print(f"安装所有所需的rpm包失败.报错信息:{error_log}")
+        if 'Bad value of LRO_MAXPARALLELDOWNLOADS' in error_log:
+            print("请检查/etc/dnf/dnf.conf配置文件里的max_parallel_doanloads参数,值最大为20!")
+            sys.exit(1)
         print(f'用户可以手动执行以下命令安装所需的rpm包:  {dnf_command}  ')
         cont = input('是否继续往下运行osmts?(Y/n)')
         if cont in ('N','n'):
@@ -141,7 +145,12 @@ def from_tests_to_tasks(run_tests:list) -> list:
 
 if __name__ == '__main__':
     start_time = time.time()
-    parser = argparse.ArgumentParser(description="get the config file name for osmts.")
+    parser = argparse.ArgumentParser(
+        description="get the config file name for osmts",
+        allow_abbrev=True,
+        add_help=True,
+        epilog="具体帮助信息请参考https://gitee.com/April_Zhao/osmts项目的README"
+    )
     parser.add_argument("--config","-c",type=str,default="osmts_config.toml")
     osmts_config_file = parser.parse_args().config
     try:

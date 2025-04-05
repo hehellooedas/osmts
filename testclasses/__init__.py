@@ -21,6 +21,7 @@ from testclasses.openscap import OpenSCAP
 from testclasses.gpgcheck import GpgCheck
 from testclasses.yarpgen import Yarpgen
 from testclasses.secureguardian import SecureGuardian
+from testclasses.mmtests import MMTests
 
 
 osmts_tests = {
@@ -92,5 +93,8 @@ osmts_tests = {
     ),
     "secureguardian":(
         SecureGuardian
+    ),
+    "mmtests":(
+        MMTests
     )
 }

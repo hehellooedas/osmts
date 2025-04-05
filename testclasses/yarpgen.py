@@ -26,7 +26,7 @@ class Yarpgen:
         if self.path.exists() and self.believe_tmp:
             pass
         else:
-            shutil.rmtree(self.path)
+            shutil.rmtree(self.path,ignore_errors=True)
             git_clone = subprocess.run(
                 "cd /root/osmts_tmp && git clone https://gitcode.com/gh_mirrors/ya/yarpgen.git",
                 shell=True,

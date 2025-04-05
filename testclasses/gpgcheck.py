@@ -5,6 +5,7 @@ import asyncio
 import numpy
 from pathlib import Path
 from openpyxl import Workbook
+from tqdm import tqdm
 
 
 
@@ -26,7 +27,6 @@ class GpgCheck:
             stdout=asyncio.subprocess.DEVNULL,
             stderr=asyncio.subprocess.PIPE,
         )
-        await asyncio.sleep(1.5)
         _, stderr = await rpm_check.communicate()
         if rpm_check.returncode != 0: # rpm -K运行失败
             self.ws.append([package_name, stderr.decode('utf-8')])
@@ -95,7 +95,7 @@ class GpgCheck:
 
         print(f"当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
         # 根据包名批量下载并测试rpm包
-        for package_list in numpy.array_split(self.packages,200):
+        for package_list in tqdm(numpy.array_split(self.packages,200),desc='处理包批次',unit='次'):
             rpm_download = subprocess.run(
                 f"dnf download {' '.join(package_list)} --destdir={self.path}",
                 shell=True,

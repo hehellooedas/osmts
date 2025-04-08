@@ -105,6 +105,7 @@ believe_tmp = 0
 | ltp cve        | 完成 |
 | ltp posix      | 完成 |
 | ltp            | 完成 |
+| gpgcheck       | 完成 |
 | dejagnu        | 完成 |
 | yarpgen        | 完成 |
 | llvmcase       | 完成 |

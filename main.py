@@ -177,10 +177,10 @@ if __name__ == '__main__':
     run_tests:list = config.get("run_tests",None)
     saved_directory = config.get("saved_directory",None)
     compiler = config.get("compiler",None)
-    netperf_server_ip = config.get("netperf_server_ip", None)
+    netperf_server_ip = str(config.get("netperf_server_ip", None))
     believe_tmp:bool = bool(config.get("believe_tmp", None))
-    gcc_version:str = config.get("gcc_version", "auto")
-    wrk_seconds:int = config.get("wrk_seconds",60)
+    gcc_version:str = str(config.get("gcc_version", "auto"))
+    wrk_seconds:int = int(config.get("wrk_seconds",60))
     merge = bool(config.get("merge", None))
     if merge:
         osmts_wb = Workbook()

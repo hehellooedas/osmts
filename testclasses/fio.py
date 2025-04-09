@@ -1,5 +1,5 @@
 from pathlib import Path
-import sys,subprocess,re
+import sys,subprocess,re,shutil
 from openpyxl.workbook import Workbook
 from pySmartDL import SmartDL
 from tqdm import tqdm
@@ -344,8 +344,9 @@ class Fio:
                 baseline += 85
                 pbar.update(1)
         pbar.close()
-        if not self.directory.exists():
-            self.directory.mkdir(exist_ok=True, parents=True)
+        if self.directory.exists():
+            shutil.rmtree(self.directory)
+        self.directory.mkdir(parents=True)
         with open(self.directory / 'fio.log', 'w') as file:
             file.write(self.test_result)
         wb.save(self.directory / 'fio.xlsx')

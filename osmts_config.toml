@@ -1,6 +1,5 @@
 run_tests = ['performance-test']
 saved_directory = "/root/osmts_result"
-merge = 0
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
 csmith_count = 1000

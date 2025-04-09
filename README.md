@@ -64,7 +64,6 @@ chmod +x main.py
 ```
 run_tests = ['netperf','unixbench','nmap','stream']
 saved_directory = "/root/osmts_result"
-merge = 0
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
 csmith_count = 1000
@@ -171,6 +170,12 @@ yarpgen测试类的输出结果如图所示:
 
 secureguardian测试类的输出结果如图所示:
 ![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/secureguardian_excel.png)
+
+wrk测试类的输出结果如图所示:
+![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/wrk_excel.png)
+
+ycsb测试类的输出结果如图所示:
+![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/ycsb_excel.png)
 
 
 ---

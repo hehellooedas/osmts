@@ -24,6 +24,10 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
             print("ycsb测试出错.redis.service开启失败")
             sys.exit(1)
 
+        if self.directory.exists():
+            shutil.rmtree(self.directory)
+        self.directory.mkdir(parents=True)
+
         if self.path.exists() and self.believe_tmp:
             pass
         else:

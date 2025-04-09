@@ -23,27 +23,43 @@ from testclasses.yarpgen import Yarpgen
 from testclasses.secureguardian import SecureGuardian
 from testclasses.mmtests import MMTests
 from testclasses.api_sanity_checker import APISanityChecker
+from testclasses.wrk import Wrk
 
 
 
 osmts_tests = {
+    "unixbench": (
+        Unixbench
+    ),
+    "nmap": (
+        Nmap
+    ),
+    "lmbench": (
+        Lmbench
+    ),
+    "stream": (
+        Stream
+    ),
+    "ltp_stress": (
+        Ltp_stress
+    ),
     "iozone":(
         Iozone
     ),
     "libmicro":(
         Libmicro
     ),
+    "wrk":(
+        Wrk
+    ),
     "fio":(
         Fio
     ),
-    "stream":(
-        Stream
+    "netperf": (
+        Netperf
     ),
-    "nmap":(
-        Nmap
-    ),
-    "unixbench":(
-        Unixbench
+    "trinity": (
+        Trinity
     ),
     "ltp":(
         Ltp
@@ -51,26 +67,20 @@ osmts_tests = {
     "ltp_cve":(
         Ltp_cve
     ),
-    "netperf":(
-        Netperf
-    ),
-    "lmbench":(
-        Lmbench
-    ),
-    "trinity":(
-        Trinity
-    ),
-    "ltp_stress":(
-        Ltp_stress
-    ),
     "ltp_posix":(
         Ltp_posix
     ),
-    "llvmcase":(
-        Llvmcase
+    "gpgcheck": (
+        GpgCheck
     ),
     "dejagnu":(
         DejaGnu
+    ),
+    "yarpgen": (
+        Yarpgen
+    ),
+    "llvmcase": (
+        Llvmcase
     ),
     "anghabench":(
         AnghaBench
@@ -86,12 +96,6 @@ osmts_tests = {
     ),
     "openscap":(
         OpenSCAP
-    ),
-    "gpgcheck":(
-        GpgCheck
-    ),
-    "yarpgen":(
-        Yarpgen
     ),
     "secureguardian":(
         SecureGuardian

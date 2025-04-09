@@ -3,6 +3,7 @@ from pathlib import Path
 import sys,subprocess,shutil
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 
 class Yarpgen:
@@ -113,7 +114,7 @@ class Yarpgen:
         ws.append(['出错项目id','出错原因'])
 
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
-            results = pool.map(self.create_source_code_and_run, range(1, self.yarpgen_count + 1))
+            results = list(tqdm(pool.map(self.create_source_code_and_run, range(1, self.yarpgen_count + 1)),total=self.yarpgen_count))
             for result in results:
                 if result.get('success'):
                     self.passed += 1

@@ -68,6 +68,7 @@ def netperf_judge():
 
 def from_tests_to_tasks(run_tests:list) -> list:
     support_tests = list(osmts_tests.keys())
+    support_tests_count = len(support_tests)
     tasks = set()
     if "performance-test" in run_tests:
         tasks |= {"fio", "stream", "iozone", "unixbench", "libmicro", "nmap", "lmbench", "netperf"}
@@ -76,6 +77,15 @@ def from_tests_to_tasks(run_tests:list) -> list:
         tasks |= set(support_tests)
         run_tests.remove("ALL")
     for run_test in run_tests:
+        if type(run_test) == int:
+            if run_test > support_tests_count:
+                print(f"输入的编号{run_test}超出了osmts的支持范围,编号必须小于{support_tests_count}")
+                sys.exit(1)
+            elif run_test < 1:
+                print(f"输入的编号{run_test}不合法")
+                sys.exit(1)
+            tasks.add(support_tests[run_test - 1])
+            continue
         if run_test not in support_tests:
             print(f"osmts当前支持的测试项目:{support_tests}")
             print(f"run_tests中出现了不在osmts支持列表里的测试项目:{run_test},请检查配置文件.")
@@ -116,7 +126,8 @@ def from_tests_to_tasks(run_tests:list) -> list:
             csmith_count=csmith_count,
             believe_tmp=believe_tmp,
             yarpgen_count=yarpgen_count,
-            gcc_version=gcc_version
+            gcc_version=gcc_version,
+            wrk_seconds=wrk_seconds
         )
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
@@ -167,8 +178,9 @@ if __name__ == '__main__':
     saved_directory = config.get("saved_directory",None)
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
-    believe_tmp = bool(config.get("believe_tmp", None))
-    gcc_version = config.get("gcc_version", "auto")
+    believe_tmp:bool = bool(config.get("believe_tmp", None))
+    gcc_version:str = config.get("gcc_version", "auto")
+    wrk_seconds:int = config.get("wrk_seconds",60)
     merge = bool(config.get("merge", None))
     if merge:
         osmts_wb = Workbook()

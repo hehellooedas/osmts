@@ -20,7 +20,7 @@ cd osmts
 * 运行前安装环境
 
 ```
-dnf install gcc python python3-devel python3-pip tmux
+dnf install gcc python python3-devel python3-pip python3-Cython systemd-devel libxml2 libxslt libxslt-devel libxml2-devel tmux
 pip install --upgrade pip setuptools
 pip install -r requirements.txt
 
@@ -120,6 +120,7 @@ believe_tmp = 0
 | 24 | secureguardian     | 完成   |
 | 25 | mmtests            | 完成   |
 | 26 | api-sanity-checker | 完成   |
+| 27 | ycsb               | 完成   |
 
 
 ## 注意事项

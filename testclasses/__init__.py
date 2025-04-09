@@ -24,7 +24,7 @@ from testclasses.secureguardian import SecureGuardian
 from testclasses.mmtests import MMTests
 from testclasses.api_sanity_checker import APISanityChecker
 from testclasses.wrk import Wrk
-
+from testclasses.ycsb import YCSB
 
 
 osmts_tests = {
@@ -105,5 +105,8 @@ osmts_tests = {
     ),
     "api-sanity-checker":(
         APISanityChecker
+    ),
+    "ycsb":(
+        YCSB
     )
 }

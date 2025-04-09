@@ -115,7 +115,8 @@ def from_tests_to_tasks(run_tests:list) -> list:
             merge=merge,
             csmith_count=csmith_count,
             believe_tmp=believe_tmp,
-            yarpgen_count=yarpgen_count
+            yarpgen_count=yarpgen_count,
+            gcc_version=gcc_version
         )
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
@@ -167,6 +168,7 @@ if __name__ == '__main__':
     compiler = config.get("compiler",None)
     netperf_server_ip = config.get("netperf_server_ip", None)
     believe_tmp = bool(config.get("believe_tmp", None))
+    gcc_version = config.get("gcc_version", "auto")
     merge = bool(config.get("merge", None))
     if merge:
         osmts_wb = Workbook()

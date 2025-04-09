@@ -22,6 +22,8 @@ from testclasses.gpgcheck import GpgCheck
 from testclasses.yarpgen import Yarpgen
 from testclasses.secureguardian import SecureGuardian
 from testclasses.mmtests import MMTests
+from testclasses.api_sanity_checker import APISanityChecker
+
 
 
 osmts_tests = {
@@ -96,5 +98,8 @@ osmts_tests = {
     ),
     "mmtests":(
         MMTests
+    ),
+    "api-sanity-checker":(
+        APISanityChecker
     )
 }

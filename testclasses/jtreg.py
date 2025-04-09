@@ -1,5 +1,6 @@
 import shutil
 import subprocess
+import sys
 import tarfile
 import requests
 from pathlib import Path
@@ -29,6 +30,7 @@ def install_rpm(package_name):
     )
     if dnf.returncode != 0:
         print(f"jtreg测试安装{package_name}失败,报错信息:{dnf.stderr.decode('utf-8')}")
+        sys.exit(1)
 
 
 def remove_rpm(package_name):
@@ -40,6 +42,7 @@ def remove_rpm(package_name):
     )
     if dnf.returncode != 0:
         print(f"jtreg测试安装{package_name}失败,报错信息:{dnf.stderr.decode('utf-8')}")
+        sys.exit(1)
 
 
 def clean_java_environment():

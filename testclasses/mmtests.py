@@ -4,6 +4,7 @@ import sys,subprocess,shutil
 import tarfile,requests
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
 
 
 headers = {
@@ -280,7 +281,7 @@ class MMTests:
 
     def run_test(self):
         with ThreadPoolExecutor() as pool:
-            results = pool.map(self.mmtests_each_test,MMTESTS_CONFIGS)
+            results = list(tqdm(pool.map(self.mmtests_each_test,MMTESTS_CONFIGS),total=len(MMTESTS_CONFIGS)))
             for result in results:
                 self.ws.append(result)
         self.wb.save(self.directory / 'mmtests.xlsx')

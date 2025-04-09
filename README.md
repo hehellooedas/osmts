@@ -69,6 +69,7 @@ compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
 csmith_count = 1000
 yarpgen_count = 100
+gcc_version="auto"
 believe_tmp = 0
 ```
 
@@ -79,8 +80,9 @@ believe_tmp = 0
 4. compiler是待测试的编译环境，应当填写gcc或者clang ,默认是gcc;
 5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000;
 6. csmith_count是csmith测试生成和编译随机c文件的数量,取值范围[100,5000],默认为1000;
-7. yarpgen_count是yarpgen测试生成随机c++文件的数量,取值范围[10,1000],默认为100
-8. believe_tmp=1表示尽可能使用本地已下载好的资源而不是从远程获取,调试用.
+7. yarpgen_count是yarpgen测试生成随机c++文件的数量,取值范围[10,1000],默认为100;
+8. gcc_version是api_sanity_checker测试需要用到的当前系统安装的gcc的版本,可以查看/usr/lib/gcc/riscv64-openEuler-linux/目录下的子目录,是一个数字比如12,如果不想指定可以填入auto让osmts自动查询;
+9. believe_tmp=1表示尽可能使用本地已下载好的资源而不是从远程获取,调试用.
 
 
 
@@ -114,6 +116,7 @@ believe_tmp = 0
 | jotai          | 完成 |
 | jtreg          | 完成 |
 | secureguardian | 完成 |
+| mmtests        | 完成 |
 
 
 ## 注意事项

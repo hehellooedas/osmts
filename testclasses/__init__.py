@@ -25,6 +25,7 @@ from testclasses.mmtests import MMTests
 from testclasses.api_sanity_checker import APISanityChecker
 from testclasses.wrk import Wrk
 from testclasses.ycsb import YCSB
+from testclasses.sysbench import sysBench
 
 
 osmts_tests = {
@@ -108,5 +109,8 @@ osmts_tests = {
     ),
     "ycsb":(
         YCSB
+    ),
+    "sysbench":(
+        sysBench
     )
 }

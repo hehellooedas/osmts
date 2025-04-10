@@ -280,7 +280,8 @@ class MMTests:
 
 
     def run_test(self):
-        with ThreadPoolExecutor() as pool:
+        # MMTests测试太消耗内存,不建议开太多线程同时运行
+        with ThreadPoolExecutor(max_workers=max(int(os.cpu_count()/2),2)) as pool:
             results = list(tqdm(pool.map(self.mmtests_each_test,MMTESTS_CONFIGS),total=len(MMTESTS_CONFIGS)))
             for result in results:
                 self.ws.append(result)

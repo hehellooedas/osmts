@@ -21,7 +21,7 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
         self.redis:Unit = Unit(b'redis.service',_autoload=True)
         self.redis.Unit.Start(b'replace')
         if self.redis.Unit.ActiveState != b'active':
-            print("ycsb测试出错.redis.service开启失败")
+            print("ycsb测试出错.redis.service开启失败,退出测试.")
             sys.exit(1)
 
         if self.directory.exists():
@@ -95,6 +95,8 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
         throughput = re.search(r"\[OVERALL\], Throughput\(ops/sec\), (\d+\.\d+)",self.test_result)
         ws.append(['测试过程中的吞吐量:',throughput.group(1) + 'ops/sec'])
 
+        ws.append(['',''])
+
         # 垃圾回收(GC机制)指标
         ws.append(['垃圾回收(GC机制)指标','---'])
         gc_count_copy = re.search(r"\[TOTAL_GCS_Copy\], Count, (\d+)",self.test_result)
@@ -124,6 +126,8 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
         gc_percent = re.search(r"\[TOTAL_GC_TIME_%\], Time\(%\), (\d+\.\d+)",self.test_result)
         ws.append(['GC占程序总耗时的百分比:',gc_percent.group(1) + '%'])
 
+        ws.append(['',''])
+
         # 读(READ)取操作指标
         ws.append(['读取操作(read)指标','---'])
 
@@ -147,6 +151,8 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
         read_return_ok = re.search(r"\[READ\], Return=OK, (\d+)",self.test_result)
         ws.append(['read返回成功,操作数:',read_return_ok.group(1)])
 
+        ws.append(['',''])
+
         # 清理(CLEANUP)操作指标
         ws.append(['清理操作(clean up)指标', '---'])
 
@@ -166,6 +172,8 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
         cleanup_PercentileLatency_95 = re.search(r"\[CLEANUP\], 95thPercentileLatency\(us\), (\d+)", self.test_result)
         cleanup_PercentileLatency_99 = re.search(r"\[CLEANUP\], 99thPercentileLatency\(us\), (\d+)", self.test_result)
         ws.append([f'50% 清理操作的时延在{cleanup_PercentileLatency_50.group(1)}us以内',f'95% 清理操作的时延在{cleanup_PercentileLatency_95.group(1)}us以内',f'99% 清理操作的时延在{cleanup_PercentileLatency_99.group(1)}us以内'])
+
+        ws.append(['',''])
 
         # 更新操作指标
         ws.append(['更新操作(update)指标','---'])

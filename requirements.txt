@@ -8,3 +8,4 @@ numpy
 aiofiles
 tqdm
 pystemd
+pymysql

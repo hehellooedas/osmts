@@ -26,6 +26,7 @@ from testclasses.api_sanity_checker import APISanityChecker
 from testclasses.wrk import Wrk
 from testclasses.ycsb import YCSB
 from testclasses.sysbench import sysBench
+from testclasses.redis_benchmark import redisBenchMark
 
 
 osmts_tests = {
@@ -109,6 +110,9 @@ osmts_tests = {
     ),
     "ycsb":(
         YCSB
+    ),
+    "redis_benchmark":(
+        redisBenchMark
     ),
     "sysbench":(
         sysBench

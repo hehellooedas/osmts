@@ -1,7 +1,7 @@
 from openpyxl.workbook import Workbook
 from pystemd.systemd1 import Unit
 from pathlib import Path
-import re
+import re,time
 import sys,subprocess,shutil
 
 
@@ -20,6 +20,7 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
     def pre_test(self):
         self.redis:Unit = Unit(b'redis.service',_autoload=True)
         self.redis.Unit.Start(b'replace')
+        time.sleep(5)
         if self.redis.Unit.ActiveState != b'active':
             print("ycsb测试出错.redis.service开启失败,退出测试.")
             sys.exit(1)

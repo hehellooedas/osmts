@@ -1,14 +1,14 @@
 from openpyxl.workbook import Workbook
 from pystemd.systemd1 import Unit
 from pathlib import Path
-import re
-import pymysql
+import re,os
+import pymysql,time
 import sys,subprocess,shutil
 
 
 class sysBench:
     def __init__(self, **kwargs):
-        self.rpms = {'sysbench'}
+        self.rpms = {'sysbench','mysql-server'}
         self.directory: Path = kwargs.get('saved_directory') / 'sysbench'
         self.test_result:str = ''
 
@@ -16,8 +16,9 @@ class sysBench:
     def pre_test(self):
         self.mysqld:Unit = Unit('mysqld.service',_autoload=True)
         self.mysqld.Unit.Start(b'replace')
+        time.sleep(5)
         if self.mysqld.Unit.ActiveState != b'active':
-            print(f"sysbench测试出错.开始mysqld.service失败,退出测试.")
+            print(f"sysbench测试出错.开启mysqld.service失败,退出测试.")
             sys.exit(1)
 
         if self.directory.exists():
@@ -49,7 +50,7 @@ class sysBench:
             "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
             "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
             "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            "--time=180 --threads=6 --report-interval=1 oltp_read_write prepare",
+            f"--time=180 --threads={os.cpu_count()} --report-interval=1 oltp_read_write prepare",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -64,7 +65,7 @@ class sysBench:
             "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
             "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
             "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            "--time=180 --threads=6 --report-interval=1 oltp_read_write run",
+            f"--time=180 --threads={os.cpu_count()} --report-interval=1 oltp_read_write run",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -72,7 +73,7 @@ class sysBench:
         if sysbench_run.returncode != 0:
             print(f"sysbench测试出错.运行sysbench run返回值不为0,报错信息:{sysbench_run.stderr.decode('utf-8')}")
         self.test_result = sysbench_run.stdout.decode('utf-8')
-        with open(Path(self.directory) / 'sysbench.log', 'a') as log:
+        with open(Path(self.directory) / 'sysbench.log', 'w') as log:
             log.write(self.test_result)
         print(self.test_result)
 
@@ -90,7 +91,7 @@ class sysBench:
             "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
             "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
             "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            "--time=180 --threads=6 --report-interval=1 oltp_read_write cleanup",
+            f"--time=180 --threads={os.cpu_count()} --report-interval=1 oltp_read_write cleanup",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,

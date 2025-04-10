@@ -120,6 +120,10 @@ believe_tmp = 0
 | 25 | mmtests            | 完成   |
 | 26 | api-sanity-checker | 完成   |
 | 27 | ycsb               | 完成   |
+| 28 | redis_benchmark    | 完成   |
+| 29 | sysbench           | 完成   |
+| 30 | benchmarksql       | 完成   |
+
 
 
 ## 注意事项
@@ -130,7 +134,8 @@ believe_tmp = 0
 5. gpgcheck测试中会下载大量的rpm包,为加快速度,需要修改/etc/dnf/dnf.conf,添加一行max_parallel_downloads=20,并行下载rpm包,但这个数字不要太大否则会报Error: Bad value of LRO_MAXPARALLELDOWNLOADS
 错误;
 6. 部分测试用到了asyncio协程,从目前的结果来看不建议使用uvloop调度器;
-7. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
+7. 如果进行mysql类的测试,把mysql登陆密码设置为无密码或者123456;
+8. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
 
 ---
 ## 未来计划
@@ -176,6 +181,9 @@ wrk测试类的输出结果如图所示:
 
 ycsb测试类的输出结果如图所示:
 ![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/ycsb_excel.png)
+
+sysbench测试类的输出结果如图所示:
+![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/sysbench_excel.png)
 
 
 ---

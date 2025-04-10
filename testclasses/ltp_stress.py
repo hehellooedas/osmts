@@ -54,7 +54,10 @@ class Ltp_stress():
     def run_test(self):
         print('ltp_stress测试需要7x24小时,期间请勿中断osmts.')
         ltpstress_sh = subprocess.Popen(
-            "cd /opt/ltp_stress/testscripts && mkdir -p /opt/ltp_stress/output && ./ltpstress.sh -i 3600 -d /opt/ltp_stress/output/ltpstress.data -I /opt/ltp_stress/output/ltpstress.iodata -l /opt/ltp_stress/output/ltpstress.log -n -p -S -m 512 -t 168",
+            "cd /opt/ltp_stress/testscripts && mkdir -p /opt/ltp_stress/output && "
+            "./ltpstress.sh -i 3600 -d /opt/ltp_stress/output/ltpstress.data "
+            "-I /opt/ltp_stress/output/ltpstress.iodata -l /opt/ltp_stress/output/ltpstress.log "
+            "-n -p -S -m 512 -t 168",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

@@ -177,13 +177,16 @@ secureguardian测试类的输出结果如图所示:
 ![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/secureguardian_excel.png)
 
 wrk测试类的输出结果如图所示:
-![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/wrk_excel.png)
+![wrk总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/wrk_excel.png)
 
 ycsb测试类的输出结果如图所示:
-![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/ycsb_excel.png)
+![ycsb总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/ycsb_excel.png)
+
+redis_benchmark测试类的输出结果如图所示:
+![redis_benchmark总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/redis_benchmark_excel.png)
 
 sysbench测试类的输出结果如图所示:
-![secureguardian总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/sysbench_excel.png)
+![sysbench总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/sysbench_excel.png)
 
 
 ---

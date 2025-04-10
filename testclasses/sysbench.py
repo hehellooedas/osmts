@@ -45,12 +45,23 @@ class sysBench:
         cursor.execute("CREATE DATABASE IF NOT EXISTS sysbench;")
         cursor.close()
 
+        # 清理测试数据
+        sysbench_clean = subprocess.run(
+            "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
+            "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
+            "--mysql-db=sysbench --table_size=10000000 --tables=64 "
+            f"--time=180 --threads={min(os.cpu_count(),16)} --report-interval=1 oltp_read_write cleanup",
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+
         # 准备测试数据和表
         sysbench_prepare = subprocess.run(
             "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
             "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
             "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            f"--time=180 --threads={os.cpu_count()} --report-interval=1 oltp_read_write prepare",
+            f"--time=180 --threads={min(os.cpu_count(),16)} --report-interval=1 oltp_read_write prepare",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -65,7 +76,7 @@ class sysBench:
             "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
             "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
             "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            f"--time=180 --threads={os.cpu_count()} --report-interval=1 oltp_read_write run",
+            f"--time=180 --threads={min(os.cpu_count(),16)} --report-interval=1 oltp_read_write run",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -82,7 +93,84 @@ class sysBench:
         wb = Workbook()
         ws = wb.active
         ws.title = 'sysbench'
-        
+
+        # SQL 统计
+        ws.append(['SQL statistics[SQL统计]'])
+        ws.merge_cells('A1:D1')
+        ws.append(['标题','key','value','percent'])
+
+        ws.append(['执行的查询'])
+        ws.merge_cells('A3:A15')
+
+        read_select = re.search(r"read:\s*(\d+)",self.test_result).group(1)
+        write_select = re.search(r"write:\s*(\d+)",self.test_result).group(1)
+        other_select = re.search(r"other:\s*(\d+)",self.test_result).group(1)
+        total_select = re.search(r"total:\s*(\d+)",self.test_result).group(1)
+
+        ws.append(['','读操作',read_select,"{.2f}".format(read_select / total_select)])
+        ws.append(['','写操作',write_select,"{.2f}".format(write_select / total_select)])
+        ws.append(['','其他操作',other_select,"{.2f}".format(other_select / total_select)])
+        ws.append(['','总查询数量:',total_select,'/'])
+
+        transactions = re.search(r"transactions:\s*(\d+)\s*\((\d+\.\d+) per sec\.\)",self.test_result).groups()
+        ws.append(['','总事务数:',transactions[0],'/'])
+        ws.append(['','每秒事务数:',transactions[1],'/'])
+
+        query_count = re.search(r"queries:\s*(\d+)\s*\((\d+\.\d+) per sec\.\)",self.test_result).groups()
+        ws.append(['','总查询数:',query_count[0],'/'])
+        ws.append(['','每秒查询数:',query_count[1],'/'])
+
+        ignore_errors = re.search(r"ignored errors:\s*(\d+)\s*\((\d+\.\d+) per sec\.\)",self.test_result).groups()
+        ws.append(['','忽略错误数:',ignore_errors[0],'/'])
+        ws.append(['','每秒忽略错误数:',ignore_errors[1],'/'])
+
+        reconnects = re.search(r"reconnects:\s*(\d+)\s*\((\d+\.\d+) per sec\.\)",self.test_result).groups()
+        ws.append(['','重连次数:',reconnects[0],'/'])
+        ws.append(['','每秒重连次数:',reconnects[1],'/'])
+
+
+        # 通用统计
+        ws.append(['General statistics[通用统计]'])
+        ws.merge_cells('A16:D16')
+        total_time = re.search(r"total time:\s*(\d+\.\d+)s",self.test_result).group(1)
+        total_number_of_events = re.search(r"total number of events:\s*(\d+)",self.test_result).group(1)
+        ws.append(['','测试总时间:',total_time + 's','/'])
+        ws.append(['','总事务数:',total_number_of_events,'/'])
+        ws.merge_cells('A17:A18')
+
+
+        # 延迟统计
+        ws.append(['Latency(ms)[延迟统计]'])
+        min = re.search(r"min:\s*(\d+\.\d+)",self.test_result).group(1)
+        avg = re.search(r"avg:\s*(\d+\.\d+)",self.test_result).group(1)
+        max = re.search(r"max:\s*(\d+\.\d+)",self.test_result).group(1)
+        percentile_95th = re.search(r"95th percentile:\s*(\d+\.\d+)",self.test_result).group(1)
+        sum = re.search(r"sum:\s*(\d+\.\d+)",self.test_result).group(1)
+
+        ws.append(['','最小延迟:',min,'/'])
+        ws.append(['', '平均延迟:', avg, '/'])
+        ws.append(['', '最大延迟:', max, '/'])
+        ws.append(['', '95% 的查询延迟小于:', percentile_95th, '/'])
+        ws.append(['', '总延迟时间:', sum, '/'])
+
+        ws.merge_cells("A20:A24")
+
+        # 线程公平性
+        ws.append(['Threads fairness[线程公平性]'])
+        ws.merge_cells("A25:D25")
+
+        events_avg,events_stddev = re.search(r"events (avg/stddev):\s*(\d+\.\d+)/(\d+\.\d+)",self.test_result).groups()
+        ws.append(['','每个线程平均处理事件数:',events_avg,'/'])
+        ws.append(['', '每个线程平均处理标准差:', events_stddev, '越小越好,负载均衡'])
+
+        execution_time_avg,execution_time_stddev = re.search(r"execution time (avg/stddev):\s*(\d+\.\d+)/(\d+\.\d+)",self.test_result).groups()
+        ws.append(['','每个线程平均执行时间:',execution_time_avg + 's','/'])
+        ws.append(['','每个线程平均执行时间标准差:',execution_time_stddev,'越小越好,说明线程执行时间非常均匀'])
+
+        ws.merge_cells("A26:A29")
+
+        wb.save(self.directory / 'sysbench.log')
+
 
 
     def post_test(self):
@@ -91,7 +179,7 @@ class sysBench:
             "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
             "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
             "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            f"--time=180 --threads={os.cpu_count()} --report-interval=1 oltp_read_write cleanup",
+            f"--time=180 --threads={min(os.cpu_count(),16)} --report-interval=1 oltp_read_write cleanup",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,

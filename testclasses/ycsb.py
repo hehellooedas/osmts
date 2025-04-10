@@ -44,7 +44,7 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
                 sys.exit(1)
 
         mvn = subprocess.run(
-            f"cd {self.path} && mvn -pl site.ycsb:redis-binding -am clean package",
+            f"cd {self.path} && mvn -pl site.ycsb:redis -binding -am clean package",
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,

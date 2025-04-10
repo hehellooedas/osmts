@@ -1,7 +1,8 @@
 from openpyxl.workbook import Workbook
 from pystemd.systemd1 import Unit
 from pathlib import Path
-import re,time
+from io import StringIO
+import csv,time
 import sys,subprocess,shutil
 
 
@@ -27,10 +28,10 @@ class redisBenchMark: # redis-benchmark 是 Redis 自带的基准测试工具
             sys.exit(1)
 
         redis_benchmark_check = subprocess.run(
-            "redis-benchmark -h",shell=True
+            "type redis-benchmark",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL
         )
         if redis_benchmark_check.returncode != 0:
-            print(f"redis-benchmark -h运行失败")
+            print(f"redis_benchmark测试出错.找不到redis-benchmark命令.")
             sys.exit(1)
 
         if self.directory.exists():
@@ -52,18 +53,25 @@ class redisBenchMark: # redis-benchmark 是 Redis 自带的基准测试工具
         self.test_result = redis_bench_mark.stdout.decode('utf-8')
 
 
-
     def result2symmary(self):
         wb = Workbook()
         ws = wb.active
         ws.title = 'redisBenchmark'
-        ws.append(['测试项目名称','rps(每秒请求数)','平均延迟(ms)','最小延迟(ms)','50%延迟(ms)','90% 延迟(ms)','99%延迟(ms)','最大延迟(ms)'])
+        ws.append(['测试项目名称','rps(每秒请求数)','平均延迟(ms)','最小延迟(ms)','50% 延迟(ms)[中位数]','90% 延迟(ms)','99% 延迟(ms)','最大延迟(ms)'])
 
-        results = self.test_result.splitlines()[1:]
-        for result in results:
-            ws.append(result.split(','))
+        csv_reader = list(csv.reader(StringIO(self.test_result), delimiter=','))
+        for result in csv_reader[1:]:
+            ws.append(result)
 
         wb.save(self.directory / 'redisBenchmark.xlsx')
+
+
+    def post_test(self):
+        self.redis.Unit.Stop(b'replace')
+        time.sleep(5)
+        subprocess.run(
+            "dnf remove -y redis",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL
+        )
 
 
     def run(self):
@@ -71,4 +79,5 @@ class redisBenchMark: # redis-benchmark 是 Redis 自带的基准测试工具
         self.pre_test()
         self.run_test()
         self.result2symmary()
+        self.post_test()
         print('redis_benchmark测试结束')

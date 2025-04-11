@@ -20,6 +20,10 @@ class TPC_H:
 
 
     def pre_test(self):
+        if self.directory.exists():
+            shutil.rmtree(self.directory)
+        self.directory.mkdir(parents=True)
+
         self.mysqld:Unit = Unit('mysqld.service',_autoload=True)
         try:
             self.mysqld.Unit.Start(b'replace')
@@ -31,11 +35,6 @@ class TPC_H:
             if self.mysqld.Unit.ActiveState != b'active':
                 print(f"sysbench测试出错.开启mysqld.service失败,退出测试.")
                 sys.exit(1)
-
-        if self.directory.exists():
-            shutil.rmtree(self.directory)
-        self.directory.mkdir(parents=True)
-
         try:
             self.conn = pymysql.connect(
                 host='localhost',
@@ -106,7 +105,7 @@ class TPC_H:
                 cursor.execute(f"\. {self.path}/dbgen/saveSQL/{i}.sql")
                 stop_time = time.perf_counter()
                 cursor.execute(f"show profile")
-                profile = cursor.fetchone()
+                profile = cursor.fetchall()
                 print(profile)
                 print(f"Python处记录的时间{stop_time - start_time}")
 
@@ -123,4 +122,5 @@ class TPC_H:
         print('开始进行tpch测试')
         self.pre_test()
         self.run_test()
+        self.post_test()
         print('tpch测试结束')

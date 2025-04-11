@@ -20,7 +20,7 @@ cd osmts
 * 运行前安装环境
 
 ```
-dnf install gcc python python3-devel python3-pip python3-Cython systemd-devel libxml2 libxslt libxslt-devel libxml2-devel tmux
+dnf install gcc python python3-devel python3-pip python3-Cython python3-psycopg2 systemd-devel libxml2 libxslt libxslt-devel libxml2-devel tmux
 pip install --upgrade pip setuptools
 pip install -r requirements.txt
 
@@ -135,7 +135,7 @@ believe_tmp = 0
 5. gpgcheck测试中会下载大量的rpm包,为加快速度,需要修改/etc/dnf/dnf.conf,添加一行max_parallel_downloads=20,并行下载rpm包,但这个数字不要太大否则会报Error: Bad value of LRO_MAXPARALLELDOWNLOADS
 错误;
 6. 部分测试用到了asyncio协程,从目前的结果来看不建议使用uvloop调度器;
-7. 如果进行mysql类的测试,把mysql登陆密码设置为无密码或者123456;
+7. 如果进行mysql或postresql数据库的测试,把数据库的登陆密码设置为无密码或者123456,osmts运行后数据库密码会设置为123456;
 8. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
 
 ---

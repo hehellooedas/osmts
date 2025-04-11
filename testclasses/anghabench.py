@@ -50,6 +50,7 @@ class AnghaBench:
                 sys.exit(1)
 
 
+
     def match2result(self,match):
         compile = subprocess.run(
             f"gcc {match[1]} -c -o {match[1]}.o",
@@ -92,6 +93,8 @@ class AnghaBench:
 
     def run(self):
         print('开始进行AnghaBench测试')
-        self.pre_test()
+        report = self.pre_test()
+        if report.status is False:
+            return report
         self.run_test()
         print('AnghaBench测试结束')

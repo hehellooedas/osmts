@@ -19,11 +19,16 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
 
     def pre_test(self):
         self.redis:Unit = Unit(b'redis.service',_autoload=True)
-        self.redis.Unit.Start(b'replace')
+        try:
+            self.redis.Unit.Start(b'replace')
+        except:
+            self.redis.Unit.Start(b'replace')
         time.sleep(5)
         if self.redis.Unit.ActiveState != b'active':
-            print("ycsb测试出错.redis.service开启失败,退出测试.")
-            sys.exit(1)
+            time.sleep(5)
+            if self.redis.Unit.ActiveState != b'active':
+                print("ycsb测试出错.redis.service开启失败,退出测试.")
+                sys.exit(1)
 
         if self.directory.exists():
             shutil.rmtree(self.directory)

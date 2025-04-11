@@ -27,6 +27,8 @@ from testclasses.wrk import Wrk
 from testclasses.ycsb import YCSB
 from testclasses.sysbench import sysBench
 from testclasses.redis_benchmark import redisBenchMark
+from testclasses.benchmarksql import BenchMarkSQL
+from testclasses.tpch import TPC_H
 
 
 osmts_tests = {
@@ -116,5 +118,11 @@ osmts_tests = {
     ),
     "sysbench":(
         sysBench
+    ),
+    "benchmarksql":(
+        BenchMarkSQL
+    ),
+    "tpch":(
+        TPC_H
     )
 }

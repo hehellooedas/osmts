@@ -21,11 +21,16 @@ class redisBenchMark: # redis-benchmark 是 Redis 自带的基准测试工具
 
     def pre_test(self):
         self.redis:Unit = Unit(b'redis.service',_autoload=True)
-        self.redis.Unit.Start(b'replace')
+        try:
+            self.redis.Unit.Start(b'replace')
+        except:
+            self.redis.Unit.Start(b'replace')
         time.sleep(5)
         if self.redis.Unit.ActiveState != b'active':
-            print("redis_benchmark测试出错.redis.service开启失败,退出测试.")
-            sys.exit(1)
+            time.sleep(5)
+            if self.redis.Unit.ActiveState != b'active':
+                print("redis_benchmark测试出错.redis.service开启失败,退出测试.")
+                sys.exit(1)
 
         redis_benchmark_check = subprocess.run(
             "type redis-benchmark",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL

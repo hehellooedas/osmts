@@ -4,6 +4,7 @@ import sys,subprocess,shutil
 import tarfile,requests
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
+from io import BytesIO
 from tqdm import tqdm
 
 
@@ -117,6 +118,7 @@ MMTESTS_CONFIGS = (
 )
 
 
+
 class MMTests:
     def __init__(self, **kwargs):
         self.rpms = {
@@ -167,11 +169,10 @@ class MMTests:
         R_Dir.mkdir(parents=True)
         response = requests.get(
             url="https://mirror.lzu.edu.cn/CRAN/src/base/R-4/R-4.4.0.tar.gz",
-            headers=headers,
-            stream=True
+            headers=headers
         )
         response.raise_for_status()
-        with tarfile.open(fileobj=response.raw, mode="r:gz") as tar:
+        with tarfile.open(fileobj=BytesIO(response.content), mode="r:gz") as tar:
             tar.extractall('/opt/')
         build = subprocess.run(
             f"cd /opt/R-4.4.0 && "
@@ -194,10 +195,9 @@ class MMTests:
     def prepare_L(self):
         response = requests.get(
             url="https://gitee.com/April_Zhao/osmts/releases/download/v1.0/List-BinarySearch.tar.xz",
-            headers=headers,
-            stream=True
+            headers=headers
         )
-        with tarfile.open(fileobj=response.raw, mode="r:xz") as tar:
+        with tarfile.open(fileobj=BytesIO(response.content), mode="r:xz") as tar:
             tar.extractall('/opt/')
         build = subprocess.run(
             f"cd /opt/List-BinarySearch && "
@@ -216,11 +216,10 @@ class MMTests:
     def prepare_F(self):
         response = requests.get(
             url="https://cpan.metacpan.org/authors/id/C/CA/CAPOEIRAB/File-Slurp-9999.32.tar.gz",
-            headers=headers,
-            stream=True
+            headers=headers
         )
         response.raise_for_status()
-        with tarfile.open(fileobj=response.raw, mode="r:gz") as tar:
+        with tarfile.open(fileobj=BytesIO(response.content), mode="r:gz") as tar:
             tar.extractall('/opt/')
         build = subprocess.run(
             f"cd /opt/File-Slurp-9999.32 && "

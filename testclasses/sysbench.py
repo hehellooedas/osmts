@@ -15,11 +15,16 @@ class sysBench:
 
     def pre_test(self):
         self.mysqld:Unit = Unit('mysqld.service',_autoload=True)
-        self.mysqld.Unit.Start(b'replace')
+        try:
+            self.mysqld.Unit.Start(b'replace')
+        except:
+            self.mysqld.Unit.Start(b'replace')
         time.sleep(5)
         if self.mysqld.Unit.ActiveState != b'active':
-            print(f"sysbench测试出错.开启mysqld.service失败,退出测试.")
-            sys.exit(1)
+            time.sleep(5)
+            if self.mysqld.Unit.ActiveState != b'active':
+                print(f"sysbench测试出错.开启mysqld.service失败,退出测试.")
+                sys.exit(1)
 
         if self.directory.exists():
             shutil.rmtree(self.directory)
@@ -76,7 +81,8 @@ class sysBench:
             "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
             "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
             "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            f"--time=180 --threads={min(os.cpu_count(),16)} --report-interval=1 oltp_read_write run",
+            f"--time=180 --threads={min(os.cpu_count(),8)} " # --threads参数不能过大
+            "--report-interval=1 oltp_read_write run",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

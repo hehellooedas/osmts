@@ -5,7 +5,6 @@ pexpect
 humanfriendly
 pysmartdl
 numpy
-aiofiles
 tqdm
 pystemd
 pymysql

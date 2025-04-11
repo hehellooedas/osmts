@@ -206,7 +206,7 @@ if __name__ == '__main__':
 
     if saved_directory is None:
         saved_directory = '/root/osmts_result/'
-    elif saved_directory in ('/','/etc','/dev','proc','/boot'):
+    elif saved_directory in ('/','/etc','/dev','/proc','/boot'):
         print(f"{saved_directory}为系统关键目录,不建议把结果存放在该路径")
         choice = input("是否使用osmts推荐的路径?(Y/n)")
         if choice == 'N' or choice == 'n':
@@ -238,6 +238,5 @@ if __name__ == '__main__':
     # 所有检查都通过,则正式开始测试
     for testclass in testclasses:
         testclass.run()
-
 
     print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")

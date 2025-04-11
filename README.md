@@ -123,6 +123,7 @@ believe_tmp = 0
 | 28 | redis_benchmark    | 完成   |
 | 29 | sysbench           | 完成   |
 | 30 | benchmarksql       | 完成   |
+| 31 | tpch               | 完成   |
 
 
 

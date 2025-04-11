@@ -108,10 +108,10 @@ class sysBench:
         ws.append(['执行的查询'])
         ws.merge_cells('A3:A15')
 
-        read_select = re.search(r"read:\s*(\d+)",self.test_result).group(1)
-        write_select = re.search(r"write:\s*(\d+)",self.test_result).group(1)
-        other_select = re.search(r"other:\s*(\d+)",self.test_result).group(1)
-        total_select = re.search(r"total:\s*(\d+)",self.test_result).group(1)
+        read_select = float(re.search(r"read:\s*(\d+)",self.test_result).group(1))
+        write_select = float(re.search(r"write:\s*(\d+)",self.test_result).group(1))
+        other_select = float(re.search(r"other:\s*(\d+)",self.test_result).group(1))
+        total_select = float(re.search(r"total:\s*(\d+)",self.test_result).group(1))
 
         ws.append(['','读操作',read_select,"{.2f}".format(read_select / total_select)])
         ws.append(['','写操作',write_select,"{.2f}".format(write_select / total_select)])

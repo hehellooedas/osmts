@@ -7,7 +7,6 @@ import tomllib,ipaddress
 import subprocess,argparse,humanfriendly
 from pathlib import Path
 from openpyxl import Workbook
-from testclasses import osmts_tests
 
 
 
@@ -231,12 +230,13 @@ if __name__ == '__main__':
 
 
     testclasses = from_tests_to_tasks(run_tests)
+    return_status = []
 
     if not osmts_tmp_dir.exists():
         osmts_tmp_dir.mkdir()
 
     # 所有检查都通过,则正式开始测试
     for testclass in testclasses:
-        testclass.run()
+        return_status.append(testclass.run())
 
     print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")

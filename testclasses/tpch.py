@@ -82,8 +82,8 @@ class TPC_H:
         cursor.execute("DROP DATABASE IF EXISTS tpch;")
         cursor.execute("CREATE DATABASE IF NOT EXISTS tpch;")
         cursor.execute("USE tpch;")
-        cursor.execute(f"\. {self.path}/dbgen/dss.ddl")
-        cursor.execute(f"\. {self.path}/dbgen/dss.ri")
+        cursor.execute(f"SOURCE {self.path}/dbgen/dss.ddl")
+        cursor.execute(f"SOURCE {self.path}/dbgen/dss.ri")
 
         cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
         for table in ('customer','lineitem','nation','orders','partsupp','part','region','supplier'):
@@ -102,7 +102,7 @@ class TPC_H:
         for i in range(1,23):
             with self.conn.cursor() as cursor:
                 start_time = time.perf_counter()
-                cursor.execute(f"\. {self.path}/dbgen/saveSQL/{i}.sql")
+                cursor.execute(f"SOURCE {self.path}/dbgen/saveSQL/{i}.sql")
                 stop_time = time.perf_counter()
                 cursor.execute(f"show profile")
                 profile = cursor.fetchall()

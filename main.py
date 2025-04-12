@@ -6,10 +6,17 @@ import sys,psutil,time
 import tomllib,ipaddress
 import subprocess,argparse,humanfriendly
 from pathlib import Path
-from openpyxl import Workbook
 from testclasses import osmts_tests
+from rich.console import Console
+from rich.traceback import install
+from rich.table import Table,Column
 
-
+console = Console()
+install(show_locals=True)
+table = Table(show_header=True, header_style="bold magenta")
+table.add_column('测试名',justify="left")
+table.add_column('成功/失败',justify="left")
+table.add_column('失败原因',justify="left")
 
 osmts_tmp_dir = Path('/root/osmts_tmp/')
 fio_flag = False
@@ -28,7 +35,7 @@ def fio_judge():
 
 
 
-def netperf_judge():
+def netperf_judge(netperf_server_ip:str):
     # netperf需要server支持
     if netperf_server_ip is None:
         print(f"用户选择测试netperf,但输入的服务端ip有误,请检查netperf_server_ip字段.")
@@ -66,7 +73,7 @@ def netperf_judge():
 
 
 
-def from_tests_to_tasks(run_tests:list) -> list:
+def from_tests_to_tasks(run_tests:list,parameter_list:dict) -> list:
     support_tests = list(osmts_tests.keys())
     support_tests_count = len(support_tests)
     tasks = set()
@@ -92,8 +99,9 @@ def from_tests_to_tasks(run_tests:list) -> list:
             sys.exit(1)
         tasks.add(run_test)
 
+    # 需要额外资源的测试进行检查
     if 'netperf' in tasks:
-        netperf_judge()
+        netperf_judge(parameter_list.get('netperf_server_ip'))
     if 'fio' in tasks:
         fio_judge()
 
@@ -117,18 +125,7 @@ def from_tests_to_tasks(run_tests:list) -> list:
     testclasses = []
     all_need_rpms = set()
     for task in tasks:
-        testclass = osmts_tests[task](
-            saved_directory=saved_directory,
-            compiler=compiler,
-            netperf_server_ip=netperf_server_ip,
-            netserver_created_by_osmts=netserver_created_by_osmts,
-            merge=merge,
-            csmith_count=csmith_count,
-            believe_tmp=believe_tmp,
-            yarpgen_count=yarpgen_count,
-            gcc_version=gcc_version,
-            wrk_seconds=wrk_seconds
-        )
+        testclass = osmts_tests[task](**parameter_list)
         all_need_rpms |= testclass.rpms
         testclasses.append(testclass)
     # 统一安装所有所需的rpm包
@@ -150,94 +147,115 @@ def from_tests_to_tasks(run_tests:list) -> list:
         if cont in ('N','n'):
             sys.exit(1)
 
-    print(f"本次osmts脚本执行将进行的测试:{tasks}(代表执行顺序)\n运行时请勿删除{osmts_tmp_dir}和{saved_directory}")
+    console.print(f"本次osmts脚本执行将进行的测试:{tasks}(代表执行顺序)\n运行时请勿删除{osmts_tmp_dir}和{parameter_list.get('saved_directory')}")
     return testclasses
 
 
 
-if __name__ == '__main__':
-    start_time = time.time()
-    parser = argparse.ArgumentParser(
-        description="get the config file name for osmts",
-        allow_abbrev=True,
-        add_help=True,
-        epilog="具体帮助信息请参考https://gitee.com/April_Zhao/osmts项目的README"
-    )
-    parser.add_argument("--config","-c",type=str,default="osmts_config.toml")
-    osmts_config_file = parser.parse_args().config
-    try:
-        config = tomllib.loads(open(osmts_config_file).read())
-    except FileNotFoundError:
-        print(f"您指定的文件{osmts_config_file}不存在,请检查文件或目录名是否正确")
-        sys.exit(1)
-
-    if config == {}:
-        print("您指定的配置文件是空的,请检查输入的toml格式文件")
-        sys.exit(1)
-    run_tests:list = config.get("run_tests",None)
-    saved_directory = config.get("saved_directory",None)
-    compiler = config.get("compiler",None)
+def parse_config(config:dict) -> dict:
+    saved_directory = config.get("saved_directory", None)
+    compiler = config.get("compiler", None)
     netperf_server_ip = str(config.get("netperf_server_ip", None))
-    believe_tmp:bool = bool(config.get("believe_tmp", None))
-    gcc_version:str = str(config.get("gcc_version", "auto"))
-    wrk_seconds:int = int(config.get("wrk_seconds",60))
+    believe_tmp: bool = bool(config.get("believe_tmp", None))
+    gcc_version: str = str(config.get("gcc_version", "auto"))
+    wrk_seconds: int = int(config.get("wrk_seconds", 60))
     merge = bool(config.get("merge", None))
-    if merge:
-        osmts_wb = Workbook()
-    else:
-        osmts_wb = None
+
     # csmith测试输入参数
-    csmith_count:int = config.get("csmith_count", 1000)
+    csmith_count: int = config.get("csmith_count", 1000)
     if csmith_count < 100:
-        print('csmith_count数量过小,不建议小于100,现在设置csmith_count=1000')
+        console.print('csmith_count数量过小,不建议小于100,现在设置csmith_count=1000')
         csmith_count = 1000
     elif csmith_count > 5000:
-        print('csmith_count数量过大,不建议大于5000,现在设置csmith_count=1000')
+        console.print('csmith_count数量过大,不建议大于5000,现在设置csmith_count=1000')
         csmith_count = 1000
+
     # yarpgen测试输入参数
-    yarpgen_count:int = config.get("yarpgen_count",100)
+    yarpgen_count: int = config.get("yarpgen_count", 100)
     if yarpgen_count < 10:
-        print("yarpgen_count数量过小,不建议小于10,现在设置yarpgen_count=100")
+        console.print("yarpgen_count数量过小,不建议小于10,现在设置yarpgen_count=100")
         yarpgen_count = 100
     elif yarpgen_count > 1000:
-        print("yarpgen_count数量过大,不建议大于1000,现在设置yarpgen_count=100")
+        console.print("yarpgen_count数量过大,不建议大于1000,现在设置yarpgen_count=100")
         yarpgen_count = 100
-
 
     if saved_directory is None:
         saved_directory = '/root/osmts_result/'
-    elif saved_directory in ('/','/etc','/dev','/proc','/boot'):
-        print(f"{saved_directory}为系统关键目录,不建议把结果存放在该路径")
+    elif saved_directory in ('/', '/etc', '/dev', '/proc', '/boot'):
+        console.print(f"{saved_directory}为系统关键目录,不建议把结果存放在该路径")
         choice = input("是否使用osmts推荐的路径?(Y/n)")
         if choice == 'N' or choice == 'n':
             print('本次测试退出.')
             sys.exit(1)
-        print("已设定存放结果的目录为/root/osmts_result")
+        console.print("已设定存放结果的目录为/root/osmts_result")
         saved_directory = '/root/osmts_result/'
     saved_directory = Path(saved_directory)
-    saved_directory.mkdir(parents=True,exist_ok=True)
+    saved_directory.mkdir(parents=True, exist_ok=True)
 
-    if compiler not in ("gcc","clang"):
-        print("编译器必为gcc或者clang之一,否则默认为gcc,请检查compiler字段")
+    if compiler not in ("gcc", "clang"):
+        console.print("编译器必为gcc或者clang之一,否则默认为gcc,请检查compiler字段")
         continue_test = input("是否继续测试?(y/N)")
-        if continue_test in ("y","Y"):
+        if continue_test in ("y", "Y"):
             compiler = "gcc"
         else:
             sys.exit(1)
+    return {
+        'saved_directory':saved_directory,
+        'compiler' : compiler,
+        'netperf_server_ip' : netperf_server_ip,
+        'netserver_created_by_osmts' : netserver_created_by_osmts,
+        'merge' : merge,
+        'csmith_count' : csmith_count,
+        'believe_tmp' : believe_tmp,
+        'yarpgen_count' : yarpgen_count,
+        'gcc_version' : gcc_version,
+        'wrk_seconds' : wrk_seconds
+    }
 
-    if run_tests is None:
-        print(f"您指定的配置文件{osmts_config_file}中的字段run_tests为空,请检查输入的toml文件")
+
+if __name__ == '__main__':
+    # 记录osmts运行所需时间
+    start_time = time.time()
+
+    # 命令行提示
+    parser = argparse.ArgumentParser(
+        description="osmts为一键管理openEuler测试脚本的项目,大多数情况下直接运行main.py即可",
+        allow_abbrev=True,
+        add_help=True,
+        epilog="更多帮助信息请参考https://gitee.com/April_Zhao/osmts项目的README"
+    )
+    parser.add_argument(
+        "--config","-c",
+        type = str,default = "osmts_config.toml",
+        help = "指定osmts运行所需的Toml格式config文件"
+    )
+    osmts_config_file = parser.parse_args().config
+
+    try:
+        config:dict = tomllib.loads(open(osmts_config_file).read())
+    except FileNotFoundError:
+        console.print(f"您指定的文件{osmts_config_file}不存在,请检查文件或目录名是否正确")
         sys.exit(1)
 
-
-    testclasses = from_tests_to_tasks(run_tests)
-    return_status = []
+    if config == {}:
+        console.print("您指定的配置文件是空的,请检查输入的toml格式文件")
+        sys.exit(1)
+    try:
+        run_tests: list = config['run_tests']
+    except KeyError:
+        console.print(f"您指定的配置文件{osmts_config_file}中的字段run_tests为空,请检查输入的toml文件")
+        sys.exit(1)
+    parameter_list = parse_config(config)
 
     if not osmts_tmp_dir.exists():
         osmts_tmp_dir.mkdir()
+
+    testclasses = from_tests_to_tasks(run_tests,parameter_list)
+    return_status = []
 
     # 所有检查都通过,则正式开始测试
     for testclass in testclasses:
         return_status.append(testclass.run())
 
+    console.print(table)
     print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")

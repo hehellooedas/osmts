@@ -113,9 +113,9 @@ class sysBench:
         other_select = float(re.search(r"other:\s*(\d+)",self.test_result).group(1))
         total_select = float(re.search(r"total:\s*(\d+)",self.test_result).group(1))
 
-        ws.append(['','读操作',read_select,"{.2f}".format(read_select / total_select)])
-        ws.append(['','写操作',write_select,"{.2f}".format(write_select / total_select)])
-        ws.append(['','其他操作',other_select,"{.2f}".format(other_select / total_select)])
+        ws.append(['','读操作',read_select,"{:.2f}".format(read_select / total_select)])
+        ws.append(['','写操作',write_select,"{:.2f}".format(write_select / total_select)])
+        ws.append(['','其他操作',other_select,"{:.2f}".format(other_select / total_select)])
         ws.append(['','总查询数量:',total_select,'/'])
 
         transactions = re.search(r"transactions:\s*(\d+)\s*\((\d+\.\d+) per sec\.\)",self.test_result).groups()

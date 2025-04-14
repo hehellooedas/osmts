@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from openpyxl import Workbook
 
-from errors import GitCloneError,RunError,DefaultError
+from .errors import GitCloneError,RunError,DefaultError
 
 
 class Jotai:

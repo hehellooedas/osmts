@@ -1,7 +1,7 @@
 from pathlib import Path
 import subprocess,shutil
 
-from errors import GitCloneError,RunError
+from .errors import GitCloneError,RunError
 
 
 class DejaGnu:

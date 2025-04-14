@@ -7,7 +7,7 @@ from pathlib import Path
 from openpyxl import Workbook
 from tqdm import tqdm
 
-from errors import DefaultError
+from .errors import DefaultError
 
 
 class GpgCheck:

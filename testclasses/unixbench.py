@@ -2,7 +2,7 @@ import subprocess,fileinput,shutil,re,sys
 from pathlib import Path
 from openpyxl import Workbook
 
-from errors import GitCloneError,CompileError,RunError,SummaryError
+from .errors import GitCloneError,CompileError,RunError,SummaryError
 
 
 class Unixbench:

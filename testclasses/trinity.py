@@ -1,7 +1,7 @@
 from pathlib import Path
 import sys,subprocess,lzma
 
-from errors import DefaultError,GitCloneError
+from .errors import DefaultError,GitCloneError
 
 
 class Trinity:

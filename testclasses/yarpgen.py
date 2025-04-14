@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
-from errors import GitCloneError,DefaultError
+from .errors import GitCloneError,DefaultError
 
 
 class Yarpgen:

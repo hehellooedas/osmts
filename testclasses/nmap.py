@@ -2,7 +2,7 @@ import subprocess,re
 from pathlib import Path
 from openpyxl import Workbook
 
-from errors import RunError,SummaryError
+from .errors import RunError,SummaryError
 
 
 class Nmap:

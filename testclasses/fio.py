@@ -4,7 +4,7 @@ from openpyxl.workbook import Workbook
 from pySmartDL import SmartDL
 from tqdm import tqdm
 
-from errors import DefaultError
+from .errors import DefaultError
 
 
 class Fio:

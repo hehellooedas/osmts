@@ -1,5 +1,7 @@
 from pathlib import Path
-import sys,subprocess
+import subprocess
+
+from .errors import GitCloneError,DefaultError
 
 
 """
@@ -21,25 +23,27 @@ class Ltp_posix(object):
         if not self.directory.exists():
             self.directory.mkdir(exist_ok=True,parents=True)
         if not Path('/opt/ltp').exists():
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp/ && git clone https://gitcode.com/gh_mirrors/ltp/ltp.git",
-                shell=True,
+            try:
+                subprocess.run(
+                    "git clone https://gitcode.com/gh_mirrors/ltp/ltp.git",
+                    cwd="/root/osmts_tmp/",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/gh_mirrors/ltp/ltp.git',e.stderr.decode())
+
+        try:
+            make = subprocess.run(
+                f" ./configure && make all -j $(nproc)",
+                cwd="/root/osmts_tmp/ltp/testcases/open_posix_testsuite",
+                shell=True,check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
             )
-            if git_clone.returncode != 0:
-                print(f"ltp_posix测试出错.git clone拉取ltp源码失败:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
-
-        make = subprocess.run(
-            f"cd /root/osmts_tmp/ltp/testcases/open_posix_testsuite && ./configure && make all -j $(nproc)",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if make.returncode != 0:
-            print(f"ltp_posix测试出错.configure和make all出错.报错信息:{make.stderr.decode('utf-8')}")
-            sys.exit(1)
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"ltp_posix测试出错.configure和make all出错.报错信息:{e.decode('utf-8')}")
 
 
     def run_test(self):

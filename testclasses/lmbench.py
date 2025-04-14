@@ -2,7 +2,7 @@ from pathlib import Path
 import subprocess,shutil,pexpect
 from openpyxl import Workbook
 
-from errors import GitCloneError,RunError,SummaryError
+from .errors import GitCloneError,RunError,SummaryError
 
 
 class Lmbench:

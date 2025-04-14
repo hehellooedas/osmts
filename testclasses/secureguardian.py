@@ -4,7 +4,7 @@ import subprocess
 from pathlib import Path
 from openpyxl import Workbook
 
-from errors import DefaultError,RunError,SummaryError
+from .errors import DefaultError,RunError,SummaryError
 
 
 class SecureGuardian:

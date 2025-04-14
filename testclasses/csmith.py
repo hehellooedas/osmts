@@ -5,7 +5,7 @@ from openpyxl import Workbook
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor,as_completed
 
-from errors import GitCloneError,DefaultError
+from .errors import GitCloneError,DefaultError
 
 
 class Csmith:

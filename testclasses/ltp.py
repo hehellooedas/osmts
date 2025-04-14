@@ -3,7 +3,7 @@ from pathlib import Path
 import subprocess,shutil
 from openpyxl import Workbook
 
-from errors import GitCloneError,DefaultError
+from .errors import GitCloneError,DefaultError
 
 """
 文档:https://blog.sina.com.cn/s/blog_7695e9f40100yjme.html

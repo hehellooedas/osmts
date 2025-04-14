@@ -5,7 +5,7 @@ from io import StringIO
 import csv,time
 import sys,subprocess,shutil
 
-from errors import DefaultError,RunError,SummaryError
+from .errors import DefaultError,RunError,SummaryError
 
 
 TEST_COMMANDS = (

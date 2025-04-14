@@ -7,7 +7,7 @@ import requests,tarfile
 import pymysql
 import sys,subprocess,shutil
 
-from errors import DefaultError
+from .errors import DefaultError
 
 
 class TPC_H:

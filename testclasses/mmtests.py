@@ -1,11 +1,13 @@
 import os
 from pathlib import Path
-import sys,subprocess,shutil
+import subprocess,shutil
 import tarfile,requests
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from tqdm import tqdm
+
+from .errors import DefaultError,GitCloneError
 
 
 headers = {
@@ -174,17 +176,18 @@ class MMTests:
         response.raise_for_status()
         with tarfile.open(fileobj=BytesIO(response.content), mode="r:gz") as tar:
             tar.extractall('/opt/')
-        build = subprocess.run(
-            f"cd /opt/R-4.4.0 && "
-            f"./configure --enable-R-shlib=yes --with-tcltk --prefix={R_Dir} && "
-            f"make -j {os.cpu_count()} && make install",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if build.returncode != 0:
-            print(f"mmtests测试出错.R-4.4.0构建失败,报错信息:{build.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                f"./configure --enable-R-shlib=yes --with-tcltk --prefix={R_Dir} && "
+                f"make -j {os.cpu_count()} && make install",
+                cwd="/opt/R-4.4.0",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"mmtests测试出错.R-4.4.0构建失败,报错信息:{e.stderr.decode('utf-8')}")
+
         # 创建软链接
         shutil.copyfile(R_Src_Path,R_Dst_Path,follow_symlinks=True)
         shutil.copyfile(Rscript_Src_Path,Rscript_Dst_Path)
@@ -199,16 +202,16 @@ class MMTests:
         )
         with tarfile.open(fileobj=BytesIO(response.content), mode="r:xz") as tar:
             tar.extractall('/opt/')
-        build = subprocess.run(
-            f"cd /opt/List-BinarySearch && "
-            f"echo y|perl Makefile.PL && make && make test && make install",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if build.returncode != 0:
-            print(f"mmtests测试出错.List-BinarySearch构建失败,报错信息:{build.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                f"cd /opt/List-BinarySearch && "
+                f"echo y|perl Makefile.PL && make && make test && make install",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"mmtests测试出错.List-BinarySearch构建失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
 
@@ -221,17 +224,17 @@ class MMTests:
         response.raise_for_status()
         with tarfile.open(fileobj=BytesIO(response.content), mode="r:gz") as tar:
             tar.extractall('/opt/')
-        build = subprocess.run(
-            f"cd /opt/File-Slurp-9999.32 && "
-            f"perl Makefile.PL -y && "
-            f"make -j {os.cpu_count()} && make test && make install",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if build.returncode != 0:
-            print(f"mmtests测试出错.File-Slurp构建失败,报错信息:{build.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            build = subprocess.run(
+                args="perl Makefile.PL -y && "
+                f"make -j {os.cpu_count()} && make test && make install",
+                cwd="/opt/File-Slurp-9999.32",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"mmtests测试出错.File-Slurp构建失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
     # 准备mmtests
@@ -241,15 +244,17 @@ class MMTests:
             pass
         else:
             shutil.rmtree(self.path, ignore_errors=True)
-            git_clone =  subprocess.run(
-                "cd /root/osmts_tmp/ && git clone https://gitcode.com/gh_mirrors/mm/mmtests.git",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            if git_clone.returncode != 0:
-                print(f"MMTtests测试出错.git clone运行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    "git clone https://gitcode.com/gh_mirrors/mm/mmtests.git",
+                    cwd="/root/osmts_tmp/",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/gh_mirrors/mm/mmtests.git'.stderr.decode('utf-8'))
+
 
 
     def pre_test(self):
@@ -267,8 +272,8 @@ class MMTests:
 
     def mmtests_each_test(self,config):
         run_mmtests = subprocess.run(
-            f"cd /root/osmts_tmp/mmtests && ./run-mmtests.sh --no-monitor "
-            f"--config configs/{config} {config}",
+            f"./run-mmtests.sh --no-monitor --config configs/{config} {config}",
+            cwd="/root/osmts_tmp/mmtests",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,

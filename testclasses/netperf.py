@@ -2,7 +2,7 @@ from pathlib import Path
 import re,sys,subprocess,psutil
 from openpyxl import Workbook
 
-from errors import DefaultError
+from .errors import DefaultError
 
 
 class Netperf(object):

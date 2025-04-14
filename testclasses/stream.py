@@ -1,7 +1,7 @@
 from pathlib import Path
 import re,subprocess,shutil
 from openpyxl import Workbook
-from errors import GitCloneError,CompileError,SummaryError,RunError
+from .errors import GitCloneError,CompileError,SummaryError,RunError
 
 
 

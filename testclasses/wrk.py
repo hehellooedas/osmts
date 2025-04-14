@@ -4,7 +4,7 @@ from pathlib import Path
 import re,subprocess
 from openpyxl import Workbook
 
-from errors import RunError,SummaryError
+from .errors import RunError,SummaryError
 
 
 

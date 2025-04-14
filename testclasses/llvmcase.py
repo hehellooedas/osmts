@@ -1,7 +1,7 @@
 from pathlib import Path
 import subprocess,shutil
 
-from errors import GitCloneError,RunError,DefaultError
+from .errors import GitCloneError,RunError,DefaultError
 
 
 class Llvmcase():

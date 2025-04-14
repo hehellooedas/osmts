@@ -4,7 +4,7 @@ from pathlib import Path
 import re,time
 import subprocess,shutil
 
-from errors import DefaultError,GitCloneError,RunError,SummaryError
+from .errors import DefaultError,GitCloneError,RunError,SummaryError
 
 
 

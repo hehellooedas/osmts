@@ -1,8 +1,9 @@
 import shutil
 import subprocess
-import sys,os
+import os
 from pathlib import Path
 
+from .errors import GitCloneError
 
 
 class APISanityChecker:
@@ -23,29 +24,32 @@ class APISanityChecker:
             pass
         else:
             shutil.rmtree(self.abi_compliance_checker,ignore_errors=True)
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp && git clone https://gitcode.com/gh_mirrors/ab/abi-compliance-checker.git",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            if git_clone.returncode != 0:
-                print(f"api-snity-checcker测试出错.报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    "git clone https://gitcode.com/gh_mirrors/ab/abi-compliance-checker.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/gh_mirrors/ab/abi-compliance-checker.git',e.stderr.decode())
+
 
         if self.api_sanity_checker.exists() and self.believe_tmp:
             pass
         else:
             shutil.rmtree(self.api_sanity_checker,ignore_errors=True)
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp && git clone https://github.com/lvc/api-sanity-checker.git",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            if git_clone.returncode != 0:
-                print(f"api-snity-checcker测试出错.报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    "cd /root/osmts_tmp && git clone https://github.com/lvc/api-sanity-checker.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://github.com/lvc/api-sanity-checker.git',e.stderr.decode())
 
         # 开始安装
         subprocess.run(

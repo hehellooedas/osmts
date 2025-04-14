@@ -4,7 +4,7 @@ import os,subprocess,shutil
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
 
-from errors import GitCloneError
+from .errors import GitCloneError
 
 
 class AnghaBench:

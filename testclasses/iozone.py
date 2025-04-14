@@ -1,7 +1,7 @@
 from pathlib import Path
 import subprocess,shutil
 
-from errors import DefaultError, CompileError, RunError
+from .errors import DefaultError, CompileError, RunError
 
 
 class Iozone:

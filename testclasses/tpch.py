@@ -7,7 +7,7 @@ import time
 import requests,tarfile
 import pymysql
 import subprocess,shutil
-from tqdm import trange
+from tqdm import trange,tqdm
 
 from .errors import DefaultError
 
@@ -17,7 +17,8 @@ class TPC_H:
         self.rpms = {'sysbench','mysql-server'}
         self.directory: Path = kwargs.get('saved_directory') / 'TPC-H'
         self.path = Path('/root/osmts_tmp/TPC-H')
-        self.saveSQL = self.path / 'dbgen/saveSQL'
+        self.dbgen = self.path / 'dbgen'
+        self.saveSQL = self.dbgen / 'saveSQL'
         self.test_result:str = ''
 
 
@@ -107,21 +108,25 @@ class TPC_H:
 
         cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
 
-        for table in ('customer','lineitem','nation','orders','partsupp','part','region','supplier'):
+        mysql = pexpect.spawn(
+            command="/bin/bash",
+            args=["-c", "mysql -uroot -p123456"],
+            encoding='utf-8',
+            logfile=open(self.directory / 'osmts_tpch_loadData.log', 'w'),
+        )
+        mysql.expect_exact("mysql>", timeout=60)
+        mysql.sendline(f"USE tpch;")
+
+        for table in tqdm(('customer','lineitem','nation','orders','partsupp','part','region','supplier'),desc="load data进度"):
             try:
-                subprocess.run(
-                    f'mysql -uroot -p123456 -eLOAD DATA LOCAL INFILE {self.path}/{table}.tbl INTO TABLE {table};',
-                    shell=True,check=True,
-                    stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,
-                )
-                subprocess.run(
-                    f"""mysql -uroot -p123456 -eFIELDS TERMINATED BY '|' LINES TERMINATED BY '|\n';""",
-                    shell=True, check=True,
-                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                )
+                mysql.expect_exact("mysql>")
+                mysql.sendline(f"LOAD DATA LOCAL INFILE {self.dbgen}/{table}.tbl INTO TABLE {table};")
+                mysql.expect_exact("mysql>")
+                mysql.sendline("FIELDS TERMINATED BY '|' LINES TERMINATED BY '|\n';")
             except subprocess.CalledProcessError as e:
                 pass
-
+        time.sleep(5)
+        mysql.terminate(force=True)
             # cursor.execute(f"LOAD DATA LOCAL INFILE {self.path}/{table}.tbl INTO TABLE {table};")
             # cursor.execute(f"FIELDS TERMINATED BY '|' LINES TERMINATED BY '|\n';")
 
@@ -134,13 +139,15 @@ class TPC_H:
             command="/bin/bash",
             args=["-c", "mysql -uroot -p123456"],
             encoding='utf-8',
-            logfile=open(self.directory / 'osmts_tpch.log', 'w'),
+            logfile=open(self.directory / 'osmts_tpch_query.log', 'w'),
         )
+        mysql.expect_exact("mysql>", timeout=60)
+        mysql.sendline(f"USE tpch;")
 
         for i in trange(1,23,desc="SQL查询进度"):
-            mysql.expect_exact("mysql>",timeout=60)
-            mysql.sendline(f"\. {self.saveSQL}/{i}.sql")
             mysql.expect_exact("mysql>")
+            mysql.sendline(f"\. {self.saveSQL}/{i}.sql")
+        time.sleep(5)
         mysql.terminate(force=True)
 
 

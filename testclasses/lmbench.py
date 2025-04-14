@@ -1,7 +1,8 @@
 from pathlib import Path
-import sys,subprocess,shutil,pexpect
+import subprocess,shutil,pexpect
 from openpyxl import Workbook
 
+from errors import GitCloneError,RunError,SummaryError
 
 
 class Lmbench:
@@ -22,22 +23,24 @@ class Lmbench:
         else:
             shutil.rmtree(self.path)
             # 获取lmbench源码
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/lmbench.git",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            if git_clone.returncode != 0:
-                print(f"lmbench测试出错:拉取源码失败.报错信息:{git_clone.stderr.decode('utf-8')})")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    "git clone https://gitee.com/April_Zhao/lmbench.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitee.com/April_Zhao/lmbench.git',e.stderr.decode())
 
 
     def run_test(self):
         # make后直接就运行了
         make = pexpect.spawn(
             command = '/bin/bash',
-            args = ['-c',f"cd /root/osmts_tmp/lmbench && make CC={self.compiler} results"],
+            args = ['-c',f"make CC={self.compiler} results"],
+            cwd=self.path,
             encoding = 'utf-8',
             logfile = open(self.directory / 'osmts_lmbench.log', 'w')
         )
@@ -95,15 +98,16 @@ class Lmbench:
 
 
         # 获取运行结果
-        make_see = subprocess.run(
-            "cd /root/osmts_tmp/lmbench && make see",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stdin=subprocess.PIPE,
-        )
-        if make_see.returncode != 0:
-            print(f"lmbench测试:make see执行出错.报错信息:{make_see.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "cd /root/osmts_tmp/lmbench && make see",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stdin=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode('utf-8'))
+
         shutil.copyfile('/root/osmts_tmp/lmbench/results/summary.out',self.directory / 'lmbench_summary.out')
 
 
@@ -390,5 +394,11 @@ class Lmbench:
         print("开始进行lmbench测试")
         self.pre_test()
         self.run_test()
-        self.result2summary()
+        try:
+            self.result2summary()
+        except Exception as e:
+            logFile = self.directory / 'lmbench_summary_error.log'
+            with open(logFile, 'w') as log:
+                log.write(str(e))
+            raise SummaryError(logFile)
         print("lmbench测试结束")

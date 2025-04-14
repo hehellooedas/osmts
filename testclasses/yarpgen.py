@@ -5,6 +5,8 @@ from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
 from tqdm import tqdm
 
+from errors import GitCloneError,DefaultError
+
 
 class Yarpgen:
     def __init__(self, **kwargs):
@@ -28,30 +30,32 @@ class Yarpgen:
             pass
         else:
             shutil.rmtree(self.path,ignore_errors=True)
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp && git clone https://gitcode.com/gh_mirrors/ya/yarpgen.git",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            if git_clone.returncode != 0:
-                print(f"yarpgen测试出错.git clone失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    "git clone https://gitcode.com/gh_mirrors/ya/yarpgen.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/gh_mirrors/ya/yarpgen.git',e.stderr.decode('utf-8'))
 
         if self.testdir.exists():
             shutil.rmtree(self.testdir)
         self.testdir.mkdir(parents=True)
 
         # 构建yarpgen命令
-        build = subprocess.run(
-            f"cd /root/osmts_tmp/yarpgen && mkdir build && cd build && cmake .. && make -j {os.cpu_count()}",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if build.returncode != 0:
-            print(f"yarpgen测试出错.cmake和make失败,报错信息:{build.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                args="mkdir build && cd build && cmake .. && make -j {os.cpu_count()}",
+                cwd=self.path,
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"yarpgen测试出错.cmake和make失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
     def create_source_code_and_run(self,id) -> dict:
@@ -59,7 +63,8 @@ class Yarpgen:
         directory.mkdir(parents=True)
         # 生成随机c++代码
         create_source_code = subprocess.run(
-            f"cd {directory} && {self.yarpgen} && cat init.h func.cpp driver.cpp > random.cpp",
+            f"{self.yarpgen} && cat init.h func.cpp driver.cpp > random.cpp",
+            cwd=directory,
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -70,8 +75,9 @@ class Yarpgen:
 
         # 编译c++代码
         compile = subprocess.run(
-            f"g++ {directory}/random.cpp -O0 -o {directory}/g++_O0.out &&" # 不开优化编译
-            f"g++ {directory}/random.cpp -O3 -o {directory}/g++_O3.out",         # O3优化编译
+            f"g++ ./random.cpp -O0 -o g++_O0.out &&" # 不开优化编译
+            f"g++ ./random.cpp -O3 -o g++_O3.out",         # O3优化编译
+            cwd=directory,
             shell=True,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,

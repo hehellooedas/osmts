@@ -76,7 +76,7 @@ MMTESTS_CONFIGS = (
 'config-workload-will-it-scale-io-threads',
 'config-workload-will-it-scale-pf-processes',
 'config-workload-will-it-scale-sys-processes',
-#longtime
+# longtime
 'config-db-pgbench-timed-ro-scale1',
 'config-functional-ltp-cve',
 'config-functional-ltp-lite',
@@ -106,7 +106,7 @@ MMTESTS_CONFIGS = (
 'config-workload-shellscripts',
 'config-workload-stockfish',
 'config-workload-usemem-stress-numa-compact',
-#long long time
+# long long time
 'config-network-sockperf-unbound',
 'config-scheduler-adrestia-periodic-unbound',
 'config-workload-johnripper',

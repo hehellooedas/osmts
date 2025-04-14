@@ -1,6 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil
+import subprocess,shutil
 
+from errors import GitCloneError,RunError
 
 
 class DejaGnu:
@@ -8,6 +9,7 @@ class DejaGnu:
         self.rpms = {'gcc-g++', 'gcc-gfortran', 'dejagnu'}
         self.path = Path('/root/osmts_tmp/dejagnu')
         self.directory: Path = kwargs.get('saved_directory') / 'dejagnu'
+        self.testsuite = Path("/root/osmts_tmp/dejagnu/gcc/gcc/testsuite/")
 
 
     def pre_test(self):
@@ -17,49 +19,53 @@ class DejaGnu:
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True)
         # 拉取源码
-        git_clone = subprocess.run(
-            f"cd {self.path} && git clone https://gitee.com/openeuler/gcc.git",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if git_clone.returncode != 0:
-            print(f"dejagnu测试出错.拉取源码失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                f"git clone https://gitee.com/openeuler/gcc.git",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise GitCloneError(e.returncode,'https://gitee.com/openeuler/gcc.git',e.stderr.decode())
 
 
     def run_test(self):
-        gcc = subprocess.run(
-            f"cd /root/osmts_tmp/dejagnu/gcc/gcc/testsuite/ && runtest --tool gcc && cp gcc.log gcc.sum {self.directory}",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if gcc.returncode != 0:
-            print(f"dejagnu测试出错.runtest --tool gcc命令运行失败,报错信息:{gcc.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                f"runtest --tool gcc && cp gcc.log gcc.sum {self.directory}",
+                cwd=self.testsuite,
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,f"dejagnu测试出错.runtest --tool gcc命令运行失败,报错信息:{e.stderr.decode('utf-8')}")
+
+        try:
+            subprocess.run(
+                f"runtest --tool g++ && cp cpp.log cpp.sum {self.directory}",
+                cwd=self.testsuite,
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,f"dejagnu测试出错.runtest --tool g++命令运行失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
-        cpp = subprocess.run(
-            f"cd /root/osmts_tmp/dejagnu/gcc/gcc/testsuite/ && runtest --tool g++ && cp cpp.log cpp.sum {self.directory}",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if cpp.returncode != 0:
-            print(f"dejagnu测试出错.runtest --tool g++命令运行失败,报错信息:{cpp.stderr.decode('utf-8')}")
-            sys.exit(1)
-
-
-        gfortran = subprocess.run(
-            f"cd /root/osmts_tmp/dejagnu/gcc/gcc/testsuite/ && runtest --tool gfortran && cp gfortran.log gfortran.sum {self.directory}",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if gfortran.returncode != 0:
-            print(f"dejagnu测试出错.runtest --tool gfortran命令运行失败,报错信息:{gfortran.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            # gfortran
+             subprocess.run(
+                f"runtest --tool gfortran && cp gfortran.log gfortran.sum {self.directory}",
+                cwd=self.testsuite,
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,f"dejagnu测试出错.runtest --tool gfortran命令运行失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
     def run(self):

@@ -1,6 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil
+import subprocess,shutil
 
+from errors import GitCloneError,CompileError,RunError
 
 
 class Libmicro:
@@ -19,32 +20,52 @@ class Libmicro:
         else:
             shutil.rmtree(self.path, ignore_errors=True)
             # 获取源码
-            git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/libmicro.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-            if git_clone.returncode != 0:
-                print(f"libmicro测试出错:拉取libmicro源码错误.报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    args="git clone https://gitee.com/April_Zhao/libmicro.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitee.com/April_Zhao/libmicro.git',e.stderr.decode())
+
 
         # 开始编译
-        if self.compiler == "gcc":
-            make = subprocess.run("cd /root/osmts_tmp/libmicro && make",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        elif self.compiler == "clang":
-            make = subprocess.run('cd /root/osmts_tmp/libmicro && make CC=clang CFLAGS="-Wno-error=implicit-function-declaration"',shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if make.returncode != 0:
-            print(f"libmicro测试出错:make编译报错.报错信息:{make.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            if self.compiler == "gcc":
+                subprocess.run(
+                    args="make",
+                    cwd=self.path,
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE
+                )
+            elif self.compiler == "clang":
+                subprocess.run(
+                    args='make CC=clang CFLAGS="-Wno-error=implicit-function-declaration"',
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE
+                )
+        except subprocess.CalledProcessError as e:
+            raise CompileError(e.returncode,self.compiler,e.stderr.decode())
 
 
     def run_test(self):
-        bench = subprocess.run(
-            "cd /root/osmts_tmp/libmicro && ./bench",
-                   shell=True,
-                   stdout=subprocess.PIPE,
-                   stderr=subprocess.PIPE
-        )
-        if bench.returncode != 0:
-            print(f"libmicro测试出错:bench命令运行失败.报错信息:{bench.stderr.decode('utf-8')}")
-            sys.exit(1)
-        self.test_result = bench.stdout.decode('utf-8')
+        try:
+            bench = subprocess.run(
+                args="./bench",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode())
+        else:
+            self.test_result = bench.stdout.decode('utf-8')
         if not self.directory.exists():
             self.directory.mkdir(exist_ok=True,parents=True)
         with open(self.directory / 'libmicro.log','w') as file:

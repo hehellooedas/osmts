@@ -4,6 +4,9 @@ from pathlib import Path
 import re,subprocess
 from openpyxl import Workbook
 
+from errors import RunError,SummaryError
+
+
 
 class Wrk:
     def __init__(self,**kwargs):
@@ -20,15 +23,16 @@ class Wrk:
 
 
     def run_test(self):
-        wrk = subprocess.run(
-            f"wrk -t{os.cpu_count()} -c1023 -d60s --latency http://www.baidu.com",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if wrk.returncode != 0:
-            print(f"wrk测试出错.wrk命令运行报错,报错信息:{wrk.stderr.decode('utf-8')}")
-            return
+        try:
+            wrk = subprocess.run(
+                f"wrk -t{os.cpu_count()} -c1023 -d60s --latency http://www.baidu.com",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,'wrk命令运行报错,报错信息:' + e.stderr.decode('utf-8'))
+
         self.test_result = wrk.stdout.decode('utf-8')
         with open(self.directory / 'wrk.txt','w') as file:
             file.write(self.test_result)
@@ -84,5 +88,11 @@ class Wrk:
         print('开始进行wrk测试')
         self.pre_test()
         self.run_test()
-        self.result2summary()
+        try:
+            self.result2summary()
+        except Exception as e:
+            logFile = self.directory / 'wrk_summary_error.log'
+            with open(logFile,'w') as log:
+                log.write(str(e))
+            raise SummaryError(logFile)
         print('wrk测试结束')

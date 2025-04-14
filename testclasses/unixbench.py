@@ -2,6 +2,7 @@ import subprocess,fileinput,shutil,re,sys
 from pathlib import Path
 from openpyxl import Workbook
 
+from errors import GitCloneError,CompileError,RunError,SummaryError
 
 
 class Unixbench:
@@ -21,34 +22,51 @@ class Unixbench:
             pass
         else:
             shutil.rmtree(self.path, ignore_errors=True)
-            clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitcode.com/gh_mirrors/by/byte-unixbench.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-            if clone.returncode != 0:
-                print(f"unixbench测试出错:git clone执行失败.报错信息:{clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    args="git clone https://gitcode.com/gh_mirrors/by/byte-unixbench.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/gh_mirrors/by/byte-unixbench.git',e.stderr)
+
+
         if self.compiler == 'clang':
             for line in fileinput.input('/root/osmts_tmp/byte-unixbench/UnixBench/Makefile', inplace=True):
                 if 'CC=gcc' in line:  # 仅在包含'CC=gcc'的行进行替换
                     line = line.replace('CC=gcc', 'CC=clang')
                 print(line, end='') #inplace=True会把stdout重定向到文件中
-        make = subprocess.run("cd /root/osmts_tmp/byte-unixbench/UnixBench && make",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if make.returncode != 0:
-            print(f"unixbench测试出错:make执行失败.报错信息:{make.stderr.decode('utf-8')}")
-            sys.exit(1)
+
+        try:
+            subprocess.run(
+                "make",
+                cwd="/root/osmts_tmp/byte-unixbench/UnixBench",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise CompileError(e.returncode,self.compiler,e.stderr)
 
 
     def run_test(self):
-        run = subprocess.run(
-            "cd /root/osmts_tmp/byte-unixbench/UnixBench/ && ./Run -c 1 -c $(nproc)",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        if run.returncode != 0:
-            print(f"unixbench测试出错:Run程序运行失败.报错信息:{run.stderr.decode('utf-8')}")
-            sys.exit(1)
-        self.test_result = run.stdout.decode('utf-8')
-        with open(self.directory / 'unixbench,log','w') as file:
-            file.write(self.test_result)
+        try:
+            run = subprocess.run(
+                "./Run -c 1 -c $(nproc)",
+                cwd="/root/osmts_tmp/byte-unixbench/UnixBench/",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr)
+        else:
+            self.test_result = run.stdout.decode('utf-8')
+            with open(self.directory / 'unixbench,log','w') as file:
+                file.write(self.test_result)
 
 
     def result2summary(self):
@@ -105,5 +123,11 @@ class Unixbench:
         print("开始进行unixbench测试")
         self.pre_test()
         self.run_test()
-        self.result2summary()
+        try:
+            self.result2summary()
+        except Exception as e:
+            logFile = self.directory / 'unixbench_summary_error.log'
+            with open(logFile, 'w') as log:
+                log.write(str(e))
+            raise SummaryError(logFile)
         print("unixbench测试结束")

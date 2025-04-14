@@ -1,8 +1,10 @@
 from pathlib import Path
-import sys,shutil,os,fnmatch,tarfile,subprocess,resource
+import fnmatch,tarfile,resource
+import os,subprocess,shutil
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
 
+from errors import GitCloneError
 
 
 class AnghaBench:
@@ -39,15 +41,15 @@ class AnghaBench:
         else:
             shutil.rmtree(self.path, ignore_errors=True)
             # 拉取AnghaBench的源码
-            git_clone = subprocess.run(
-                f"cd /root/osmts_tmp/ && git clone https://gitcode.com/qq_61653333/AnghaBench.git",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            if git_clone.returncode != 0:
-                print(f"AnghaBench测试出错.git clone运行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    f"cd /root/osmts_tmp/ && git clone https://gitcode.com/qq_61653333/AnghaBench.git",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/qq_61653333/AnghaBench.git',e.stderr)
 
 
 
@@ -58,7 +60,7 @@ class AnghaBench:
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT
         )
-        if compile.returncode != 0:
+        if compile.returncode != 0: # 这里编译出错在预料之中不属于意外实践
             with open(self.log_files / (match[0] + '.log'), 'w') as log:
                 log.write(compile.stdout.decode('utf-8'))
             return match[0]
@@ -93,8 +95,6 @@ class AnghaBench:
 
     def run(self):
         print('开始进行AnghaBench测试')
-        report = self.pre_test()
-        if report.status is False:
-            return report
+        self.pre_test()
         self.run_test()
         print('AnghaBench测试结束')

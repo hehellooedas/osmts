@@ -1,5 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil
+import subprocess,shutil
+
+from errors import GitCloneError,RunError,DefaultError
 
 
 class Llvmcase():
@@ -18,41 +20,44 @@ class Llvmcase():
         else:
             shutil.rmtree(self.path, ignore_errors=True)
             # 拉取源码
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp/ && git clone https://gitcode.com/pollyduan/llvm-project.git",
-                shell=True,
+            try:
+                subprocess.run(
+                    "git clone https://gitcode.com/pollyduan/llvm-project.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/pollyduan/llvm-project.git',e.stderr.decode())
+
+        # 编译llvm
+        try:
+            build_llvm = subprocess.run(
+                args='mkdir build && cd build && cmake -DLLVM_PARALLEL_LINK_JOBS=3 -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_TARGETS_TO_BUILD="RISCV" -DCMAKE_BUILD_TYPE="Release" -G Ninja ../llvm && ninja',
+                cwd=self.path,
+                shell=True,check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
             )
-            if git_clone.returncode != 0:
-                print(f"llvmcase测试出错.git clone执行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
-
-        # 编译llvm
-        build_llvm = subprocess.run(
-            f'cd {self.path} && mkdir build && cd build && cmake -DLLVM_PARALLEL_LINK_JOBS=3 -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_TARGETS_TO_BUILD="RISCV" -DCMAKE_BUILD_TYPE="Release" -G Ninja ../llvm && ninja',
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if build_llvm.returncode != 0:
-            print(f"llvmcase测试出错.编译llvm失败,报错信息:{build_llvm.stderr.decode('utf-8')}")
-            sys.exit(1)
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"llvmcase测试出错.编译llvm失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
     def run_test(self):
-        run_clang = subprocess.run(
-            "cd /root/osmts_tmp/llvm-project/build/bin && clang -v",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT
-        )
-        if run_clang.returncode != 0:
-            print(f"llvmcase测试出错.clang -v运行报错,报错信息:{run_clang.stderr.decode('utf-8')}")
-            print('不过osmts仍会继续运行')
-
-        with open(self.directory / 'llvmcase.log', 'w') as file:
-            file.write(run_clang.stdout.decode('utf-8'))
+        try:
+            run_clang = subprocess.run(
+                "clang -v",
+                cwd="/root/osmts_tmp/llvm-project/build/bin",
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode('utf-8'))
+        else:
+            with open(self.directory / 'llvmcase.log', 'w') as file:
+                file.write(run_clang.stdout.decode('utf-8'))
 
 
     def run(self):

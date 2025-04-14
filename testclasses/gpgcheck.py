@@ -1,12 +1,13 @@
 import shutil
 import subprocess
-import sys,os
+import os
 import asyncio
 import numpy
 from pathlib import Path
 from openpyxl import Workbook
 from tqdm import tqdm
 
+from errors import DefaultError
 
 
 class GpgCheck:
@@ -54,27 +55,29 @@ class GpgCheck:
         )
 
         # 引入openEuler的gpg验证密钥
-        import_gpg_key = subprocess.run(
-            "rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openEuler",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if import_gpg_key.returncode != 0:
-            print(f"gpgcheck测试出错.import gpg文件失败,报错信息:{import_gpg_key.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openEuler",
+                shell=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"gpgcheck测试出错.import gpg文件失败,报错信息:{e.stderr.decode('utf-8')}")
+
 
         # 获取已安装的所有rpm包名
-        dnf_list = subprocess.run(
-            "dnf list available | awk '/Available Packages/{flag=1; next} flag' | awk '{print $1}'",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if dnf_list.returncode != 0:
-            print(f"gpgcheck测试出错.获取所有已安装的rpm包名失败,报错信息:{dnf_list.stderr.decode('utf-8')}")
-            sys.exit(1)
-        self.rpm_package_list = dnf_list.stdout.decode('utf-8').splitlines()
+        try:
+            dnf_list = subprocess.run(
+                "dnf list available | awk '/Available Packages/{flag=1; next} flag' | awk '{print $1}'",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"gpgcheck测试出错.获取所有已安装的rpm包名失败,报错信息:{e.stderr.decode('utf-8')}")
+        else:
+            self.rpm_package_list = dnf_list.stdout.decode('utf-8').splitlines()
 
         self.ws.title = 'gpgcheck'
         self.ws.cell(1,1,f"当前系统已安装rpm包的数量:{len(self.rpm_package_list)}")

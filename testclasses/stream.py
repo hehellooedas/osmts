@@ -1,6 +1,7 @@
 from pathlib import Path
-import re,sys,subprocess,shutil
+import re,subprocess,shutil
 from openpyxl import Workbook
+from errors import GitCloneError,CompileError,SummaryError,RunError
 
 
 
@@ -23,25 +24,58 @@ class Stream:
             pass
         else:
             shutil.rmtree(self.path, ignore_errors=True)
-            git_clone = subprocess.run("cd /root/osmts_tmp/ && git clone https://gitee.com/April_Zhao/stream.git",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-            if git_clone.returncode != 0:
-                print(f"stream测试出错:git拉取stream失败.报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    "git clone https://gitee.com/April_Zhao/stream.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(
+                    error_code = e.returncode,
+                    url = 'https://gitee.com/April_Zhao/stream.git',
+                    stderr = e.stderr.decode('utf-8'),
+                )
+
 
         # 编译stream.c
-        compile = subprocess.run(f"cd /root/osmts_tmp/stream && {self.compiler} -O3 -fopenmp -DSTREAM_ARRAY_SIZE=35000000 -DNTIMES=50 stream.c -o stream_o3",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
-        if compile.returncode != 0:
-            print(f"stream测试出错:编译stream.c未通过.报错信息:{compile.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                f"{self.compiler} -O3 -fopenmp -DSTREAM_ARRAY_SIZE=35000000 -DNTIMES=50 stream.c -o stream_O3",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise CompileError(
+                error_code = e.returncode,
+                compiler = self.compiler,
+                stderr = e.stderr.decode('utf-8')
+            )
 
 
     def run_test(self):
-        stream_o3 = subprocess.run(f"cd /root/osmts_tmp/stream && ./stream_o3",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        if stream_o3.returncode != 0:
-            print(f"stream测试出错:运行./stream_o3失败.报错信息:{stream_o3.stderr.decode('utf-8')}")
-        self.test_result = stream_o3.stdout.decode('utf-8')
-        with open(self.path / 'stream.log','w',encoding='utf-8') as file:
-            file.write(self.test_result)
+        try:
+            stream_o3 = subprocess.run(
+                f"./stream_O3",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            log_file = self.directory / 'run_stream_O3_failed.log'
+            with open(log_file,'w') as log:
+                log.write(e.stderr.decode('utf-8'))
+            raise RunError(e.returncode, f"详细信息请查看{log_file}日志文件")
+        else:
+            # 运行成功,保存日志
+            self.test_result = stream_o3.stdout.decode('utf-8')
+            with open(self.path / 'stream.log','w',encoding='utf-8') as file:
+                file.write(self.test_result)
 
 
     def result2summary(self):
@@ -75,5 +109,11 @@ class Stream:
         print("开始进行stream测试")
         self.pre_test()
         self.run_test()
-        self.result2summary()
+        try:
+            self.result2summary()
+        except Exception as e:
+            fileName = self.directory / 'summary_stream_error.log'
+            with open(fileName,'w') as log:
+                log.write(str(e))
+            raise SummaryError(fileName)
         print("stream测试结束")

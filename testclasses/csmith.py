@@ -5,6 +5,8 @@ from openpyxl import Workbook
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor,as_completed
 
+from errors import GitCloneError,DefaultError
+
 
 class Csmith:
     def __init__(self, **kwargs):
@@ -58,51 +60,55 @@ class Csmith:
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True,exist_ok=True)
 
-        git_clone =subprocess.run(
-            "cd /root/osmts_tmp/ && git clone https://gitcode.com/qq_61653333/csmith.git -b master",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if git_clone.returncode != 0:
-            print(f"Csmith测试出错.git clone失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "git clone https://gitcode.com/qq_61653333/csmith.git -b master",
+                cwd="/root/osmts_tmp/",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise GitCloneError(e.returncode,'https://gitcode.com/qq_61653333/csmith.git',e.stderr.decode('utf-8'))
 
-        build = subprocess.run(
-            f"cd {self.path} && mkdir install && cmake -DCMAKE_INSTALL_PREFIX=/root/osmts_tmp/csmith/install . && make -j {os.cpu_count()} && make install",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if build.returncode != 0:
-            print(f"Csmith测试出错.构建csmith项目失败,报错信息:{build.stderr.decode('utf-8')}")
-            sys.exit(1)
+
+        try:
+            subprocess.run(
+                f"mkdir install && cmake -DCMAKE_INSTALL_PREFIX=/root/osmts_tmp/csmith/install . && make -j {os.cpu_count()} && make install",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"Csmith测试出错.构建csmith项目失败,报错信息:{e.stderr.decode('utf-8')}")
+
 
         # 批量生成c代码
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
-            pool.map(self.create_source_and_bin, [i for i in range(1,self.csmith_count)])
+            pool.map(self.create_source_and_bin, range(1,self.csmith_count))
 
         print(f'源码文件生成在{self.source}目录,已完成')
         print(f'二进制文件生成在{self.bin}目录,已完成')
 
 
-    def check_each_csmith(self,number:int) -> tuple:
+    def check_each_csmith(self,id:int) -> tuple:
         # 超过10秒则跳过(生成的c代码要求算力太大,不符合测试条件)
         gcc = subprocess.run(
-            f"timeout 10 {self.directory}/bin/csmith{number}_gcc",
+            f"timeout 10 {self.directory}/bin/csmith{id}_gcc",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL
         )
         clang = subprocess.run(
-            f"timeout 10 {self.directory}/bin/csmith{number}_clang",
+            f"timeout 10 {self.directory}/bin/csmith{id}_clang",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL
         )
         if gcc.returncode != 0 or clang.returncode != 0:
-            return (number,None,None)
-        return (number,gcc.stdout.decode('utf-8'), clang.stdout.decode('utf-8'))
+            return (id,None,None)
+        return (id,gcc.stdout.decode('utf-8'), clang.stdout.decode('utf-8'))
 
 
     def run_test(self):

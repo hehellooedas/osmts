@@ -1,12 +1,9 @@
 import subprocess,re
-import sys
 from pathlib import Path
 from openpyxl import Workbook
 
+from errors import RunError,SummaryError
 
-"""
-nmap测试:具体请查看文档https://gitee.com/jean9823/openEuler_riscv_test/blob/master/%E5%9C%A8openEuler%20RISC-V%2024.03%20LTS%20%E4%B8%8A%E6%89%8B%E5%8A%A8%E6%89%A7%E8%A1%8C%E6%80%A7%E8%83%BD%E6%B5%8B%E8%AF%95.md#2-nmap
-"""
 
 class Nmap:
     def __init__(self, **kwargs):
@@ -16,16 +13,17 @@ class Nmap:
 
 
     def run_test(self):
-        nmap = subprocess.run(
-            "nmap -sS -sU 127.0.0.1",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        if nmap.returncode != 0:
-            print(f"nmap测试出错:nmap进程运行出错.报错信息:{nmap.stderr.decode('utf-8')}")
-            sys.exit(1)
-        self.test_result = nmap.stdout.decode('utf-8')
+        try:
+            nmap = subprocess.run(
+                "nmap -sS -sU 127.0.0.1",
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode('utf-8'))
+        else:
+            self.test_result = nmap.stdout.decode('utf-8')
 
 
     def result2summary(self):
@@ -51,5 +49,11 @@ class Nmap:
     def run(self):
         print("开始进行nmap测试")
         self.run_test()
-        self.result2summary()
+        try:
+            self.result2summary()
+        except Exception as e:
+            lofFile = self.directory / 'nmap_summary_error.log'
+            with open(lofFile,'w') as log:
+                log.write(str(e))
+            raise SummaryError(lofFile)
         print("nmap测试结束")

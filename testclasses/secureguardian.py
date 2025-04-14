@@ -1,9 +1,10 @@
 import re
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from openpyxl import Workbook
+
+from errors import DefaultError,RunError,SummaryError
 
 
 class SecureGuardian:
@@ -18,27 +19,28 @@ class SecureGuardian:
         if self.directory.exists():
             shutil.rmtree(self.directory)
         self.directory.mkdir(parents=True)
-        install_secureguardian = subprocess.run(
-            "dnf install -y https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems5/repositories/openEuler-24.09:epol/openEuler:24.09/x86_64/history/223fa6b8-65fc-11ef-9cf1-324c421ef8df/steps/upload/cbs.6161130/secureguardian-1.0.0-1.oe2409.noarch.rpm",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if install_secureguardian.returncode != 0:
-            print(f"secureguardian测试出错.安装rpm包失败,报错信息:{install_secureguardian.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "dnf install -y https://eulermaker.compass-ci.openeuler.openatom.cn/api/ems5/repositories/openEuler-24.09:epol/openEuler:24.09/x86_64/history/223fa6b8-65fc-11ef-9cf1-324c421ef8df/steps/upload/cbs.6161130/secureguardian-1.0.0-1.oe2409.noarch.rpm",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"secureguardian测试出错.安装rpm包失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
     def run_test(self):
-        run_checks = subprocess.run(
-            "run_checks",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if run_checks.returncode != 0:
-            print(f"secureguardian测试出错.run_checks命令运行失败,报错信息:{run_checks.stderr.decode('utf-8')}")
-            return False
+        try:
+            run_checks = subprocess.run(
+                "run_checks",
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,f"secureguardian测试出错.run_checks命令运行失败,报错信息:{e.stderr.decode('utf-8')}")
+
         self.test_result = run_checks.stdout.decode('utf-8')
         shutil.copy2("/usr/local/secureguardian/reports/all_checks.results.html", self.directory)
         shutil.copy2("/usr/local/secureguardian/reports/all_checks.results.json", self.directory)
@@ -57,8 +59,12 @@ class SecureGuardian:
     def run(self):
         print('开始进行secureguardian测试')
         self.pre_test()
-        if self.run_test() is False:
-            print("退出secureguardian测试")
-            return
-        self.result2summary()
+        self.run_test()
+        try:
+            self.result2summary()
+        except Exception as e:
+            logFile = self.directory / 'secureguardian_summary_error.log'
+            with open(logFile, 'w') as log:
+                log.write(str(e))
+            raise SummaryError(logFile)
         print('secureguardian测试结束')

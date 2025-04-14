@@ -2,7 +2,9 @@ from openpyxl.workbook import Workbook
 from pystemd.systemd1 import Unit
 from pathlib import Path
 import re,time
-import sys,subprocess,shutil
+import subprocess,shutil
+
+from errors import DefaultError,GitCloneError,RunError,SummaryError
 
 
 
@@ -21,14 +23,13 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
         self.redis:Unit = Unit(b'redis.service',_autoload=True)
         try:
             self.redis.Unit.Start(b'replace')
-        except:
+        except Exception:
             self.redis.Unit.Start(b'replace')
         time.sleep(5)
         if self.redis.Unit.ActiveState != b'active':
             time.sleep(5)
             if self.redis.Unit.ActiveState != b'active':
-                print("ycsb测试出错.redis.service开启失败,退出测试.")
-                sys.exit(1)
+                raise DefaultError("redis.service开启失败,退出测试.")
 
         if self.directory.exists():
             shutil.rmtree(self.directory)
@@ -38,53 +39,59 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
             pass
         else:
             shutil.rmtree(self.path,ignore_errors=True)
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp && git clone https://gitcode.com/gh_mirrors/yc/YCSB.git",
-                shell=True,
+            try:
+                subprocess.run(
+                    "git clone https://gitcode.com/gh_mirrors/yc/YCSB.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/gh_mirrors/yc/YCSB.git',e.stderr.decode('utf-8'))
+        try:
+            subprocess.run(
+                f"mvn -pl site.ycsb:redis -binding -am clean package",
+                cwd=self.path,
+                shell=True,check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
             )
-            if git_clone.returncode != 0:
-                print(f"ycsb测试出错.git clone失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"mvn命令运行失败,报错信息:{e.stderr.decode('utf-8')}")
 
-        mvn = subprocess.run(
-            f"cd {self.path} && mvn -pl site.ycsb:redis -binding -am clean package",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if mvn.returncode != 0:
-            print(f"ycsb测试出错.mvn命令运行失败,报错信息:{mvn.stderr.decode('utf-8')}")
-            sys.exit(1)
 
+        # 修改配置文件加入redis
         with open(self.workloada,mode='a+') as workloada:
             workloada.writelines(['redis.host=127.0.0.1\n','redis.port=6379\n'])
 
         # 加载数据
-        load = subprocess.run(
-            f"cd {self.path} && "
-            f"bin/ycsb load redis -threads 100 -P workloads/workloada",
-            shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,
-        )
-        if load.returncode != 0:
-            print(f"ycsb测试出错.ycsb load redis加载数据失败,报错信息:{load.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                f"bin/ycsb load redis -threads 100 -P workloads/workloada",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError("ycsb load redis加载数据失败,报错信息:{load.stderr.decode('utf-8')}")
 
 
     def run_test(self):
-        run = subprocess.run(
-            f"cd {self.path} && "
-            f"bin/ycsb run redis -threads 100 -P workloads/workloada",
-            shell=True,
-            stdout=subprocess.PIPE,stderr=subprocess.PIPE,
-        )
-        if run.returncode != 0:
-            print(f"ycsb测试出错.执行测试失败,报错信息:{run.stderr.decode('utf-8')}")
-            return
-        self.test_result = run.stdout.decode('utf-8')
-        with open(self.directory / 'ycsb.log','w') as log:
-            log.write(self.test_result)
+        try:
+            run = subprocess.run(
+                f"bin/ycsb run redis -threads 100 -P workloads/workloada",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.PIPE,stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode('utf-8'))
+        else:
+            self.test_result = run.stdout.decode('utf-8')
+            with open(self.directory / 'ycsb.log','w') as log:
+                log.write(self.test_result)
 
 
     def result2summary(self):
@@ -218,6 +225,12 @@ class YCSB: # Yahoo！Cloud Serving Benchmark
         print("开始进行ycsb测试")
         self.pre_test()
         self.run_test()
-        self.result2summary()
+        try:
+            self.result2summary()
+        except Exception as e:
+            logFile = self.directory / 'ycsb_summary_error.log'
+            with open(logFile,'w') as log:
+                log.write(str(e))
+            raise SummaryError(logFile)
         self.post_test()
         print("ycsb测试结束")

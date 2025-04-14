@@ -7,6 +7,7 @@ import requests,tarfile
 import pymysql
 import sys,subprocess,shutil
 
+from errors import DefaultError
 
 
 class TPC_H:
@@ -68,16 +69,18 @@ class TPC_H:
             with tarfile.open(fileobj=BytesIO(response.content), mode="r:xz") as tar:
                 tar.extractall(Path('/root/osmts_tmp/'))
 
-        # dbgen
-        dbgen = subprocess.run(
-            f"cd {self.path}/dbgen && make -j 4 && ./dbgen -s 1",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if dbgen.returncode != 0:
-            print(f"TPC-H测试出错.构建或运行dbgen失败,报错信息:{dbgen.stdout.decode('utf-8')}")
-            sys.exit(1)
+        # build dbgen
+        try:
+            subprocess.run(
+                f"make -j 4 && ./dbgen -s 1",
+                cwd=self.path / "dbgen",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"TPC-H测试出错.构建或运行dbgen失败,报错信息:{e.stdout.decode('utf-8')}")
+
 
         cursor.execute("DROP DATABASE IF EXISTS tpch;")
         cursor.execute("CREATE DATABASE IF NOT EXISTS tpch;")

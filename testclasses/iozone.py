@@ -1,6 +1,7 @@
 from pathlib import Path
-import sys,subprocess,shutil
+import subprocess,shutil
 
+from errors import DefaultError, CompileError, RunError
 
 
 class Iozone:
@@ -16,44 +17,49 @@ class Iozone:
         if self.path.exists():
             shutil.rmtree(self.path)
         self.path.mkdir(parents=True, exist_ok=True)
+
+        if self.directory.exists():
+            shutil.rmtree(self.directory)
+        self.directory.mkdir(parents=True)
+
         # 获取iozone的源码
-        git_clone = subprocess.run(
-            "cd /root/osmts_tmp/iozone && "
-            "wget https://www.iozone.org/src/current/iozone3_506.tar && "
-            "tar -xf iozone3_506.tar",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE
-        )
-        if git_clone.returncode != 0:
-            print(f"iozone测试出错:下载/解压iozone源码压缩包失败.报错信息:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "wget https://www.iozone.org/src/current/iozone3_506.tar && "
+                "tar -xf iozone3_506.tar",
+                cwd=self.path,
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"iozone测试出错:下载/解压iozone源码压缩包失败.报错信息:{e.stderr.decode('utf-8')}")
+
 
         #编译iozone
-        compile = subprocess.run(
-            f"cd /root/osmts_tmp/iozone/iozone3_506/src/current && "
-            f"make clean && make CC={self.compiler} CFLAGS=-fcommon linux",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE
-        )
-        if compile.returncode != 0:
-            print(f"iozone测试出错:编译iozone失败.报错信息:{compile.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            compile = subprocess.run(
+                f"make clean && make CC={self.compiler} CFLAGS=-fcommon linux",
+                cwd="/root/osmts_tmp/iozone/iozone3_506/src/current",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise CompileError(e.returncode,self.compiler,e.stderr.decode('utf-8'))
 
 
     def run_test(self):
-        if not self.directory.exists():
-            self.directory.mkdir(exist_ok=True,parents=True)
-        iozone = subprocess.run(
-            f"cd /root/osmts_tmp/iozone/iozone3_506/src/current && ./iozone -Rab {self.directory}/iozone.xls",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE
-        )
-        if iozone.returncode != 0:
-            print(f"iozone测试出错:iozone运行报错.报错信息:{iozone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                f"./iozone -Rab {self.directory}/iozone.xls",
+                cwd="/root/osmts_tmp/iozone/iozone3_506/src",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode('utf-8'))
 
 
     def run(self):

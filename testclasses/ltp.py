@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
-import sys,subprocess,shutil
+import subprocess,shutil
 from openpyxl import Workbook
 
+from errors import GitCloneError,DefaultError
 
 """
 文档:https://blog.sina.com.cn/s/blog_7695e9f40100yjme.html
@@ -24,26 +25,28 @@ class Ltp:
             self.directory.mkdir(exist_ok=True, parents=True)
         if self.path.exists():
             shutil.rmtree(self.path)
+        try:
+            subprocess.run(
+                "git clone https://gitcode.com/gh_mirrors/ltp/ltp.git",
+                cwd = "/root/osmts_tmp",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise GitCloneError(e.returncode,'https://gitcode.com/gh_mirrors/ltp/ltp.git',e.stderr)
 
-        git_clone = subprocess.run(
-            "cd /root/osmts_tmp/ && git clone https://gitcode.com/gh_mirrors/ltp/ltp.git",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if git_clone.returncode != 0:
-            print(f"ltp测试出错.git clone拉取ltp源码失败:{git_clone.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "make autotools && ./configure && make -j $(nproc) && make install",
+                cwd = "/root/osmts_tmp/ltp/",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"ltp测试出错.configure和make出错:报错信息:{e.stderr.decode('utf-8')}")
 
-        make = subprocess.run(
-            "cd /root/osmts_tmp/ltp/ && make autotools && ./configure && make -j $(nproc) && make install",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if make.returncode != 0:
-            print(f"ltp测试出错.configure和make出错:报错信息:{make.stderr.decode('utf-8')}")
-            sys.exit(1)
         # 添加标记
         Path('/opt/ltp/finish.sign').touch()
 
@@ -58,7 +61,8 @@ class Ltp:
 
     def run_test(self):
         runltp = subprocess.run(
-            "cd /opt/ltp && ./runltp",
+            "./runltp",
+            cwd="/opt/ltp",
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

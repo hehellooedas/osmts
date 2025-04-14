@@ -1,10 +1,11 @@
 import shutil
 import subprocess
-import sys,os,threading
+import os,threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-
 from openpyxl import Workbook
+
+from errors import GitCloneError,RunError,DefaultError
 
 
 class Jotai:
@@ -52,15 +53,17 @@ class Jotai:
         else:
             shutil.rmtree(self.path, ignore_errors=True)
             # 拉取jotai-benchmarks源码
-            git_clone = subprocess.run(
-                "cd /root/osmts_tmp && git clone https://gitcode.com/qq_61653333/jotai-benchmarks.git",
-                shell=True,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.PIPE,
-            )
-            if git_clone.returncode != 0:
-                print(f"jotai测试.git clone执行失败,报错信息:{git_clone.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                subprocess.run(
+                    "git clone https://gitcode.com/qq_61653333/jotai-benchmarks.git",
+                    cwd="/root/osmts_tmp",
+                    shell=True,check=True,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.PIPE,
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitCloneError(e.returncode,'https://gitcode.com/qq_61653333/jotai-benchmarks.git',e.stderr.decode())
+
 
         # 创建anghaLeaves系列目录
         if self.anghaLeaves_output.exists():

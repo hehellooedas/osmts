@@ -1,9 +1,10 @@
 from pathlib import Path
-import sys,subprocess,re,shutil
+import subprocess,re,shutil
 from openpyxl.workbook import Workbook
 from pySmartDL import SmartDL
 from tqdm import tqdm
 
+from errors import DefaultError
 
 
 class Fio:
@@ -50,13 +51,23 @@ class Fio:
         pbar = tqdm(total=48,desc="fio运行进度")
         for rw in ("read","write","rw","randread","randwrite","randrw"):
             for bs in (4,16,32,64,128,256,512,1024):
-                if rw == "randrw" or rw == "rw":
-                    fio = subprocess.run(f"fio -filename={filename} -direct=1 -iodepth {iodepth} -thread -rw={rw} -rwmixread=70 -ioengine=libaio -bs={bs}k -size=1G -numjobs={numjobs} -runtime=30 -group_reporting -name={rw}-{bs}k",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                else:
-                    fio = subprocess.run(f"fio -filename={filename} -direct=1 -iodepth {iodepth} -thread -rw={rw} -ioengine=libaio -bs={bs}k -size=1G -numjobs={numjobs} -runtime=30 -group_reporting -name={rw}-{bs}k",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-                if fio.returncode != 0:
-                    print(f"fio测试出错:fio进程运行报错,此时rw为{rw}.报错信息:{fio.stderr.decode('utf-8')}")
-                    sys.exit(1)
+                try:
+                    if rw == "randrw" or rw == "rw":
+                        fio = subprocess.run(
+                            f"fio -filename={filename} -direct=1 -iodepth {iodepth} -thread -rw={rw} -rwmixread=70 -ioengine=libaio -bs={bs}k -size=1G -numjobs={numjobs} -runtime=30 -group_reporting -name={rw}-{bs}k",
+                            shell=True,check=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE
+                        )
+                    else:
+                        fio = subprocess.run(
+                            f"fio -filename={filename} -direct=1 -iodepth {iodepth} -thread -rw={rw} -ioengine=libaio -bs={bs}k -size=1G -numjobs={numjobs} -runtime=30 -group_reporting -name={rw}-{bs}k",
+                            shell=True,check=True,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE
+                        )
+                except subprocess.CalledProcessError as e:
+                    raise DefaultError(f"fio测试出错:fio进程运行报错,此时rw为{rw}.报错信息:{e.stderr.decode('utf-8')}")
 
                 # 保存fio命令的输出结果
                 result = fio.stdout.decode('utf-8')

@@ -6,10 +6,15 @@ import sys,psutil,time
 import tomllib,ipaddress
 import subprocess,argparse,humanfriendly
 from pathlib import Path
-from testclasses import osmts_tests
+
+
 from rich.console import Console
 from rich.traceback import install
 from rich.table import Table,Column
+
+from testclasses import osmts_tests
+from testclasses.errors import *
+
 
 console = Console()
 install(show_locals=True)
@@ -17,6 +22,8 @@ table = Table(show_header=True, header_style="bold magenta")
 table.add_column('测试名',justify="left")
 table.add_column('成功/失败',justify="left")
 table.add_column('失败原因',justify="left")
+table.add_column('注解',justify="left")
+
 
 osmts_tmp_dir = Path('/root/osmts_tmp/')
 fio_flag = False
@@ -73,7 +80,7 @@ def netperf_judge(netperf_server_ip:str):
 
 
 
-def from_tests_to_tasks(run_tests:list,parameter_list:dict) -> list:
+def from_tests_to_tasks(run_tests:list,parameter_list:dict) -> dict:
     support_tests = list(osmts_tests.keys())
     support_tests_count = len(support_tests)
     tasks = set()
@@ -122,12 +129,12 @@ def from_tests_to_tasks(run_tests:list,parameter_list:dict) -> list:
         tasks.append("ltp_stress")
 
 
-    testclasses = []
+    testclasses = {}
     all_need_rpms = set()
     for task in tasks:
         testclass = osmts_tests[task](**parameter_list)
         all_need_rpms |= testclass.rpms
-        testclasses.append(testclass)
+        testclasses[task] = testclass
     # 统一安装所有所需的rpm包
     dnf_command = f"dnf install -y --nobest --skip-broken gcc clang make git cmake htop iotop python3-ipython {' '.join(all_need_rpms)}"
     install_rpms = subprocess.run(
@@ -147,7 +154,6 @@ def from_tests_to_tasks(run_tests:list,parameter_list:dict) -> list:
         if cont in ('N','n'):
             sys.exit(1)
 
-    console.print(f"本次osmts脚本执行将进行的测试:{tasks}(代表执行顺序)\n运行时请勿删除{osmts_tmp_dir}和{parameter_list.get('saved_directory')}")
     return testclasses
 
 
@@ -213,6 +219,45 @@ def parse_config(config:dict) -> dict:
     }
 
 
+
+def run_all_tests():
+    console.print(f"本次osmts脚本执行将进行的测试:{list(testClasses.keys())}(代表执行顺序)")
+    console.print(f"运行时请勿删除{osmts_tmp_dir}和{parameter_list.get('saved_directory')}")
+
+    for testName,testClass in testClasses.items():
+        try:
+            testClass.run()
+        except KeyboardInterrupt:
+            console.print("检测到了用户执行 Ctrl + C 键盘中断,正在退出测试...")
+            console.print(table)
+            console.print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")
+            sys.exit(1)
+        except GitCloneError as e:
+            console.print(f"{testName}出现git clone错误,退出测试")
+            table.add_row(testName,'failed',f'git clone运行失败,返回值:{e.error_code}',e.url)
+        except CompileError as e:
+            console.print(f"{testName}出现编译失败问题,退出测试")
+            table.add_row(testName,'failed',f'编译失败,返回值:{e.error_code}',e.stderr)
+        except SummaryError as e:
+            console.print(f"{testName}在把运行结果总结为Excel时出错,退出测试.详细信息请查看{e.fileName}")
+            table.add_row(testName,'failed','运行成功但是在总结为Excel时出错,有必要时请给osmts项目提交issue','详细报错信息请查看:' + e.fileName)
+        except RunError as e:
+            console.print(f"{testName}在运行测试命令时出错,退出测试")
+            table.add_row(testName,'failed',f'测试运行时出错,返回值:{e.error_code}',e.stderr)
+        except DefaultError as e:
+            console.print(f"{testName}抛出一个默认异常,{e}")
+            table.add_row(testName,'failed','默认异常',str(e))
+        except DBusNoSuchUnitError as e:
+            console.print(f"{testName}测试中用到的service服务不存在.")
+            table.add_row(testName, 'failed', 'systemd service missing.', str(e))
+        except Exception as e:
+            console.print(f"出现了未被预料的错误,{e}")
+            console.print("如有需要可以向osmts项目提交issue")
+        else:
+            table.add_row(testName,'success','/')
+
+
+
 if __name__ == '__main__':
     # 记录osmts运行所需时间
     start_time = time.time()
@@ -250,12 +295,11 @@ if __name__ == '__main__':
     if not osmts_tmp_dir.exists():
         osmts_tmp_dir.mkdir()
 
-    testclasses = from_tests_to_tasks(run_tests,parameter_list)
-    return_status = []
+    # 保存所有测试类
+    testClasses = from_tests_to_tasks(run_tests,parameter_list)
 
-    # 所有检查都通过,则正式开始测试
-    for testclass in testclasses:
-        return_status.append(testclass.run())
+    # 正式开始测试
+    run_all_tests()
 
     console.print(table)
-    print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")
+    console.print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")

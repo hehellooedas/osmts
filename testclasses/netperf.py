@@ -2,6 +2,7 @@ from pathlib import Path
 import re,sys,subprocess,psutil
 from openpyxl import Workbook
 
+from errors import DefaultError
 
 
 class Netperf(object):
@@ -142,6 +143,9 @@ class Netperf(object):
 
     def run(self):
         print("开始进行netperf测试")
-        self.run_test()
+        try:
+            self.run_test()
+        except Exception as e:
+            raise DefaultError(str(e))
         self.post_test()
         print("netperf测试结束")

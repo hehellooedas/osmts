@@ -165,11 +165,11 @@ class sysBench:
         ws.append(['Threads fairness[线程公平性]'])
         ws.merge_cells("A25:D25")
 
-        events_avg,events_stddev = re.search(r"events (avg/stddev):\s*(\d+\.\d+)/(\d+\.\d+)",self.test_result).groups()
+        events_avg,events_stddev = re.search(r"events \(avg/stddev\):\s*(\d+\.\d+)/(\d+\.\d+)",self.test_result).groups()
         ws.append(['','每个线程平均处理事件数:',events_avg,'/'])
         ws.append(['', '每个线程平均处理标准差:', events_stddev, '越小越好,负载均衡'])
 
-        execution_time_avg,execution_time_stddev = re.search(r"execution time (avg/stddev):\s*(\d+\.\d+)/(\d+\.\d+)",self.test_result).groups()
+        execution_time_avg,execution_time_stddev = re.search(r"execution time \(avg/stddev\):\s*(\d+\.\d+)/(\d+\.\d+)",self.test_result).groups()
         ws.append(['','每个线程平均执行时间:',execution_time_avg + 's','/'])
         ws.append(['','每个线程平均执行时间标准差:',execution_time_stddev,'越小越好,说明线程执行时间非常均匀'])
 

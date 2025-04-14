@@ -16,7 +16,7 @@ from testclasses import osmts_tests
 from testclasses.errors import *
 
 
-console = Console()
+console = Console(color_system='256',file=sys.stdout)
 install(show_locals=True)
 table = Table(show_header=True, header_style="bold magenta")
 table.add_column('测试名',justify="left")
@@ -228,6 +228,7 @@ def run_all_tests():
         try:
             testClass.run()
         except KeyboardInterrupt:
+            table.add_row(testName,'skipped','用户按下Ctrl+C退出测试','/')
             console.print("检测到了用户执行 Ctrl + C 键盘中断,正在退出测试...")
             console.print(table)
             console.print(f"osmts运行结束,本次运行总耗时{humanfriendly.format_timespan(time.time() - start_time)}")

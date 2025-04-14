@@ -1,4 +1,5 @@
 from pystemd.dbusexc import *
+import inspect
 
 
 class DefaultError(Exception):

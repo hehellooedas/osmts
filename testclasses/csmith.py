@@ -86,7 +86,8 @@ class Csmith:
 
         # 批量生成c代码
         with ThreadPoolExecutor(max_workers=os.cpu_count()) as pool:
-            pool.map(self.create_source_and_bin, range(1,self.csmith_count))
+            for _ in tqdm(pool.map(self.create_source_and_bin, range(1,self.csmith_count)),desc='批量生成c代码进度',total=self.csmith_count):
+                pass
 
         print(f'源码文件生成在{self.source}目录,已完成')
         print(f'二进制文件生成在{self.bin}目录,已完成')
@@ -127,7 +128,7 @@ class Csmith:
                 ws.cell(i + 1, 1, f"csmith{i}.c")
 
             # 获取返回值
-            for future in tqdm(as_completed(futures),total=len(futures),desc="csmith完成进度"):
+            for future in tqdm(as_completed(futures),total=self.csmith_count,desc="csmith完成进度"):
                 line,gcc_checksum,clang_checksum = future.result()
                 line += 1
                 if gcc_checksum is None and clang_checksum is None:

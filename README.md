@@ -136,7 +136,7 @@ believe_tmp = 0
 错误;
 6. 部分测试用到了asyncio协程,从目前的结果来看不建议使用uvloop调度器;
 7. 如果进行mysql或postresql数据库的测试,把数据库的登陆密码设置为无密码或者123456,osmts运行后数据库密码会设置为123456;
-8. osmts只能运行在类Unix操作系统上,Python版本应为3.9以上,机器在测试期间不要作其他用途.
+8. osmts使用时必须带有dbus,Python版本应为3.9以上,机器在测试期间不要作其他用途.
 
 ---
 ## 未来计划
@@ -189,6 +189,8 @@ redis_benchmark测试类的输出结果如图所示:
 sysbench测试类的输出结果如图所示:
 ![sysbench总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/sysbench_excel.png)
 
+tpch测试类的输出结果如图所示:
+![tpch总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/tpch_excel.png)
 
 ---
 

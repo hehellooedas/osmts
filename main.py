@@ -240,8 +240,8 @@ def run_all_tests():
             console.print(f"{testName}出现编译失败问题,退出测试")
             table.add_row(testName,'failed',f'编译失败,返回值:{e.error_code}',e.stderr)
         except SummaryError as e:
-            console.print(f"{testName}在把运行结果总结为Excel时出错,退出测试.详细信息请查看{e.fileName}")
-            table.add_row(testName,'failed','运行成功但是在总结为Excel时出错,有必要时请给osmts项目提交issue','详细报错信息请查看:' + e.fileName)
+            console.print(f"{testName}在把运行结果总结为Excel时出错,退出测试.详细信息请查看:{e.fileName}")
+            table.add_row(testName,'failed','运行成功但是总结为Excel时出错,有必要时请给osmts项目提交issue','详细报错信息请查看:' + e.fileName)
         except RunError as e:
             console.print(f"{testName}在运行测试命令时出错,退出测试")
             table.add_row(testName,'failed',f'测试运行时出错,返回值:{e.error_code}',e.stderr)
@@ -254,6 +254,7 @@ def run_all_tests():
         except Exception as e:
             console.print(f"出现了未被预料的错误,{e}")
             console.print("如有需要可以向osmts项目提交issue")
+            table.add_row(testName, 'failed', '也许是osmts的设计缺陷导致', str(e))
         else:
             table.add_row(testName,'success','/')
 

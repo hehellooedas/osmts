@@ -7,6 +7,9 @@ import pymysql,psycopg2
 import sys,subprocess,shutil
 from io import BytesIO
 
+from .errors import DefaultError
+
+
 headers = {
     'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:137.0) Gecko/20100101 Firefox/137.0',
     'referer': 'https://gitee.com/April_Zhao/osmts',
@@ -68,17 +71,19 @@ class BenchMarkSQL:
         with tarfile.open(fileobj=BytesIO(response.content)) as tar:
             tar.extractall(self.path)
 
+        # -------------------------------------------------------
 
         # 初始化postgresql
-        postgresql_initdb = subprocess.run(
-            "/usr/bin/postgresql-setup initdb",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE
-        )
-        if postgresql_initdb.returncode != 0:
-            print(f"benchmarksql测试出错.初始化postgresql数据库失败,报错信息:{postgresql_initdb.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "/usr/bin/postgresql-setup initdb",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"benchmarksql测试出错.初始化postgresql数据库失败,报错信息:{e.stderr.decode('utf-8')}")
+
         self.postgresql:Unit = Unit('postgresql.service',_autoload=True)
         try:
             self.postgresql.Unit.Start(b'replace')

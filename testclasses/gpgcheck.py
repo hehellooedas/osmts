@@ -38,7 +38,7 @@ class GpgCheck:
         packages = list(os.walk(self.path))[0][2]
         # 对每个rpm包创建一个测试任务
         tasks = [asyncio.create_task(self.rpm_check_each(package)) for package in packages]
-        await tqdm_asyncio.gather(*tasks,leave=False)
+        await tqdm_asyncio.gather(*tasks,leave=False,desc='rpm check')
 
 
     def pre_test(self):
@@ -49,17 +49,20 @@ class GpgCheck:
         self.path.mkdir(parents=True)
 
         # 更新缓存以便后面下载
-        subprocess.run(
-            "dnf clean all && dnf makecache",
-            shell=True,
-            stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
-        )
+        try:
+            subprocess.run(
+                "dnf clean all && dnf makecache",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"gpgcheck测试出错.创建repo缓存失败/")
 
         # 引入openEuler的gpg验证密钥
         try:
             subprocess.run(
                 "rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-openEuler",
-                shell=True,
+                shell=True,check=True,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
             )
@@ -71,7 +74,7 @@ class GpgCheck:
         try:
             dnf_list = subprocess.run(
                 "dnf list available | awk '/Available Packages/{flag=1; next} flag' | awk '{print $1}'",
-                shell=True,
+                shell=True,check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
@@ -99,6 +102,7 @@ class GpgCheck:
 
         print(f"  当前线程的event loop策略:{asyncio.get_event_loop_policy()}")
         # 根据包名批量下载并测试rpm包
+        # 分批次原因: shell无法解析长度过大的文本
         piece = int(len(self.packages) / 100)
         for package_list in tqdm(numpy.array_split(self.packages,indices_or_sections=piece),desc='处理包进度',unit='次'):
             rpm_download = subprocess.run(

@@ -9,7 +9,7 @@ import pymysql
 import subprocess,shutil
 from tqdm import trange,tqdm
 
-from .errors import DefaultError
+from .errors import DefaultError,SummaryError
 
 
 class TPC_H:
@@ -29,10 +29,13 @@ class TPC_H:
         if self.path.exists():
             shutil.rmtree(self.path)
 
+        time.sleep(5)
         self.mysqld:Unit = Unit('mysqld.service',_autoload=True)
         try:
             self.mysqld.Unit.Start(b'replace')
-        except:
+        except Exception:
+            time.sleep(5)
+            self.mysqld.load(force=True)
             self.mysqld.Unit.Start(b'replace')
         time.sleep(5)
         if self.mysqld.Unit.ActiveState != b'active':
@@ -73,7 +76,7 @@ class TPC_H:
         # 这个过程会有交互
         try:
             subprocess.run(
-                f"make -j 4 && ./dbgen -s 1",
+                "make -j 4 && ./dbgen -s 1",
                 cwd=self.path / "dbgen",
                 shell=True,check=True,
                 stdout=subprocess.DEVNULL,
@@ -81,6 +84,18 @@ class TPC_H:
             )
         except subprocess.CalledProcessError as e:
             raise DefaultError(f"TPC-H测试出错.构建或运行dbgen失败,报错信息:{e.stdout.decode('utf-8')}")
+
+        try:
+            subprocess.run(
+                "cp -f qgen dists.dss queries/ && cd queries &&"
+                "for i in {1..22};do ./qgen -d ${i} > ../saveSQL/${i}.sql;done",
+                cwd=self.path / "dbgen",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"TPC-H测试出错.生成saveSQL失败,报错信息:{e.stdout.decode('utf-8')}")
 
 
 
@@ -104,8 +119,10 @@ class TPC_H:
         mysql.sendline(f"USE tpch;")
 
         mysql.expect_exact("mysql>", timeout=60)
+        # mysql服务器端和客户端在一次传送数据包的过程当中最大允许的数据包大小
         mysql.sendline("SET GLOBAL max_allowed_packet = 1024*1024*1024;")
 
+        # 用于缓存索引和数据的内存大小
         mysql.expect_exact("mysql>", timeout=60)
         mysql.sendline("SET GLOBAL innodb_buffer_pool_size = 4*1024*1024*1024;")
 
@@ -114,18 +131,18 @@ class TPC_H:
         mysql.expect_exact("mysql>", timeout=600)
         mysql.sendline(f"SOURCE {self.dbgen}/dss.ri;")
 
-        mysql.expect_exact("mysql>", timeout=60)
+        mysql.expect_exact("mysql>", timeout=600)
         mysql.sendline("SET FOREIGN_KEY_CHECKS=0;")
         mysql.expect_exact("mysql>", timeout=60)
         mysql.sendline("SET GLOBAL local_infile=1;")
+        mysql.expect_exact("mysql>", timeout=60)
 
         for table in tqdm(('customer','lineitem','nation','orders','partsupp','part','region','supplier'),desc="load data进度"):
-            mysql.expect_exact("mysql>",timeout=3600)
             mysql.sendline(
                 f"LOAD DATA LOCAL INFILE '{self.dbgen}/{table}.tbl' INTO TABLE {table} FIELDS TERMINATED BY '|' LINES TERMINATED BY '|\n';"
             )
+            mysql.expect_exact("mysql>", timeout=3600)
 
-        mysql.expect_exact("mysql>")
         mysql.sendline("SET FOREIGN_KEY_CHECKS=1;")
         mysql.expect_exact("mysql>")
         mysql.terminate(force=True)
@@ -141,16 +158,18 @@ class TPC_H:
         )
         mysql.expect_exact("mysql>", timeout=60)
         mysql.sendline(f"USE tpch;")
+        mysql.expect_exact("mysql>", timeout=60)
 
         for i in trange(1,23,desc="SQL查询进度"):
-            mysql.expect_exact("mysql>")
             mysql.sendline(f"\. {self.saveSQL}/{i}.sql")
-        time.sleep(5)
+            mysql.expect_exact("mysql>", timeout=36000)
+        time.sleep(20)
         mysql.terminate(force=True)
 
 
     def result2summary(self):
         wb = Workbook()
+
         ws = wb.active
         ws.title = 'TPC-H'
         ws.append(['SQL文件','查询所耗时间'])
@@ -160,7 +179,7 @@ class TPC_H:
         for line in log:
             if "rows in set" in line:
                 print(line)
-                ws.append([index, line.split('(')[-1][:-1]])
+                ws.append([str(index) + '.sql', line.split('(')[-1][:-2]])
                 index += 1
         wb.save(self.directory / 'tpch.xlsx')
 
@@ -176,6 +195,12 @@ class TPC_H:
         print('开始进行tpch测试')
         self.pre_test()
         self.run_test()
-        self.result2summary()
+        try:
+            self.result2summary()
+        except Exception as e:
+            logFile = self.directory / 'tpch_summary_error.log'
+            with open(logFile, 'w') as log:
+                log.write(str(e))
+            raise SummaryError(logFile)
         self.post_test()
         print('tpch测试结束')

@@ -7,7 +7,7 @@ import pymysql,psycopg2
 import sys,subprocess,shutil
 from io import BytesIO
 
-from .errors import DefaultError
+from .errors import DefaultError,RunError
 
 
 headers = {
@@ -23,7 +23,9 @@ class BenchMarkSQL:
         self.path:Path = Path('/root/osmts_tmp/benchmarksql')
         self.mysql_path: Path = self.path / 'mysql'
         self.postgresql_path: Path = self.path / 'postgresql'
-        self.test_result:str = ''
+
+        self.mysql_test_result:str = ''
+        self.postgres_test_result:str = ''
 
 
     def pre_test(self):
@@ -36,13 +38,15 @@ class BenchMarkSQL:
         try:
             self.mysqld.Unit.Start(b'replace')
         except:
+            time.sleep(5)
+            self.mysqld.load(force=True)
             self.mysqld.Unit.Start(b'replace')
         time.sleep(5)
         if self.mysqld.Unit.ActiveState != b'active':
             time.sleep(5)
             if self.mysqld.Unit.ActiveState != b'active':
-                print(f"benchmarksql测试出错.开启mysqld.service失败,退出测试.")
-                sys.exit(1)
+                raise DefaultError(f"benchmarksql测试出错.开启mysqld.service失败,退出测试.")
+
         try:
             self.mysql_conn = pymysql.connect(
                 host='localhost',
@@ -133,25 +137,44 @@ class BenchMarkSQL:
 
 
     def run_test(self):
-        mysql = subprocess.run(
-            f"cd {self.mysql_path}/run && ./runDatabaseBuild.sh mysql.properties",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if mysql.returncode != 0:
-            print(f"benchmarksql测试出错.mysql测试出错,报错信息:{mysql.stderr.decode('utf-8')}")
-            return False
+        try:
+            mysql = subprocess.run(
+                f"./runDatabaseBuild.sh mysql.properties",
+                cwd=self.mysql_path / 'run',
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode('utf-8'))
+        self.mysql_test_result = mysql.stdout.decode('utf-8')
+        with open(self.directory / 'mysql.log', 'w') as log:
+            log.write(self.mysql_test_result)
 
-        postgresql = subprocess.run(
-            f"cd {self.postgresql_path}/run && ./runDatabaseBuild.sh postgresql.properties",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if postgresql.returncode != 0:
-            print(f"benchmarksql测试出错.postgresql测试出错,报错信息:{postgresql.stderr.decode('utf-8')}")
-            return False
+        try:
+            postgresql = subprocess.run(
+                f"./runDatabaseBuild.sh postgresql.properties",
+                cwd=self.postgresql_path / 'run',
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode, e.stderr.decode('utf-8'))
+        self.postgres_test_result = postgresql.stdout.decode('utf-8')
+        with open(self.directory / 'postgresql.log', 'w') as log:
+            log.write(self.postgres_test_result)
+
+
+    def result2summary(self):
+        wb = Workbook()
+        ws1 = wb.active
+        ws1.title = 'mysql'
+
+        ws2 = wb.create_sheet(title='postgresql')
+
+
+        wb.save(self.directory / 'benchmarksql.log')
 
 
     def post_test(self):
@@ -165,5 +188,6 @@ class BenchMarkSQL:
         print('开始进行benchmarksql测试')
         self.pre_test()
         self.run_test()
+        self.result2summary()
         self.post_test()
         print('benchmarksql测试结束')

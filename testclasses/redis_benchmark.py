@@ -3,7 +3,7 @@ from pystemd.systemd1 import Unit
 from pathlib import Path
 from io import StringIO
 import csv,time
-import sys,subprocess,shutil
+import subprocess,shutil
 
 from .errors import DefaultError,RunError,SummaryError
 
@@ -22,23 +22,25 @@ class redisBenchMark: # redis-benchmark 是 Redis 自带的基准测试工具
 
 
     def pre_test(self):
+        time.sleep(5)
         self.redis:Unit = Unit(b'redis.service',_autoload=True)
         try:
             self.redis.Unit.Start(b'replace')
         except:
+            time.sleep(5)
+            self.redis.load(force=True)
             self.redis.Unit.Start(b'replace')
         time.sleep(5)
         if self.redis.Unit.ActiveState != b'active':
             time.sleep(5)
             if self.redis.Unit.ActiveState != b'active':
-                print("redis_benchmark测试出错.redis.service开启失败,退出测试.")
-                sys.exit(1)
+                raise DefaultError("redis_benchmark测试出错.redis.service开启失败,退出测试.")
 
         try:
-            redis_benchmark_check = subprocess.run(
+            subprocess.run(
                 "type redis-benchmark",shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL
             )
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             raise DefaultError(f"redis_benchmark测试出错.找不到redis-benchmark命令.")
 
 

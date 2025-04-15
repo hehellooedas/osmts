@@ -20,6 +20,8 @@ class sysBench:
         try:
             self.mysqld.Unit.Start(b'replace')
         except:
+            time.sleep(5)
+            self.mysqld.load(force=True)
             self.mysqld.Unit.Start(b'replace')
         time.sleep(5)
         if self.mysqld.Unit.ActiveState != b'active':

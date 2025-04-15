@@ -5,8 +5,9 @@ import tarfile
 import requests
 from pathlib import Path
 from io import BytesIO
-from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
+
+from .errors import DnfError
 
 
 """
@@ -22,15 +23,15 @@ headers = {
 
 
 def install_rpm(package_name):
-    dnf = subprocess.run(
-        f"dnf install -y {package_name}",
-        shell=True,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.PIPE,
-    )
-    if dnf.returncode != 0:
-        print(f"jtreg测试安装{package_name}失败,报错信息:{dnf.stderr.decode('utf-8')}")
-        sys.exit(1)
+    try:
+        subprocess.run(
+            f"dnf install -y {package_name}",
+            shell=True,check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+    except subprocess.CalledProcessError as e:
+        raise DnfError(e.returncode,e.stderr.decode())
 
 
 def remove_rpm(package_name):

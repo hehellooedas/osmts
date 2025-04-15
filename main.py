@@ -248,6 +248,9 @@ def run_all_tests():
         except DefaultError as e:
             console.print(f"{testName}抛出一个默认异常,{e}")
             table.add_row(testName,'failed','默认异常',str(e))
+        except DnfError as e:
+            console.print(f"{testName}在使用yum/dnf包管理器时异常")
+            table.add_row(testName,'failed','使用yum/dnf包管理器时发生错误,请检查网络或repo环境',e.stderr)
         except DBusNoSuchUnitError as e:
             console.print(f"{testName}测试中用到的service服务不存在.")
             table.add_row(testName, 'failed', 'systemd service missing.', str(e))

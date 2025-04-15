@@ -46,3 +46,12 @@ class SummaryError(Exception):
     def __init__(self, fileName):
         self.fileName = fileName
         super().__init__()
+
+
+class DnfError(Exception):
+    """
+        使用dnf包管理器时发生错误
+    """
+    def __init__(self, error_code,stderr):
+        self.error_code = error_code
+        self.stderr = stderr

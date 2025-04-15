@@ -5,6 +5,8 @@ import re,os
 import pymysql,time
 import sys,subprocess,shutil
 
+from .errors import DefaultError,RunError
+
 
 class sysBench:
     def __init__(self, **kwargs):
@@ -23,8 +25,8 @@ class sysBench:
         if self.mysqld.Unit.ActiveState != b'active':
             time.sleep(5)
             if self.mysqld.Unit.ActiveState != b'active':
-                print(f"sysbench测试出错.开启mysqld.service失败,退出测试.")
-                sys.exit(1)
+                raise DefaultError(f"sysbench测试出错.开启mysqld.service失败,退出测试.")
+
 
         if self.directory.exists():
             shutil.rmtree(self.directory)
@@ -62,37 +64,38 @@ class sysBench:
         )
 
         # 准备测试数据和表
-        sysbench_prepare = subprocess.run(
-            "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
-            "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
-            "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            f"--time=180 --threads={min(os.cpu_count(),16)} --report-interval=1 oltp_read_write prepare",
-            shell=True,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        if sysbench_prepare.returncode != 0:
-            print(f"sysbench测试出错.准备测试数据和表失败,报错信息:{sysbench_prepare.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            subprocess.run(
+                "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
+                "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
+                "--mysql-db=sysbench --table_size=10000000 --tables=64 "
+                f"--time=180 --threads={min(os.cpu_count(),16)} --report-interval=1 oltp_read_write prepare",
+                shell=True,check=True,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise DefaultError(f"sysbench测试出错.准备测试数据和表失败,报错信息:{e.stderr.decode('utf-8')}")
 
 
     def run_test(self):
-        sysbench_run = subprocess.run(
-            "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
-            "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
-            "--mysql-db=sysbench --table_size=10000000 --tables=64 "
-            f"--time=180 --threads={min(os.cpu_count(),8)} " # --threads参数不能过大
-            "--report-interval=1 oltp_read_write run",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        if sysbench_run.returncode != 0:
-            print(f"sysbench测试出错.运行sysbench run返回值不为0,报错信息:{sysbench_run.stderr.decode('utf-8')}")
-        self.test_result = sysbench_run.stdout.decode('utf-8')
+        try:
+            sysbench_run = subprocess.run(
+                "sysbench --db-driver=mysql --mysql-host=127.0.0.1 "
+                "--mysql-port=3306 --mysql-user=root --mysql-password=123456 "
+                "--mysql-db=sysbench --table_size=10000000 --tables=64 "
+                f"--time=180 --threads={min(os.cpu_count(),8)} " # --threads参数不能过大
+                "--report-interval=1 oltp_read_write run",
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,e.stderr.decode('utf-8'))
+        else:
+            self.test_result = sysbench_run.stdout.decode('utf-8')
         with open(Path(self.directory) / 'sysbench.log', 'w') as log:
             log.write(self.test_result)
-        print(self.test_result)
 
 
     def result2summary(self):
@@ -105,17 +108,15 @@ class sysBench:
         ws.merge_cells('A1:D1')
         ws.append(['标题','key','value','percent'])
 
-        ws.append(['执行的查询'])
-        ws.merge_cells('A3:A15')
 
-        read_select = float(re.search(r"read:\s*(\d+)",self.test_result).group(1))
-        write_select = float(re.search(r"write:\s*(\d+)",self.test_result).group(1))
-        other_select = float(re.search(r"other:\s*(\d+)",self.test_result).group(1))
+        read_select = float(re.search(r"read:\s*(\d+)",self.test_result).group(1)) * 100
+        write_select = float(re.search(r"write:\s*(\d+)",self.test_result).group(1)) * 100
+        other_select = float(re.search(r"other:\s*(\d+)",self.test_result).group(1)) * 100
         total_select = float(re.search(r"total:\s*(\d+)",self.test_result).group(1))
 
-        ws.append(['','读操作',read_select,"{:.2f}".format(read_select / total_select)])
-        ws.append(['','写操作',write_select,"{:.2f}".format(write_select / total_select)])
-        ws.append(['','其他操作',other_select,"{:.2f}".format(other_select / total_select)])
+        ws.append(['','读操作',read_select,"{:.4f}%".format(read_select / total_select)])
+        ws.append(['','写操作',write_select,"{:.4f}%".format(write_select / total_select)])
+        ws.append(['','其他操作',other_select,"{:.4f}%".format(other_select / total_select)])
         ws.append(['','总查询数量:',total_select,'/'])
 
         transactions = re.search(r"transactions:\s*(\d+)\s*\((\d+\.\d+) per sec\.\)",self.test_result).groups()
@@ -133,6 +134,9 @@ class sysBench:
         reconnects = re.search(r"reconnects:\s*(\d+)\s*\((\d+\.\d+) per sec\.\)",self.test_result).groups()
         ws.append(['','重连次数:',reconnects[0],'/'])
         ws.append(['','每秒重连次数:',reconnects[1],'/'])
+
+        ws.cell(3, 1, "执行的查询")
+        ws.merge_cells('A3:A15')
 
 
         # 通用统计
@@ -175,7 +179,7 @@ class sysBench:
 
         ws.merge_cells("A26:A29")
 
-        wb.save(self.directory / 'sysbench.log')
+        wb.save(self.directory / 'sysbench.xlsx')
 
 
 

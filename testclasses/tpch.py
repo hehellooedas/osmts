@@ -87,26 +87,12 @@ class TPC_H:
         cursor.execute("DROP DATABASE IF EXISTS tpch;")
         cursor.execute("CREATE DATABASE IF NOT EXISTS tpch;")
         cursor.execute("USE tpch;")
+        cursor.close()
 
         # SOURCE是MySQL客户端特有的工具(pymysql无法执行SOURCE)
         # cursor.execute(f"SOURCE {self.path}/dss.ddl;")
         # cursor.execute(f"SOURCE {self.path}/dss.ri;")
 
-        try:
-            subprocess.run(
-                "mysql -uroot -p123456 tpch -eSOURCE /root/osmts_tmp/TPC-H/dss.ddl",
-                shell=True,check=True,
-                stdout=subprocess.DEVNULL,stderr=subprocess.PIPE
-            )
-            subprocess.run(
-                "mysql -uroot -p123456 tpch -eSOURCE /root/osmts_tmp/TPC-H/dss.ri",
-                shell=True, check=True,
-                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE
-            )
-        except subprocess.CalledProcessError as e:
-            DefaultError(f"tpch测试出错.SOURCE失败,报错信息:{e.stderr.decode('utf-8')}")
-
-        cursor.execute("SET FOREIGN_KEY_CHECKS=0;")
 
         mysql = pexpect.spawn(
             command="/bin/bash",
@@ -117,21 +103,33 @@ class TPC_H:
         mysql.expect_exact("mysql>", timeout=60)
         mysql.sendline(f"USE tpch;")
 
-        for table in tqdm(('customer','lineitem','nation','orders','partsupp','part','region','supplier'),desc="load data进度"):
-            try:
-                mysql.expect_exact("mysql>")
-                mysql.sendline(f"LOAD DATA LOCAL INFILE {self.dbgen}/{table}.tbl INTO TABLE {table};")
-                mysql.expect_exact("mysql>")
-                mysql.sendline("FIELDS TERMINATED BY '|' LINES TERMINATED BY '|\n';")
-            except subprocess.CalledProcessError as e:
-                pass
-        time.sleep(5)
-        mysql.terminate(force=True)
-            # cursor.execute(f"LOAD DATA LOCAL INFILE {self.path}/{table}.tbl INTO TABLE {table};")
-            # cursor.execute(f"FIELDS TERMINATED BY '|' LINES TERMINATED BY '|\n';")
+        mysql.expect_exact("mysql>", timeout=60)
+        mysql.sendline("SET GLOBAL max_allowed_packet = 1024*1024*1024;")
 
-        cursor.execute("SET FOREIGN_KEY_CHECKS=1;")
-        cursor.close()
+        mysql.expect_exact("mysql>", timeout=60)
+        mysql.sendline("SET GLOBAL innodb_buffer_pool_size = 4*1024*1024*1024;")
+
+        mysql.expect_exact("mysql>", timeout=60)
+        mysql.sendline(f"SOURCE {self.dbgen}/dss.ddl;")
+        mysql.expect_exact("mysql>", timeout=600)
+        mysql.sendline(f"SOURCE {self.dbgen}/dss.ri;")
+
+        mysql.expect_exact("mysql>", timeout=60)
+        mysql.sendline("SET FOREIGN_KEY_CHECKS=0;")
+        mysql.expect_exact("mysql>", timeout=60)
+        mysql.sendline("SET GLOBAL local_infile=1;")
+
+        for table in tqdm(('customer','lineitem','nation','orders','partsupp','part','region','supplier'),desc="load data进度"):
+            mysql.expect_exact("mysql>",timeout=3600)
+            mysql.sendline(
+                f"LOAD DATA LOCAL INFILE '{self.dbgen}/{table}.tbl' INTO TABLE {table} FIELDS TERMINATED BY '|' LINES TERMINATED BY '|\n';"
+            )
+
+        mysql.expect_exact("mysql>")
+        mysql.sendline("SET FOREIGN_KEY_CHECKS=1;")
+        mysql.expect_exact("mysql>")
+        mysql.terminate(force=True)
+
 
 
     def run_test(self):
@@ -158,7 +156,7 @@ class TPC_H:
         ws.append(['SQL文件','查询所耗时间'])
 
         index = 1
-        log = open(self.directory / 'osmts_tpch.log').readlines()
+        log = open(self.directory / 'osmts_tpch_query.log').readlines()
         for line in log:
             if "rows in set" in line:
                 print(line)
@@ -178,5 +176,6 @@ class TPC_H:
         print('开始进行tpch测试')
         self.pre_test()
         self.run_test()
+        self.result2summary()
         self.post_test()
         print('tpch测试结束')

@@ -10,12 +10,13 @@ from pathlib import Path
 
 from rich.console import Console
 from rich.traceback import install
-from rich.table import Table,Column
-
+from rich.table import Table
+from setproctitle import setproctitle
 from testclasses import osmts_tests
 from testclasses.errors import *
 
 
+setproctitle('osmts')
 console = Console(color_system='256',file=sys.stdout)
 install(show_locals=True)
 table = Table(show_header=True, header_style="bold magenta")

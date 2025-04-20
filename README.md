@@ -180,6 +180,9 @@ secureguardian测试类的输出结果如图所示:
 wrk测试类的输出结果如图所示:
 ![wrk总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/wrk_excel.png)
 
+mmtests测试类的输出结果如图所示:
+![mmtests总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/mmtests_excel.png)
+
 ycsb测试类的输出结果如图所示:
 ![ycsb总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/ycsb_excel.png)
 

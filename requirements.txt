@@ -9,3 +9,4 @@ tqdm
 pystemd
 pymysql
 rich
+setproctitle

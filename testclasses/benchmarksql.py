@@ -4,7 +4,7 @@ from pathlib import Path
 import re,os,time
 import requests,tarfile
 import pymysql,psycopg2
-import sys,subprocess,shutil
+import subprocess,shutil
 from io import BytesIO
 
 from .errors import DefaultError,RunError
@@ -91,14 +91,16 @@ class BenchMarkSQL:
         self.postgresql:Unit = Unit('postgresql.service',_autoload=True)
         try:
             self.postgresql.Unit.Start(b'replace')
-        except Exception as e:
+        except Exception:
+            time.sleep(5)
+            self.postgresql.load(force=True)
             self.postgresql.Unit.Start(b'replace')
         time.sleep(5)
         if self.postgresql.Unit.ActiveState != b'active':
             time.sleep(5)
             if self.postgresql.Unit.ActiveState != b'active':
-                print(f"benchmarksql测试出错.开启postgresql.service失败.")
-                sys.exit(1)
+                raise DefaultError("benchmarksql测试出错.开启postgresql.service失败.")
+
         try:
             self.postgresql_conn = pymysql.connect(
                 host='localhost',

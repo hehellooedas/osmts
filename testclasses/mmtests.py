@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 import subprocess,shutil
-import tarfile,requests
+import tarfile,requests,time
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
@@ -148,7 +148,7 @@ class MMTests:
         self.wb = Workbook()
         self.ws = self.wb.active
         self.ws.title = 'MMTests'
-        self.ws.append(['config','返回值'])
+        self.ws.append(['config','返回值','运行时间'])
 
 
 
@@ -271,16 +271,20 @@ class MMTests:
 
 
     def mmtests_each_test(self,config):
-        run_mmtests = subprocess.run(
-            f"./run-mmtests.sh --no-monitor --config configs/{config} {config}",
-            cwd="/root/osmts_tmp/mmtests",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-        )
+        start = time.time()
+        try:
+            run_mmtests = subprocess.run(
+                f"./run-mmtests.sh --no-monitor --config configs/{config} {config}",
+                cwd="/root/osmts_tmp/mmtests",
+                shell=True,timeout=6 * 60 * 60,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+        except subprocess.TimeoutExpired:
+            return (config,'/','超时')
         with open(self.logs / f"{config}.log", "w") as log:
             log.write(run_mmtests.stdout.decode('utf-8'))
-        return (config,run_mmtests.returncode)
+        return (config,run_mmtests.returncode,time.time()-start)
 
 
     def run_test(self):

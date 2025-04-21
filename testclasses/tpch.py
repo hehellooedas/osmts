@@ -19,7 +19,7 @@ class TPC_H:
         self.path = Path('/root/osmts_tmp/TPC-H')
         self.dbgen = self.path / 'dbgen'
         self.saveSQL = self.dbgen / 'saveSQL'
-        self.test_result:str = ''
+        self.sql_results:list = []
 
 
     def pre_test(self):
@@ -163,7 +163,8 @@ class TPC_H:
         for i in trange(1,23,desc="SQL查询进度"):
             mysql.sendline(f"\. {self.saveSQL}/{i}.sql")
             mysql.expect_exact("mysql>", timeout=36000)
-        time.sleep(20)
+            self.sql_results.append(mysql.before)
+        time.sleep(5)
         mysql.terminate(force=True)
 
 
@@ -175,12 +176,11 @@ class TPC_H:
         ws.append(['SQL文件','查询所耗时间'])
 
         index = 1
-        log = open(self.directory / 'osmts_tpch_query.log').readlines()
-        for line in log:
-            if "rows in set" in line:
-                print(line)
-                ws.append([str(index) + '.sql', line.split('(')[-1][:-2]])
-                index += 1
+        for sql_result in self.sql_results:
+            for line in sql_result.splitlines():
+                if 'rows' in line:
+                    ws.append([str(index) + '.sql',line])
+                    index += 1
         wb.save(self.directory / 'tpch.xlsx')
 
 

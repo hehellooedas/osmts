@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import subprocess,shutil
+import humanfriendly
 import tarfile,requests,time
 from openpyxl import Workbook
 from concurrent.futures import ThreadPoolExecutor
@@ -284,7 +285,7 @@ class MMTests:
             return (config,'/','超时')
         with open(self.logs / f"{config}.log", "w") as log:
             log.write(run_mmtests.stdout.decode('utf-8'))
-        return (config,run_mmtests.returncode,time.time()-start)
+        return (config,run_mmtests.returncode,humanfriendly.format_timespan(time.time() - start))
 
 
     def run_test(self):

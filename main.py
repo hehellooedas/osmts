@@ -242,7 +242,7 @@ def run_all_tests():
             table.add_row(testName,'failed',f'编译失败,返回值:{e.error_code}',e.stderr)
         except SummaryError as e:
             console.print(f"{testName}在把运行结果总结为Excel时出错,退出测试.详细信息请查看:{e.fileName}")
-            table.add_row(testName,'failed','运行成功但是总结为Excel时出错,有必要时请给osmts项目提交issue','详细报错信息请查看:' + e.fileName)
+            table.add_row(testName,'failed','运行成功但是总结为Excel时出错,有必要时请给osmts项目提交issue','详细报错信息请查看文件:' + str(e.fileName))
         except RunError as e:
             console.print(f"{testName}在运行测试命令时出错,退出测试")
             table.add_row(testName,'failed',f'测试运行时出错,返回值:{e.error_code}',e.stderr)

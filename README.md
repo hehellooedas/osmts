@@ -97,7 +97,7 @@ believe_tmp = 0
 | 2  | nmap               | 完成   |
 | 3  | lmbench            | 完成   |
 | 4  | stream             | 完成   |
-| 5  | ltp stress         | 完成   |
+| 5  | ltp_stress         | 完成   |
 | 6  | iozone             | 完成   |
 | 7  | libmicro           | 完成   |
 | 8  | wrk                | 完成   |
@@ -105,8 +105,8 @@ believe_tmp = 0
 | 10 | netperf            | 完成   |
 | 11 | trinity            | 完成   |
 | 12 | ltp                | 完成   |
-| 13 | ltp cve            | 完成   |
-| 14 | ltp posix          | 完成   |
+| 13 | ltp_cve            | 完成   |
+| 14 | ltp_posix          | 完成   |
 | 15 | gpgcheck           | 完成   |
 | 16 | dejagnu            | 完成   |
 | 17 | yarpgen            | 完成   |
@@ -193,6 +193,9 @@ sysbench测试类的输出结果如图所示:
 ![sysbench总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/sysbench_excel.png)
 
 tpch测试类的输出结果如图所示:
+
+
+
 ![tpch总结为excel的截图](https://gitee.com/April_Zhao/images/raw/master/osmts/tpch_excel.png)
 
 ---

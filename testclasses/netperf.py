@@ -2,7 +2,7 @@ from pathlib import Path
 import re,sys,subprocess,psutil
 from openpyxl import Workbook
 
-from .errors import DefaultError
+from .errors import DefaultError,RunError
 
 
 class Netperf(object):
@@ -62,10 +62,15 @@ class Netperf(object):
         # TCP_STREAM测试
         line = 2
         for message_size_bytes in (1,64,512,65536):
-            TCP_STREAM = subprocess.run(f"netperf -t TCP_STREAM -H {self.server_ip} -p 10000 -l 60 -- -m {message_size_bytes}",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            if TCP_STREAM.returncode != 0:
-                print(f"netperf测试出错:TCP_STREAM测试运行失败.报错信息:{TCP_STREAM.stderr}")
-                sys.exit(1)
+            try:
+                TCP_STREAM = subprocess.run(
+                    f"netperf -t TCP_STREAM -H {self.server_ip} -p 10000 -l 60 -- -m {message_size_bytes}",
+                    shell=True,check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+            except subprocess.CalledProcessError as e:
+                raise RunError(e.returncode,f"netperf测试出错:TCP_STREAM测试运行失败.报错信息:{e.stderr}")
             result = re.findall(r'\d+\.\d+|\d+', TCP_STREAM.stdout.decode('utf-8').split('\n')[6])
             for col,value in enumerate(result):
                 ws.cell(line,col+2,value)
@@ -75,10 +80,15 @@ class Netperf(object):
         # UDP_STREAM测试
         line = 7
         for message_size_bytes in (1,64,128,256,512,32768):
-            UDP_STREAM = subprocess.run(f"netperf -t UDP_STREAM -H {self.server_ip} -p 10000 -l 60 -- -m {message_size_bytes}",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            if UDP_STREAM.returncode != 0:
-                print(f"netperf测试出错:UDP_STREAM测试运行失败.报错信息:{UDP_STREAM.stderr.decode('utf-8')}")
-                sys.exit(1)
+            try:
+                UDP_STREAM = subprocess.run(
+                    f"netperf -t UDP_STREAM -H {self.server_ip} -p 10000 -l 60 -- -m {message_size_bytes}",
+                    shell=True,check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE
+                )
+            except subprocess.CalledProcessError as e:
+                raise RunError(e.returncode,f"netperf测试出错:UDP_STREAM测试运行失败.报错信息:{e.stderr.decode('utf-8')}")
             result1 = re.findall(r'\d+\.\d+|\d+', UDP_STREAM.stdout.decode('utf-8').split('\n')[5])
             result2 = re.findall(r'\d+\.\d+|\d+', UDP_STREAM.stdout.decode('utf-8').split('\n')[6])
             for col,value in enumerate(result1):
@@ -92,10 +102,15 @@ class Netperf(object):
 
 
         # TCP REQUEST/RESPONSE测试
-        TCP_RR = subprocess.run(f"netperf -t TCP_RR -H {self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        if TCP_RR.returncode != 0:
-            print(f"netperf测试出错:TCP_RR测试运行失败.报错信息:{TCP_RR.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            TCP_RR = subprocess.run(
+                f"netperf -t TCP_RR -H {self.server_ip} -p 10000",
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,f"netperf测试出错:TCP_RR测试运行失败.报错信息:{e.stderr.decode('utf-8')}")
         result1 = re.findall(r'\d+\.\d+|\d+', TCP_RR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', TCP_RR.stdout.decode('utf-8').split('\n')[7])
         for col, value in enumerate(result1):
@@ -105,10 +120,15 @@ class Netperf(object):
 
 
         # TCP Connect/Request/Response测试
-        TCP_CRR = subprocess.run(f"netperf -t TCP_CRR -H {self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        if TCP_CRR.returncode != 0:
-            print(f"netperf测试出错:TCP_CRR测试运行失败.报错信息:{TCP_CRR.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            TCP_CRR = subprocess.run(
+                f"netperf -t TCP_CRR -H {self.server_ip} -p 10000",
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,f"netperf测试出错:TCP_CRR测试运行失败.报错信息:{TCP_CRR.stderr.decode('utf-8')}")
         result1 = re.findall(r'\d+\.\d+|\d+', TCP_CRR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', TCP_CRR.stdout.decode('utf-8').split('\n')[7])
         for col, value in enumerate(result1):
@@ -118,10 +138,15 @@ class Netperf(object):
 
 
         # UDP REQUEST/RESPONSE测试
-        UDP_RR = subprocess.run(f"netperf -t UDP_RR -H {self.server_ip} -p 10000",shell=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        if UDP_RR.returncode != 0:
-            print(f"netperf测试出错:UDP_RR测试运行失败.报错信息:{UDP_RR.stderr.decode('utf-8')}")
-            sys.exit(1)
+        try:
+            UDP_RR = subprocess.run(
+                f"netperf -t UDP_RR -H {self.server_ip} -p 10000",
+                shell=True,check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        except subprocess.CalledProcessError as e:
+            raise RunError(e.returncode,f"netperf测试出错:UDP_RR测试运行失败.报错信息:{UDP_RR.stderr.decode('utf-8')}")
         result1 = re.findall(r'\d+\.\d+|\d+', UDP_RR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', UDP_RR.stdout.decode('utf-8').split('\n')[7])
         for col, value in enumerate(result1):

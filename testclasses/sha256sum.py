@@ -1,8 +1,11 @@
 from pySmartDL import SmartDL
 import requests,shutil,pySmartDL
 from pathlib import Path
-
+from faker import Faker
 from .errors import DefaultError
+
+
+faker = Faker()
 
 class Sha256sum():
     def __init__(self, **kwargs):
@@ -13,7 +16,16 @@ class Sha256sum():
 
 
     def pre_test(self):
-        response = requests.get(self.sha256sumISO + '.sha256sum')
+        try:
+            response = requests.get(
+                self.sha256sumISO + '.sha256sum',
+                headers={
+                    'User-Agent': faker.user_agent(),
+                    'Referer': 'https://gitee.com/April_Zhao/osmts'
+                }
+            )
+        except requests.exceptions.Timeout:
+            raise DefaultError('https请求超时，请检查网络')
         if not response.ok:
             raise DefaultError("sha256sumISO测试sha256sum文件下载失败")
         self.hash = response.text.split(' ')[0]

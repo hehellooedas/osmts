@@ -20,7 +20,7 @@ cd osmts
 * 运行前安装环境
 
 ```
-dnf install gcc python python3-devel python3-pip python3-Cython python3-psycopg2 systemd-devel libxml2 libxslt libxslt-devel libxml2-devel tmux
+dnf install gcc python python3-devel python3-pip python3-Cython python3-psycopg2 python3-paramiko systemd-devel libxml2 libxslt libxslt-devel libxml2-devel tmux
 pip install --upgrade pip setuptools
 pip install -r requirements.txt
 

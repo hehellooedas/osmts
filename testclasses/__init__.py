@@ -29,7 +29,7 @@ from testclasses.sysbench import sysBench
 from testclasses.redis_benchmark import redisBenchMark
 from testclasses.benchmarksql import BenchMarkSQL
 from testclasses.tpch import TPC_H
-
+from testclasses.sha256sum import Sha256sum
 
 
 osmts_tests = {
@@ -125,5 +125,8 @@ osmts_tests = {
     ),
     "tpch":(
         TPC_H
+    ),
+    "sha256sum":(
+        Sha256sum
     )
 }

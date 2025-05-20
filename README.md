@@ -66,6 +66,8 @@ run_tests = ['netperf','unixbench','nmap','stream']
 saved_directory = "/root/osmts_result"
 compiler = "gcc"
 netperf_server_ip = "127.0.0.1"
+netperf_server_password = "openEuler12#$"
+sha256sumISO=""
 csmith_count = 1000
 yarpgen_count = 100
 gcc_version="auto"
@@ -77,7 +79,8 @@ believe_tmp = 0
 3. 如果run_tests=["ALL"],则添加所有测试项目进去;
 3. saved_directory填写测试结果存放的目录，main.py运行结束后会在这个目录产生excel文件，默认为'/root/osmts_result';
 4. compiler是待测试的编译环境，应当填写gcc或者clang ,默认是gcc;
-5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000;
+5. netperf_server_ip是netserver运行的机器的ip地址，如果不测试netperf则无需填写，netserver机器可以是自己，这时候就填写127.0.0.1;指定机器上提前运行netserver -p 10000;如果指定了netperf_server_password则会尝试打开对方机器上的netserver;
+6. sha256sumISO是ISO镜像哈希校验的ISO下载地址
 6. csmith_count是csmith测试生成和编译随机c文件的数量,取值范围[100,5000],默认为1000;
 7. yarpgen_count是yarpgen测试生成随机c++文件的数量,取值范围[10,1000],默认为100;
 8. gcc_version是api_sanity_checker测试需要用到的当前系统安装的gcc的版本,可以查看/usr/lib/gcc/riscv64-openEuler-linux/目录下的子目录,是一个数字比如12,如果不想指定可以填入auto让osmts自动查询;
@@ -124,7 +127,7 @@ believe_tmp = 0
 | 29 | sysbench           | 完成   |
 | 30 | benchmarksql       | 完成   |
 | 31 | tpch               | 完成   |
-
+| 32 | sha256sum          | 完成   |
 
 
 ## 注意事项

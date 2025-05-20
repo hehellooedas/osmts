@@ -1,8 +1,26 @@
 from pathlib import Path
-import re,sys,subprocess,psutil
+import re,subprocess,psutil
 from openpyxl import Workbook
-
+import paramiko
 from .errors import DefaultError,RunError
+
+
+def get_client(ip, password, port=22):
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy)
+    try:
+        client.connect(hostname=ip, port=port, username="root", password=password, timeout=100)
+    except (
+            paramiko.ssh_exception.NoValidConnectionsError,
+            paramiko.ssh_exception.AuthenticationException,
+            paramiko.ssh_exception.SSHException,
+            TypeError,
+            AttributeError,
+    ) as e:
+        print(f"无法连接到远程机器:{ip}.\n原因： {e}")
+    return client
+
 
 
 class Netperf(object):
@@ -11,6 +29,20 @@ class Netperf(object):
         self.directory:Path = kwargs.get('saved_directory') / 'netperf'
         self.server_ip:str = kwargs.get('netperf_server_ip')
         self.netserver_created_by_osmts:bool = kwargs.get('netserver_created_by_osmts')
+        self.netserver_created_by_osmts_remote:bool = False
+        self.client = None
+        self.netperf_server_password = kwargs.get('netperf_server_password')
+
+
+    def pre_test(self):
+        # 非本地测试才会进入pre_test
+        self.client = get_client(self.server_ip, self.netperf_server_password,22)
+        stdin,stdout,stderr = self.client.exec_command('ps aux|grep netserver|grep -v grep')
+        if stdout.channel.recv_exit_status() != 0:
+            stdin,stdout,stderr = self.client.exec_command('dnf install netserver -y && netserver -p 10000')
+            if stdout.channel.recv_exit_status() != 0:
+                raise DefaultError("在远程机器上自动运行netserver失败")
+            self.netserver_created_by_osmts_remote = True
 
 
     def run_test(self):
@@ -164,10 +196,14 @@ class Netperf(object):
             for process in psutil.process_iter():
                 if process.name() == 'netserver':
                     process.terminate()
+        elif self.netserver_created_by_osmts_remote:
+            self.client.exec_command("pkill -9 netserver")
 
 
     def run(self):
         print("开始进行netperf测试")
+        if not self.netserver_created_by_osmts or self.netperf_server_password is not None:
+            self.pre_test()
         try:
             self.run_test()
         except Exception as e:

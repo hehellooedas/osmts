@@ -163,10 +163,12 @@ def parse_config(config:dict) -> dict:
     saved_directory = config.get("saved_directory", None)
     compiler = config.get("compiler", None)
     netperf_server_ip = str(config.get("netperf_server_ip", None))
+    netperf_server_password = config.get("netperf_server_password", None)
     believe_tmp: bool = bool(config.get("believe_tmp", None))
     gcc_version: str = str(config.get("gcc_version", "auto"))
     wrk_seconds: int = int(config.get("wrk_seconds", 60))
-    merge = bool(config.get("merge", None))
+    sha256sumISO:str = str(config.get("sha256sumISO", ""))
+
 
     # csmith测试输入参数
     csmith_count: int = config.get("csmith_count", 1000)
@@ -210,13 +212,14 @@ def parse_config(config:dict) -> dict:
         'saved_directory':saved_directory,
         'compiler' : compiler,
         'netperf_server_ip' : netperf_server_ip,
+        "netperf_server_password":netperf_server_password,
         'netserver_created_by_osmts' : netserver_created_by_osmts,
-        'merge' : merge,
         'csmith_count' : csmith_count,
         'believe_tmp' : believe_tmp,
         'yarpgen_count' : yarpgen_count,
         'gcc_version' : gcc_version,
-        'wrk_seconds' : wrk_seconds
+        'wrk_seconds' : wrk_seconds,
+        'sha256sumISO':sha256sumISO
     }
 
 

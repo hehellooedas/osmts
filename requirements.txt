@@ -10,3 +10,4 @@ pystemd
 pymysql
 rich
 setproctitle
+paramiko

@@ -20,6 +20,8 @@ class Sha256sum():
             response = requests.get(
                 self.sha256sumISO + '.sha256sum',
                 headers={
+                    'Accept':'text / html, application / xhtml + xml, application / xml;q = 0.9, * / *;q = 0.8',
+                    'Connection':'keep-alive',
                     'User-Agent': faker.user_agent(),
                     'Referer': 'https://gitee.com/April_Zhao/osmts'
                 }
@@ -48,6 +50,7 @@ class Sha256sum():
                 progress_bar=True,
                 request_args={
                     "headers": {
+                        'Accept': 'text / html, application / xhtml + xml, application / xml;q = 0.9, * / *;q = 0.8',
                         'Connection': 'keep-alive',
                         # User-Agent会自动生成
                         'Referer': 'https://gitee.com/April_Zhao/osmts'

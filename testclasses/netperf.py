@@ -39,10 +39,14 @@ class Netperf(object):
         self.client = get_client(self.server_ip, self.netperf_server_password,22)
         stdin,stdout,stderr = self.client.exec_command('ps aux|grep netserver|grep -v grep')
         if stdout.channel.recv_exit_status() != 0:
-            stdin,stdout,stderr = self.client.exec_command('dnf install netserver -y && netserver -p 10000')
+            stdin,stdout,stderr = self.client.exec_command('dnf install netperf-y && netserver -p 10000')
             if stdout.channel.recv_exit_status() != 0:
                 raise DefaultError("在远程机器上自动运行netserver失败")
             self.netserver_created_by_osmts_remote = True
+        stdin,stdout,stderr = self.client.exec_command('systemctl is-active firewalld')
+        self.is_active = stdout.read()
+        if self.is_active == "active":
+            stdin, stdout, stderr = self.client.exec_command("systemctl stop firewalld")
 
 
     def run_test(self):
@@ -196,17 +200,17 @@ class Netperf(object):
             for process in psutil.process_iter():
                 if process.name() == 'netserver':
                     process.terminate()
-        elif self.netserver_created_by_osmts_remote:
-            self.client.exec_command("pkill -9 netserver")
+        if self.client is not None:
+            if self.netserver_created_by_osmts_remote:
+                self.client.exec_command("pkill -9 netserver")
+            if self.is_active == 'active':
+                self.client.exec_command("systemctl start firewalld")
 
 
     def run(self):
         print("开始进行netperf测试")
         if not self.netserver_created_by_osmts or self.netperf_server_password is not None:
             self.pre_test()
-        try:
-            self.run_test()
-        except Exception as e:
-            raise DefaultError(str(e))
+        self.run_test()
         self.post_test()
         print("netperf测试结束")

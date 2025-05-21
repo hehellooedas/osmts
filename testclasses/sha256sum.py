@@ -1,11 +1,10 @@
 from pySmartDL import SmartDL
 import requests,shutil,pySmartDL
 from pathlib import Path
-from faker import Faker
+
 from .errors import DefaultError
 
 
-faker = Faker()
 
 class Sha256sum():
     def __init__(self, **kwargs):
@@ -22,8 +21,8 @@ class Sha256sum():
                 headers={
                     'Accept':'text / html, application / xhtml + xml, application / xml;q = 0.9, * / *;q = 0.8',
                     'Connection':'keep-alive',
-                    'User-Agent': faker.user_agent(),
-                    'Referer': 'https://gitee.com/April_Zhao/osmts'
+                    'Referer': 'https://gitee.com/April_Zhao/osmts',
+                    'User-Agent':'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0'
                 }
             )
         except requests.exceptions.Timeout:
@@ -52,7 +51,7 @@ class Sha256sum():
                     "headers": {
                         'Accept': 'text / html, application / xhtml + xml, application / xml;q = 0.9, * / *;q = 0.8',
                         'Connection': 'keep-alive',
-                        # User-Agent会自动生成
+                        'User-Agent':'Mozilla/5.0 (X11; Linux x86_64; rv:138.0) Gecko/20100101 Firefox/138.0',
                         'Referer': 'https://gitee.com/April_Zhao/osmts'
                     }},
 

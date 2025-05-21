@@ -75,9 +75,9 @@ def netperf_judge(netperf_server_ip:str):
                 )
                 global netserver_created_by_osmts
                 netserver_created_by_osmts = True
-        else:
-            print("请手动执行netserver -p 10000以进行netperf的测试")
-            sys.exit(1)
+            else:
+                print("请手动执行netserver -p 10000以进行netperf的测试")
+                sys.exit(1)
 
 
 

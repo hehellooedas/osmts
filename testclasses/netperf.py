@@ -164,7 +164,7 @@ class Netperf(object):
                 stderr=subprocess.PIPE
             )
         except subprocess.CalledProcessError as e:
-            raise RunError(e.returncode,f"netperf测试出错:TCP_CRR测试运行失败.报错信息:{TCP_CRR.stderr.decode('utf-8')}")
+            raise RunError(e.returncode,f"netperf测试出错:TCP_CRR测试运行失败.报错信息:{e.stderr.decode('utf-8')}")
         result1 = re.findall(r'\d+\.\d+|\d+', TCP_CRR.stdout.decode('utf-8').split('\n')[6])
         result2 = re.findall(r'\d+\.\d+|\d+', TCP_CRR.stdout.decode('utf-8').split('\n')[7])
         for col, value in enumerate(result1):
@@ -209,7 +209,7 @@ class Netperf(object):
 
     def run(self):
         print("开始进行netperf测试")
-        if not self.netserver_created_by_osmts or self.netperf_server_password is not None:
+        if self.netperf_server_password is not None:
             self.pre_test()
         self.run_test()
         self.post_test()

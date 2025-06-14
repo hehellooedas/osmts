@@ -9,7 +9,7 @@ class Unixbench:
     def __init__(self,**kwargs ):
         self.rpms = {'perl','perl-CPAN'}
         self.believe_tmp: bool = kwargs.get('believe_tmp')
-        self.path = Path('/root/osmts_tmp/unixbench')
+        self.path = Path('/root/osmts_tmp/byte-unixbench')
         self.directory:Path = kwargs.get('saved_directory') / 'unixbench'
         self.compiler:str = kwargs.get('compiler')
         self.test_result = ''
@@ -65,7 +65,7 @@ class Unixbench:
             raise RunError(e.returncode,e.stderr)
         else:
             self.test_result = run.stdout.decode('utf-8')
-            with open(self.directory / 'unixbench,log','w') as file:
+            with open(self.directory / 'unixbench.log','w') as file:
                 file.write(self.test_result)
 
 
@@ -75,25 +75,27 @@ class Unixbench:
         ws.title = "unixbench"
         ws['a1'] = "unixbench"
         ws['b1'] = "测试项目"
-        ws['c1'] = "数据"
+        ws['c1'] = "Raw Results(原始数据)"
+        ws['d1'] = "Index Values(基准值)"
 
         ws['a2'] = "64 CPUs & 1 parallel"
-        ws['a15'] = "64 CPUs & 64 parallel"
-        ws.merge_cells("a2:a13")
-        ws.merge_cells("a15:a26")
+        ws['a16'] = "64 CPUs & 64 parallel"
+        ws.merge_cells("a2:a14")
+        ws.merge_cells("a16:a28")
 
-        ws['b2'] = ws['b15'] = "Dhrystone 2 using register variables(lps)"
-        ws['b3'] = ws['b16'] = "Double-Precision Whetstone(MWIPS)"
-        ws['b4'] = ws['b17'] = "Execl Throughput(lps)"
-        ws['b5'] = ws['b18'] = "File Copy 1024 bufsize 2000 maxblocks(KBps)"
-        ws['b6'] = ws['b19'] = "File Copy 256 bufsize 500 maxblocks(KBps)"
-        ws['b7'] = ws['b20'] = "File Copy 4096 bufsize 8000 maxblocks(KBps)"
-        ws['b8'] = ws['b21'] = "Pipe Throughput(lps)"
-        ws['b9'] = ws['b22'] = "Pipe-based Context Switching(lps)"
-        ws['b10'] = ws['b23'] = "Process Creation(lps)"
-        ws['b11'] = ws['b24'] = "Shell Scripts (1 concurrent)(lpm)"
-        ws['b12'] = ws['b25'] = "Shell Scripts (8 concurrent)(lpm)"
-        ws['b13'] = ws['b26'] = "System Call Overhead(lps)"
+        ws['b2'] = ws['b16'] = "Dhrystone 2 using register variables(lps)"
+        ws['b3'] = ws['b17'] = "Double-Precision Whetstone(MWIPS)"
+        ws['b4'] = ws['b18'] = "Execl Throughput(lps)"
+        ws['b5'] = ws['b19'] = "File Copy 1024 bufsize 2000 maxblocks(KBps)"
+        ws['b6'] = ws['b20'] = "File Copy 256 bufsize 500 maxblocks(KBps)"
+        ws['b7'] = ws['b21'] = "File Copy 4096 bufsize 8000 maxblocks(KBps)"
+        ws['b8'] = ws['b22'] = "Pipe Throughput(lps)"
+        ws['b9'] = ws['b23'] = "Pipe-based Context Switching(lps)"
+        ws['b10'] = ws['b24'] = "Process Creation(lps)"
+        ws['b11'] = ws['b25'] = "Shell Scripts (1 concurrent)(lpm)"
+        ws['b12'] = ws['b26'] = "Shell Scripts (8 concurrent)(lpm)"
+        ws['b13'] = ws['b27'] = "System Call Overhead(lps)"
+        ws['b14'] = ws['b28'] = "System Benchmarks Index Score"
 
         match_list = [
             re.compile(r"Dhrystone 2 using register variables\s+([\d.]+\d)\slps"),
@@ -113,8 +115,14 @@ class Unixbench:
         for one in match_list:
             match_result = one.findall(self.test_result)
             ws[f'c{line}'] = match_result[0]
-            ws[f'c{line + 13}'] = match_result[1]
+            ws[f'c{line + 14}'] = match_result[1]
             line += 1
+        line = 2
+        for index_value in re.findall(r"\b(\d+\.\d+)\s*$",self.test_result,re.MULTILINE):
+            ws[f'd{line}'] = index_value
+            line += 1
+            if line == 15:
+                line += 1
 
         wb.save(self.directory / 'unixbench.xlsx')
 
